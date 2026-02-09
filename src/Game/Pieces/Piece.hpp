@@ -13,7 +13,9 @@ public:
     Piece& operator=(const Piece&) = default;
     virtual ~Piece()               = 0;
 
-private:
+protected:
     std::string       _name;
     std::vector<Move> _allowedMoves;
+
+    virtual void setAllowedMoves() = 0;
 };
