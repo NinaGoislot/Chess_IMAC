@@ -14,6 +14,6 @@ public:
     virtual ~Piece()               = 0;
 
 private:
-    std::string       name;
-    std::vector<Move> allowedMoves;
+    std::string       _name;
+    std::vector<Move> _allowedMoves;
 };

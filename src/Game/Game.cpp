@@ -1,11 +1,12 @@
 #include "Game.hpp"
-#include <iostream>
 #include <imgui.h>
+#include <iostream>
+#include "_settings.hpp"
+
 // #include "quick_imgui/quick_imgui.hpp"
 
-void ChessGame::displayBoard()
+void ChessGame::displayBoard(const settings &gameSettings)
 {
-    ImGui::Begin("Chess Board");
     for (int y{0}; y < Board::SIZE; y++)
     {
         for (int x{0}; x < Board::SIZE; x++)
@@ -13,13 +14,13 @@ void ChessGame::displayBoard()
             ImGui::PushID(x + y * Board::SIZE);
             if (y % 2 == 0)
             {
-                ImGui::PushStyleColor(ImGuiCol_Button, (x % 2 == 0) ? ImVec4{0.9f, 0.9f, 0.8f, 1.f} : ImVec4{0.46f, 0.58f, 0.33f, 1.f});
+                ImGui::PushStyleColor(ImGuiCol_Button, (x % 2 == 0) ? gameSettings.getWhite() : gameSettings.getBlack());
             }
             else
             {
-                ImGui::PushStyleColor(ImGuiCol_Button, (x % 2 == 0) ? ImVec4{0.46f, 0.58f, 0.33f, 1.f} : ImVec4{0.9f, 0.9f, 0.8f, 1.f});
+                ImGui::PushStyleColor(ImGuiCol_Button, (x % 2 == 0) ? gameSettings.getBlack() : gameSettings.getWhite());
             }
-            if (ImGui::Button(" ", ImVec2{50.f, 50.f}))
+            if (ImGui::Button(" ", ImVec2{gameSettings.buttonSize, gameSettings.buttonSize}))
             {
                 std::cout << "Clicked on case (" << x << ", " << y << ")\n";
             }
@@ -31,16 +32,8 @@ void ChessGame::displayBoard()
             }
         }
     }
-    ImGui::End();
-}
-
-void ChessGame::placePieces()
-{
-    
 }
 
 ChessGame::ChessGame() : _board()
 {
-
-    
 }

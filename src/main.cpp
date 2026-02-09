@@ -1,14 +1,17 @@
 #include <imgui.h>
 #include <iostream>
-#include "quick_imgui/quick_imgui.hpp"
 #include "Board/Board.hpp"
-
+#include "Game/Game.hpp"
+#include "Game/_settings.hpp"
+#include "quick_imgui/quick_imgui.hpp"
 
 int main()
 {
     float value{0.f};
 
-    Board board;
+    // Board board;
+    ChessGame game;
+    settings  gameSettings;
 
     quick_imgui::loop(
         "Chess",
@@ -16,30 +19,13 @@ int main()
             .init = [&]() {},
             .loop =
                 [&]() {
-                    
                     ImGui::Begin("Chess Board");
-                    for (int y{0}; y < Board::SIZE ; y++) {
-                        for (int x{0}; x < Board::SIZE ; x++) {
-                            ImGui::PushID(x + y * Board::SIZE ); 
-                            if (y % 2 == 0) {
-                                ImGui::PushStyleColor(ImGuiCol_Button, (x % 2 == 0) ? ImVec4{0.9f, 0.9f, 0.8f, 1.f} : ImVec4{0.46f, 0.58f, 0.33f, 1.f});
-                            } else {
-                                ImGui::PushStyleColor(ImGuiCol_Button, (x % 2 == 0) ? ImVec4{0.46f, 0.58f, 0.33f, 1.f} : ImVec4{0.9f, 0.9f, 0.8f, 1.f});
-                            }
-                            if (ImGui::Button(" ", ImVec2{50.f, 50.f})) {
-                                std::cout << "Clicked on case (" << x << ", " << y << ")\n";
-                            }
-                            ImGui::PopStyleColor();
-                            ImGui::PopID();
-                            if (x < Board::SIZE  - 1) {
-                                ImGui::SameLine(); // Keep buttons on the same line
-                            }
-                        }
-                    }
+                    game.displayBoard(gameSettings);
+                    gameSettings.display();
                     ImGui::End();
                     // ImGui::ShowDemoWindow(); // This opens a window which shows tons of examples of what you can do with ImGui. You should check it out! Also, you can use the "Item Picker" in the top menu of that demo window: then click on any widget and it will show you the corresponding code directly in your IDE!
                     // ImGui::Begin("Example");
-                    
+
                     // ImGui::SliderFloat("My Value", &value, 0.f, 3.f);
 
                     // if (ImGui::Button("1", ImVec2{50.f, 50.f}))
