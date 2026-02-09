@@ -12,7 +12,7 @@ Pawn::~Pawn() = default;
 
 void Pawn::setAllowedMoves()
 {
-    Move move1(dir::up(), 1);
+    Vector2D move1(0, 1);
 
     _allowedMoves.push_back(move1);
 }

@@ -3,6 +3,8 @@
 #include <string>
 #include <vector>
 #include "Move.hpp"
+#include "utilities/Vector2D.hpp"
+
 
 class Piece {
 public:
@@ -14,8 +16,8 @@ public:
     virtual ~Piece()               = 0;
 
 protected:
-    std::string       _name;
-    std::vector<Move> _allowedMoves;
+    std::string           _name;
+    std::vector<Vector2D> _allowedMoves;
 
     virtual void setAllowedMoves() = 0;
 };
