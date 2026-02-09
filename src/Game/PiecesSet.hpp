@@ -1,7 +1,7 @@
 #pragma once
 
 #include <memory>
-#include <map>
+#include <unordered_set>
 #include "Pieces/Piece.hpp"
 
 
@@ -9,10 +9,10 @@ class PiecesSet {
 public:
     PiecesSet();
 
-    void addPiece(std::shared_ptr<Piece>& piece);
-    bool getPieceStatus(std::shared_ptr<Piece>& piece) const;
-    void pieceEaten(std::shared_ptr<Piece>& piece);
+    void addPiece(const std::shared_ptr<Piece>& piece);
+    bool getPieceStatus(const std::shared_ptr<Piece>& piece) const;
+    void pieceEaten(const std::shared_ptr<Piece>& piece);
 
 private:
-    std::map<std::shared_ptr<Piece>, bool> _allPieces;
+    std::unordered_set<std::shared_ptr<Piece>> _alivePieces;
 };

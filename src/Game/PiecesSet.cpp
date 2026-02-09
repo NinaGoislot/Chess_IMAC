@@ -6,21 +6,14 @@ PiecesSet::PiecesSet() {
     addPiece(pawn1);
 }  
 
-void PiecesSet::addPiece(std::shared_ptr<Piece>& piece) {
-    _allPieces[piece] = true;
+void PiecesSet::addPiece(const std::shared_ptr<Piece>& piece) {
+    _alivePieces.insert(piece);
 }
 
-bool PiecesSet::getPieceStatus(std::shared_ptr<Piece>& piece) const {
-    auto it = _allPieces.find(piece);
-    if (it != _allPieces.end()) {
-        return it->second;
-    }
-    return false; // Piece not found
+bool PiecesSet::getPieceStatus(const std::shared_ptr<Piece>& piece) const {
+    return _alivePieces.contains(piece); // C++20
 }
 
-void PiecesSet::pieceEaten(std::shared_ptr<Piece>& piece) {
-    auto it = _allPieces.find(piece);
-    if (it != _allPieces.end()) {
-        it->second = false;
-    }
-}    
+void PiecesSet::pieceEaten(const std::shared_ptr<Piece>& piece) {
+    _alivePieces.erase(piece);
+}
