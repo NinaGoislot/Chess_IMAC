@@ -1,15 +1,16 @@
 #pragma once
-#include "_settings.hpp"
+#include "settings.hpp"
 #include "Board/Board.hpp"
-// #include "Piece/Piece.hpp"
+#include "Pieces/Piece.hpp"
+#include "Render/TextureLoader.hpp"
 
-class ChessGame
+class Game
 {
 public:
-    ChessGame();
+    Game();
 
     void displayBoard(const settings &s);
-    void placePieces();
+    void placePieces(const settings &s);
 
 private:
     Board _board;

@@ -7,7 +7,8 @@ Board::Board() : _cases{} {
         for (int y{0}; y < SIZE; y++)
         {
             // _cases[x][y] = Case(x, y);
-            setCase(x, y, Case(x, y));
+            // setCase(x, y, Case(x, y));
+            _cases[x][y] = Case(x, y);
         }
     }
 }

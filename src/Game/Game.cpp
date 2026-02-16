@@ -1,11 +1,13 @@
 #include "Game.hpp"
 #include <imgui.h>
 #include <iostream>
-#include "_settings.hpp"
+#include "settings.hpp"
+#include <memory>
+#include "Pieces/Pawn.hpp"
 
 // #include "quick_imgui/quick_imgui.hpp"
 
-void ChessGame::displayBoard(const settings &gameSettings)
+void Game::displayBoard(const settings& gameSettings)
 {
     for (int y{0}; y < Board::SIZE; y++)
     {
@@ -34,6 +36,13 @@ void ChessGame::displayBoard(const settings &gameSettings)
     }
 }
 
-ChessGame::ChessGame() : _board()
+Game::Game() : _board()
 {
+}
+
+void Game::placePieces(const settings& gameSettings)
+{
+    ImTextureID whitePawnTex = LoadTexture("../../textures/pieces/white_pawn.png");
+    _board.getCase(0, 0).setPiece(std::make_unique<Pawn>());
+    _board.getCase(0,0).getPiece()->draw(whitePawnTex, gameSettings);
 }

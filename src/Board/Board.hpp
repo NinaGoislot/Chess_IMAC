@@ -9,10 +9,10 @@ public:
 
     Board();
 
-    void setCase(int x, int y, const Case& c)
-    {
-        _cases[x][y] = c;
-    }
+    // void setCase(int x, int y, const Case& c)
+    // {
+    //     _cases[x][y] = c;
+    // }
 
     // int getSize() const { return _size; }
 

@@ -1,6 +1,7 @@
 #include "Pawn.hpp"
 #include <vector>
 #include "utilities/Direction.hpp"
+#include <imgui.h>
 
 Pawn::Pawn()
     : Piece()
@@ -16,3 +17,14 @@ void Pawn::setAllowedMoves()
 
     _allowedMoves.push_back(move1);
 }
+
+void Pawn::draw(const ImTextureID &texture, const settings& gameSettings)
+{
+    
+
+    ImVec2 squarePos = ImGui::GetCursorScreenPos();
+
+    ImGui::SetCursorScreenPos(squarePos);
+    ImGui::Image(texture, ImVec2(gameSettings.buttonSize, gameSettings.buttonSize));
+}
+
