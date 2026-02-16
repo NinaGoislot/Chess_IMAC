@@ -10,10 +10,11 @@ void PiecesSet::addPiece(const std::shared_ptr<Piece>& piece) {
     _alivePieces.insert(piece);
 }
 
-bool PiecesSet::getPieceStatus(const std::shared_ptr<Piece>& piece) const {
-    return _alivePieces.contains(piece); // C++20
-}
+// bool PiecesSet::getPieceStatus(const Piece& piece) const {
+//     return _alivePieces.contains(piece);
+// }
 
 void PiecesSet::pieceEaten(const std::shared_ptr<Piece>& piece) {
     _alivePieces.erase(piece);
+    // _pieceEatenCallback(*piece);        
 }
