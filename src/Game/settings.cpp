@@ -1,4 +1,4 @@
-#include "_settings.hpp"
+#include "settings.hpp"
 #include <imgui.h>
 
 void settings::display()
