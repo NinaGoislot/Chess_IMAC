@@ -1,9 +1,9 @@
 #include "Game.hpp"
 #include <imgui.h>
 #include <iostream>
-#include "settings.hpp"
 #include <memory>
-#include "Pieces/Pawn.hpp"
+#include "Game/Pieces/Pawn.hpp"
+#include "Game/settings.hpp"
 
 // #include "quick_imgui/quick_imgui.hpp"
 
@@ -42,7 +42,11 @@ Game::Game() : _board()
 
 void Game::placePieces(const settings& gameSettings)
 {
-    ImTextureID whitePawnTex = LoadTexture("../../textures/pieces/white_pawn.png");
+    ImTextureID whitePawnTex = LoadTexture("textures/pieces/white_pawn.png");
     _board.getCase(0, 0).setPiece(std::make_unique<Pawn>());
-    _board.getCase(0,0).getPiece()->draw(whitePawnTex, gameSettings);
+    _board.getCase(0, 0).getPiece()->draw(whitePawnTex, gameSettings);
+}
+
+void Game::init(){
+    
 }

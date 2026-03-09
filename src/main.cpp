@@ -1,7 +1,7 @@
 #include <imgui.h>
 #include <iostream>
 #include "Board/Board.hpp"
-#include "Game/Game.hpp"
+#include "Managers/Game.hpp"
 #include "Game/settings.hpp"
 #include "quick_imgui/quick_imgui.hpp"
 
@@ -23,7 +23,7 @@ int main()
             .init = [&]() {},
             .loop =
                 [&]() {
-                    ImGui::Begin("Chess Board");
+                    ImGui::Begin("Le jeu d'échec de fou");
                     game.displayBoard(gameSettings);
                     game.placePieces(gameSettings);
                     gameSettings.display();
