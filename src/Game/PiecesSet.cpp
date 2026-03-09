@@ -1,19 +1,21 @@
-#include "PiecesSet.hpp"
-#include "Pieces/pawn.hpp"
+// #include "PiecesSet.hpp"
+// #include "Pieces/pawn.hpp"
 
-PiecesSet::PiecesSet() {
-    std::shared_ptr<Piece> pawn1 = std::make_shared<Pawn>();
-    addPiece(pawn1);
-}  
 
-void PiecesSet::addPiece(const std::shared_ptr<Piece>& piece) {
-    _alivePieces.insert(piece);
-}
 
-bool PiecesSet::getPieceStatus(const std::shared_ptr<Piece>& piece) const {
-    return _alivePieces.contains(piece); // C++20
-}
+// PiecesSet::PiecesSet(TextureManager& textures) {
+//     std::shared_ptr<Piece> pawn1 = std::make_shared<Pawn>(textures.whitePawn);
+//     addPiece(pawn1);
+// }  
 
-void PiecesSet::pieceEaten(const std::shared_ptr<Piece>& piece) {
-    _alivePieces.erase(piece);
-}
+// void PiecesSet::addPiece(const std::shared_ptr<Piece>& piece) {
+//     _alivePieces.insert(piece);
+// }
+
+// bool PiecesSet::getPieceStatus(const std::shared_ptr<Piece>& piece) const {
+//     return _alivePieces.contains(piece); // C++20
+// }
+
+// void PiecesSet::pieceEaten(const std::shared_ptr<Piece>& piece) {
+//     _alivePieces.erase(piece);
+// }

@@ -3,27 +3,20 @@
 #include <imgui.h>
 #include <string>
 #include <vector>
-#include "Move.hpp"
-#include "utilities/Vector2D.hpp"
 #include "game/settings.hpp"
-#include "Render/TextureLoader.hpp"
-
+#include "utilities/Vector2D.hpp"
 
 class Piece {
 public:
     Piece();
-    Piece(Piece&&)                 = default;
-    Piece(const Piece&)            = default;
-    Piece& operator=(Piece&&)      = default;
-    Piece& operator=(const Piece&) = default;
-    virtual ~Piece()               = 0;
-    
-    virtual void draw(const ImTextureID &texture, const settings& gameSettings) = 0;
+    virtual ~Piece() = default;
+
+    virtual void draw(const settings& gameSettings);
 
 protected:
     std::string           _name;
     std::vector<Vector2D> _allowedMoves;
+    ImTextureID           _texture = nullptr;
 
     virtual void setAllowedMoves() = 0;
-
 };

@@ -1,13 +1,14 @@
 #include "Board.hpp"
+#include "Case.hpp"
 
 
-Board::Board() : _cases{} {
-    for (int x{0}; x < SIZE; x++)
+
+Board::Board()
+{
+    for (int x = 0; x < SIZE; x++)
     {
-        for (int y{0}; y < SIZE; y++)
+        for (int y = 0; y < SIZE; y++)
         {
-            // _cases[x][y] = Case(x, y);
-            // setCase(x, y, Case(x, y));
             _cases[x][y] = Case(x, y);
         }
     }
@@ -19,3 +20,4 @@ Case&       Board::getCase(int x, int y) {
 const Case& Board::getCase(int x, int y) const {
     return _cases[x][y];
 }
+

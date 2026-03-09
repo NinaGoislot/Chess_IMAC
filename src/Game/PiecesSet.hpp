@@ -1,18 +1,19 @@
-#pragma once
+// #pragma once
 
-#include <memory>
-#include <unordered_set>
-#include "Pieces/Piece.hpp"
+// #include <memory>
+// #include <unordered_set>
+// #include "Pieces/Piece.hpp"
+// #include "Render/TextureManager.hpp"
 
 
-class PiecesSet {
-public:
-    PiecesSet();
+// class PiecesSet {
+// public:
+//     PiecesSet(TextureManager& textures);
 
-    void addPiece(const std::shared_ptr<Piece>& piece);
-    bool getPieceStatus(const std::shared_ptr<Piece>& piece) const;
-    void pieceEaten(const std::shared_ptr<Piece>& piece);
+//     void addPiece(const std::shared_ptr<Piece>& piece);
+//     bool getPieceStatus(const std::shared_ptr<Piece>& piece) const;
+//     void pieceEaten(const std::shared_ptr<Piece>& piece);
 
-private:
-    std::unordered_set<std::shared_ptr<Piece>> _alivePieces;
-};
+// private:
+//     std::unordered_set<std::shared_ptr<Piece>> _alivePieces;
+// };

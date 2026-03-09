@@ -1,13 +1,15 @@
 #pragma once
 #include <glad/glad.h>
-#include <stb_image/stb_image.h>
 #include <imgui.h>
-#include <string>
+#include <stb_image/stb_image.h>
+
 
 inline ImTextureID LoadTexture(const char* filename)
 {
-    int width, height, channels;
-    unsigned char* data = stbi_load(filename, &width, &height, &channels, 4);
+    int            width    = 0;
+    int            height   = 0;
+    int            channels = 0;
+    unsigned char* data     = stbi_load(filename, &width, &height, &channels, 4);
 
     if (!data)
     {
@@ -15,12 +17,14 @@ inline ImTextureID LoadTexture(const char* filename)
         return nullptr;
     }
 
-    GLuint tex;
+    GLuint tex = 0;
     glGenTextures(1, &tex);
     glBindTexture(GL_TEXTURE_2D, tex);
 
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
     glTexImage2D(
         GL_TEXTURE_2D,
