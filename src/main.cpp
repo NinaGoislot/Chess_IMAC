@@ -11,6 +11,10 @@ int main()
     Game game;
     settings  gameSettings;
 
+    // pieecest.stCallback = [&](Piece const& piece) {
+    //     std::cout << "A piece has been eaten: " << piece._name << "\n";
+    // };      
+
     quick_imgui::loop(
         "Chess",
         {
