@@ -19,3 +19,4 @@ private:
     std::vector<Player> _players;
     Board               _board;
 };
+
