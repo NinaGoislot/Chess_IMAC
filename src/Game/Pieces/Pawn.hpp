@@ -4,9 +4,11 @@
 class Pawn : public Piece {
 public:
     Pawn();
-    ~Pawn() override;
+    ~Pawn() override = default;
 
-    void draw(const ImTextureID &texture, const settings& gameSettings) override;
+    explicit Pawn(ImTextureID texture);
+
+    void draw(const settings& gameSettings) override;
 
 private:
     void setAllowedMoves() override;

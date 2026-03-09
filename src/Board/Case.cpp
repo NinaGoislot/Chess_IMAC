@@ -14,8 +14,9 @@ int Case::getY() const
 };
 
 bool Case::hasPiece() const {
-    return _piece ? true : false;
+    return _piece != nullptr;
 }
+
 Piece* Case::getPiece() const {
     return _piece.get();
 }
@@ -25,5 +26,5 @@ void Case::setPiece(std::unique_ptr<Piece> p) {
 }
 
 void Case::removePiece() {
-    return _piece.reset();
+    _piece.reset();
 }

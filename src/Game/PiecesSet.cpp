@@ -1,6 +1,13 @@
 #include "PiecesSet.hpp"
 #include "Pieces/pawn.hpp"
 
+
+
+// PiecesSet::PiecesSet(TextureManager& textures) {
+//     std::shared_ptr<Piece> pawn1 = std::make_shared<Pawn>(textures.whitePawn);
+//     addPiece(pawn1);
+// }  
+
 PiecesSet::PiecesSet() {
     std::shared_ptr<Piece> pawn1 = std::make_shared<Pawn>();
     addPiece(pawn1);
