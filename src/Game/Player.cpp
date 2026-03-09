@@ -1,3 +1,3 @@
-// #include "Player.hpp"
+#include "Player.hpp"
 
-// Player::Player() : _name("Nullos") {}
+Player::Player() : _name("Nullos") {}

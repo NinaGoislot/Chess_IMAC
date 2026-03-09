@@ -1,4 +1,5 @@
 #include <imgui.h>
+#include <optional>
 #include "Managers/Game.hpp"
 #include "Game/settings.hpp"
 #include "quick_imgui/quick_imgui.hpp"
@@ -7,9 +8,9 @@ int main()
 {
     float value{0.f};
 
-    // Board board;
-    Game game;
-    settings  gameSettings;
+    // Game must be created after quick_imgui initializes OpenGL, otherwise textures are created without a valid context.
+    std::optional<Game> game;
+    settings            gameSettings;
 
     // pieecest.stCallback = [&](Piece const& piece) {
     //     std::cout << "A piece has been eaten: " << piece._name << "\n";
@@ -18,12 +19,12 @@ int main()
     quick_imgui::loop(
         "Chess",
         {
-            .init = [&]() {},
+            .init = [&]() { game.emplace(); },
             .loop =
                 [&]() {
                     ImGui::Begin("Chess Board");
-                    game.displayBoard(gameSettings);
-                    // game.placePieces(gameSettings);
+                    if (game.has_value())
+                        game->displayBoard(gameSettings);
                     gameSettings.display();
                     ImGui::End();
                     // ImGui::ShowDemoWindow(); // This opens a window which shows tons of examples of what you can do with ImGui. You should check it out! Also, you can use the "Item Picker" in the top menu of that demo window: then click on any widget and it will show you the corresponding code directly in your IDE!
