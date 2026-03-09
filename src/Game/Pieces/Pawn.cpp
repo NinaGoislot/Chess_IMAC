@@ -1,13 +1,13 @@
 #include "Pawn.hpp"
+#include <imgui.h>
 #include <vector>
 
-#include <imgui.h>
 
-// Pawn::Pawn()
-//     : Piece()
-// {
-//     setAllowedMoves();
-// }
+Pawn::Pawn()
+    : Piece()
+{
+    setAllowedMoves();
+}
 
 void Pawn::setAllowedMoves()
 {
@@ -27,5 +27,5 @@ void Pawn::draw(const settings& gameSettings)
 
     ImGui::SetCursorScreenPos(squarePos);
 
-ImGui::Image(_texture, ImVec2(gameSettings.buttonSize, gameSettings.buttonSize));}
-
+    ImGui::Image(_texture, ImVec2(gameSettings.buttonSize, gameSettings.buttonSize));
+}
