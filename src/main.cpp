@@ -1,5 +1,5 @@
 #include <imgui.h>
-#include "Game/Game.hpp"
+#include "Managers/Game.hpp"
 #include "Game/settings.hpp"
 #include "quick_imgui/quick_imgui.hpp"
 

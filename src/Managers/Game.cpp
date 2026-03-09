@@ -1,7 +1,7 @@
 #include "Game.hpp"
 #include <imgui.h>
 #include <memory>
-#include "Pieces/Pawn.hpp"
+#include "Game/Pieces/Pawn.hpp"
 
 // #include "quick_imgui/quick_imgui.hpp"
 
