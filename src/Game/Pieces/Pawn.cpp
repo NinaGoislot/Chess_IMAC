@@ -21,8 +21,6 @@ Pawn::Pawn(ImTextureID texture)
     setAllowedMoves();
 }
 
-Pawn::~Pawn() = default;
-
 void Pawn::draw(const settings& gameSettings)
 {
     ImVec2 squarePos = ImGui::GetCursorScreenPos();
