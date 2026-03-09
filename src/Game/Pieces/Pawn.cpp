@@ -6,6 +6,7 @@
 Pawn::Pawn()
     : Piece()
 {
+    _name = "Pawn";
     setAllowedMoves();
 }
 

@@ -1,10 +1,11 @@
 #pragma once
 
-#include <imgui.h>
+#include <vector>
 #include "Board/Board.hpp"
-#include "Render/BoardRenderer.hpp"
+#include "Game/Pieces/Piece.hpp"
+#include "Game/Player.hpp"
 #include "Game/settings.hpp"
-
+#include "Render/BoardRenderer.hpp"
 
 class Game
 {
@@ -13,9 +14,11 @@ public:
 
     void placePieces();
     void displayBoard(const settings& gameSettings);
+    void init();
 
 private:
     Board _board;
     TextureManager _textures;
     BoardRenderer _boardRenderer;
+    std::vector<Player> _players;
 };

@@ -22,7 +22,7 @@ int main()
             .init = [&]() { game.emplace(); },
             .loop =
                 [&]() {
-                    ImGui::Begin("Chess Board");
+                    ImGui::Begin("Le jeu d'échec de fou");
                     if (game.has_value())
                         game->displayBoard(gameSettings);
                     gameSettings.display();

@@ -1,9 +1,13 @@
-#include "Game.hpp"
+#include "Managers/Game.hpp"
 #include <imgui.h>
+#include <iostream>
 #include <memory>
 #include "Game/Pieces/Pawn.hpp"
+#include "Game/settings.hpp"
 
 // #include "quick_imgui/quick_imgui.hpp"
+
+void Game::init(){}
 
 Game::Game()
     : _board(), _textures(), _boardRenderer(_textures)
