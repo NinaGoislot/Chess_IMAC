@@ -3,6 +3,10 @@
 #include "Managers/Game.hpp"
 #include "Game/settings.hpp"
 #include "quick_imgui/quick_imgui.hpp"
+#include <probabimac/engine.hpp>
+#include <probabimac/weibull.hpp>
+#include <probabimac/exponentielle.hpp>
+#include <iostream>
 
 int main()
 {
@@ -11,6 +15,15 @@ int main()
     // Game must be created after quick_imgui initializes OpenGL, otherwise textures are created without a valid context.
     std::optional<Game> game;
     settings            gameSettings;
+
+
+    // Variables aléatoires pour tester la loi de Weibull
+    StochasticEngine moteurRandom;
+    LoiWeibull usurePion(1.5, 10.0);
+
+
+
+
 
     // pieecest.stCallback = [&](Piece const& piece) {
     //     std::cout << "A piece has been eaten: " << piece._name << "\n";
