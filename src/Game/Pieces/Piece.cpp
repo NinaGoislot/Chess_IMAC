@@ -1,6 +1,7 @@
 #include "Piece.hpp"
 
-Piece::Piece() = default;
+
+
 Piece::~Piece() = default;
 
 void Piece::draw(const settings& gameSettings)

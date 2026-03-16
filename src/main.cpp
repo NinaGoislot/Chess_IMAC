@@ -6,7 +6,6 @@
 #include <probabimac/engine.hpp>
 #include <probabimac/weibull.hpp>
 #include <probabimac/exponentielle.hpp>
-#include <iostream>
 
 int main()
 {
@@ -35,6 +34,7 @@ int main()
             .init = [&]() { game.emplace(); },
             .loop =
                 [&]() {
+                    // ImGui::SetNextWindowSize(ImVec2(540.f, 560.f), ImGuiCond_Always);
                     ImGui::Begin("Le jeu d'échec de fou");
                     if (game.has_value())
                         game->displayBoard(gameSettings);

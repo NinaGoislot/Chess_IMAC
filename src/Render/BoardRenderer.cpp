@@ -16,13 +16,14 @@ void BoardRenderer::draw(const Board& board, const settings& gameSettings) const
             ImGui::PushID(x + y * Board::SIZE);
 
             bool white = (x + y) % 2 == 0;
+            
 
             ImGui::PushStyleColor(
                 ImGuiCol_Button,
                 white ? gameSettings.getWhite() : gameSettings.getBlack()
             );
 
-            const Case& c   = board.getCase(x, y);
+            const Case& currentCase   = board.getCase(x, y);
 
             ImVec2      pos = ImGui::GetCursorScreenPos();
 
@@ -31,13 +32,13 @@ void BoardRenderer::draw(const Board& board, const settings& gameSettings) const
                 std::cout << "Clicked " << x << "," << y << "\n";
             }
 
-            if (c.hasPiece())
+            if (currentCase.hasPiece())
             {
-                
-                Piece* p = c.getPiece();
+    
+                Piece* piece = currentCase.getPiece();
 
                 ImGui::SetCursorScreenPos(pos);
-                p->draw(gameSettings);
+                piece->draw(gameSettings);
             }
 
             ImGui::PopStyleColor();

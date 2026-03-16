@@ -7,6 +7,8 @@ Pawn::Pawn()
     : Piece()
 {
     _name = "Pawn";
+    _type = PieceType::Pawn;
+    _color = PieceColor::White;
     setAllowedMoves();
 }
 
@@ -18,6 +20,18 @@ void Pawn::setAllowedMoves()
 
 Pawn::Pawn(ImTextureID texture)
 {
+    _name = "Pawn";
+    _type = PieceType::Pawn;
+    _color = PieceColor::White;
+    _texture = texture;
+    setAllowedMoves();
+}
+
+Pawn::Pawn(PieceColor color, ImTextureID texture)
+{
+    _name = "Pawn";
+    _type = PieceType::Pawn;
+    _color = color;
     _texture = texture;
     setAllowedMoves();
 }

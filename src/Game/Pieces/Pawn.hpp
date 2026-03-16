@@ -7,6 +7,7 @@ public:
     ~Pawn() override = default;
 
     explicit Pawn(ImTextureID texture);
+    Pawn(PieceColor color, ImTextureID texture);
 
     void draw(const settings& gameSettings) override;
 
