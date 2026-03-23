@@ -1,6 +1,5 @@
 #include "BoardRenderer.hpp"
 #include <imgui.h>
-#include <iostream>
 
 BoardRenderer::BoardRenderer(TextureManager& textures)
     : _textures(textures)
@@ -27,41 +26,46 @@ void BoardRenderer::draw(const Board& board, const settings& gameSettings, Piece
 
     if (!gameSettings.use3D)
     {
-    for (int y = 0; y < Board::SIZE; y++)
-    {
-        for (int x = 0; x < Board::SIZE; x++)
+        for (int y = 0; y < Board::SIZE; y++)
         {
-            ImGui::PushID(x + y * Board::SIZE);
-
-            bool white = (x + y) % 2 == 0;
-
-            ImGui::PushStyleColor(
-                ImGuiCol_Button,
-                white ? gameSettings.getWhite() : gameSettings.getBlack()
-            );
-
-            const Case& currentCase = board.getCase(x, y);
-
-            ImVec2 pos = ImGui::GetCursorScreenPos();
-
-            if (ImGui::Button(" ", ImVec2{gameSettings.buttonSize, gameSettings.buttonSize}))
+            for (int x = 0; x < Board::SIZE; x++)
             {
-                std::cout << "Clicked " << x << "," << y << "\n";
+                ImGui::PushID(x + y * Board::SIZE);
+
+                bool        white       = (x + y) % 2 == 0;
+                const Case& currentCase = board.getCase(x, y);
+
+                ImVec4 color = white ? gameSettings.getWhite() : gameSettings.getBlack();
+                if (currentCase.isActive())
+                {
+                    color = gameSettings.getHighlight();
+                }
+
+                ImGui::PushStyleColor(ImGuiCol_Button, color);
+                ImGui::PushStyleColor(ImGuiCol_ButtonHovered, color);
+                ImGui::PushStyleColor(ImGuiCol_ButtonActive, color);
+
+                ImVec2 pos = ImGui::GetCursorScreenPos();
+
+                if (ImGui::Button(" ", ImVec2{gameSettings.buttonSize, gameSettings.buttonSize}))
+                {
+                    board.onCaseClicked(x, y);
+                }
+
+                if (currentCase.hasPiece())
+                {
+                    Piece* piece = currentCase.getPiece();
+
+                    ImGui::SetCursorScreenPos(pos);
+                    piece->draw(gameSettings);
+                }
+
+                ImGui::PopStyleColor(3);
+                ImGui::PopID();
+
+                if (x < Board::SIZE - 1)
+                    ImGui::SameLine();
             }
-
-            if (currentCase.hasPiece())
-            {
-                Piece* piece = currentCase.getPiece();
-
-                ImGui::SetCursorScreenPos(pos);
-                piece->draw(gameSettings);
-            }
-
-            ImGui::PopStyleColor();
-            ImGui::PopID();
-
-            if (x < Board::SIZE - 1)
-                ImGui::SameLine();
         }
-    }}
+    }
 }

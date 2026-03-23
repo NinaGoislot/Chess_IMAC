@@ -1,49 +1,61 @@
 #include "Pawn.hpp"
 #include <imgui.h>
 #include <vector>
-
+#include "Board/Board.hpp"
 
 Pawn::Pawn()
     : Piece()
 {
-    _name = "Pawn";
-    _type = PieceType::Pawn;
+    _name  = "Pawn";
+    _type  = PieceType::Pawn;
     _color = PieceColor::White;
 }
 
 void Pawn::updateAllowedMoves(const Board& board, Vector2D position)
 {
     _allowedMoves.clear();
-    if (_color == PieceColor::White) {
-        _allowedMoves.push_back({0, 1});   // forward
-        if (position.getY() == 1) {
-            _allowedMoves.push_back({0, 2});   // double forward from starting position
+
+    const float direction = (_color == PieceColor::White) ? 1.f : -1.f;
+    const float startRow  = (_color == PieceColor::White) ? 1.f : 6.f;
+
+    const Vector2D oneStep(position.getX(), position.getY() + direction);
+    if (board.isInside(oneStep) && board.isEmpty(oneStep))
+    {
+        _allowedMoves.push_back(oneStep);
+
+        const Vector2D twoStep(position.getX(), position.getY() + 2.f * direction);
+        if (position.getY() == startRow && board.isInside(twoStep) && board.isEmpty(twoStep))
+        {
+            _allowedMoves.push_back(twoStep);
         }
-        _allowedMoves.push_back({-1, 1});  // capture left
-        _allowedMoves.push_back({1, 1});   // capture right
-    } else {
-        _allowedMoves.push_back({0, -1});  // forward
-        if (position.getY() == 6) {
-            _allowedMoves.push_back({0, -2});  // double forward from starting position
-        }
-        _allowedMoves.push_back({-1, -1}); // capture left
-        _allowedMoves.push_back({1, -1});  // capture right
+    }
+
+    const Vector2D captureLeft(position.getX() - 1.f, position.getY() + direction);
+    const Vector2D captureRight(position.getX() + 1.f, position.getY() + direction);
+
+    if (board.isEnemy(captureLeft, _color))
+    {
+        _allowedMoves.push_back(captureLeft);
+    }
+    if (board.isEnemy(captureRight, _color))
+    {
+        _allowedMoves.push_back(captureRight);
     }
 }
 
 Pawn::Pawn(ImTextureID texture)
 {
-    _name = "Pawn";
-    _type = PieceType::Pawn;
-    _color = PieceColor::White;
+    _name    = "Pawn";
+    _type    = PieceType::Pawn;
+    _color   = PieceColor::White;
     _texture = texture;
 }
 
 Pawn::Pawn(PieceColor color, ImTextureID texture)
 {
-    _name = "Pawn";
-    _type = PieceType::Pawn;
-    _color = color;
+    _name    = "Pawn";
+    _type    = PieceType::Pawn;
+    _color   = color;
     _texture = texture;
 }
 

@@ -24,23 +24,24 @@ enum class PieceType {
 
 class Piece {
 public:
-    Piece() = default;
-    virtual ~Piece()               = 0;
-    
-    virtual void draw(const settings& gameSettings);
-    std::vector<Vector2D> getAllowedMoves() const { return _allowedMoves; }
+    Piece()          = default;
+    virtual ~Piece() = 0;
 
-    PieceColor               color() const { return _color; }
-    PieceType                type() const { return _type; }
-    const std::string&       name() const { return _name; }
+    virtual void          draw(const settings& gameSettings);
+    std::vector<Vector2D> getAllowedMoves() const { return _allowedMoves; }
+    void                  updateAllowedMoves(const Board& board, Vector2D position) { setAllowedMoves(board, position); }
+
+    PieceColor         color() const { return _color; }
+    PieceType          type() const { return _type; }
+    const std::string& name() const { return _name; }
 
 protected:
     std::string           _name;
     std::vector<Vector2D> _allowedMoves;
 
-    ImTextureID           _texture = nullptr;
-    PieceColor            _color;
-    PieceType             _type;
+    ImTextureID _texture = nullptr;
+    PieceColor  _color;
+    PieceType   _type;
 
     virtual void updateAllowedMoves(const Board& board, Vector2D position) = 0;
 };
