@@ -16,6 +16,7 @@ public:
     virtual ~Piece()               = 0;
     
     virtual void draw(const settings& gameSettings);
+    const std::vector<Vector2D>& getAllowedMoves() const;
 
 protected:
     std::string           _name;

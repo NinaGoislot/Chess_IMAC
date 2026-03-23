@@ -9,7 +9,7 @@ class BoardRenderer
 public:
     explicit BoardRenderer(TextureManager& textures);
 
-    void draw(const Board& board, const settings& gameSettings) const;
+    void draw(Board& board, const settings& gameSettings) const;
 
 private:
     TextureManager _textures;

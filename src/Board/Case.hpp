@@ -8,6 +8,7 @@ private:
     int _x;
     int _y;
     std::unique_ptr<Piece> _piece;
+    bool _isActive;
 
 public:
     Case() = default;
@@ -16,8 +17,15 @@ public:
     int getX() const;
     int getY() const;
 
+    bool isActive() const;
+    void setActive(bool active);
+
     bool hasPiece() const;
     Piece* getPiece() const;
     void setPiece(std::unique_ptr<Piece> p);
     void removePiece();
+
+    std::unique_ptr<Piece> takePiece();
+
+    void onClick();
 };
