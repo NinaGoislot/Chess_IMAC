@@ -41,6 +41,21 @@ file(GLOB_RECURSE MY_SOURCES CONFIGURE_DEPENDS src/*)
 target_sources(${PROJECT_NAME} PRIVATE ${MY_SOURCES})
 target_include_directories(${PROJECT_NAME} PRIVATE src)
 
+# Keep GLSL files visible in IDE and available at runtime.
+file(GLOB SHADER_SOURCES CONFIGURE_DEPENDS src/Render/3D/shaders/*.glsl)
+target_sources(${PROJECT_NAME} PRIVATE ${SHADER_SOURCES})
+
+target_compile_definitions(${PROJECT_NAME} PRIVATE
+    SHADER_DIR="${CMAKE_SOURCE_DIR}/src/Render/3D/shaders"
+)
+
+add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E make_directory "$<TARGET_FILE_DIR:${PROJECT_NAME}>/shaders"
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            ${SHADER_SOURCES}
+            "$<TARGET_FILE_DIR:${PROJECT_NAME}>/shaders"
+)
+
 # Add quick-imgui library
 add_subdirectory(lib/quick_imgui)
 target_link_libraries(${PROJECT_NAME} PRIVATE quick_imgui::quick_imgui)

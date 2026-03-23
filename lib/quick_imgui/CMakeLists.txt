@@ -54,6 +54,13 @@ target_sources(ImGui PRIVATE
 target_include_directories(ImGui SYSTEM PUBLIC lib/imgui)
 target_compile_features(ImGui PUBLIC cxx_std_11)
 
+# ---Header-only helper libraries---
+add_library(glimac INTERFACE)
+target_include_directories(glimac INTERFACE lib)
+
+add_library(glm INTERFACE)
+target_include_directories(glm INTERFACE lib/glm)
+
 # Build ImGui with glfw
 target_link_libraries(ImGui PUBLIC glfw)
 target_sources(ImGui PRIVATE lib/imgui/backends/imgui_impl_glfw.cpp)
@@ -63,4 +70,4 @@ target_sources(ImGui PRIVATE lib/imgui/backends/imgui_impl_opengl3.cpp)
 
 # Link to ImGui
 target_link_libraries(quick_imgui PUBLIC ImGui)
-target_include_directories(quick_imgui SYSTEM PUBLIC lib)
+target_link_libraries(quick_imgui PUBLIC glm glimac)

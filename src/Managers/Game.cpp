@@ -27,14 +27,15 @@ void Game::placePieces()
     Player& whitePlayer = _players[0];
     Player& blackPlayer = _players[1];
 
+    placeBackRankPieces(0, whitePlayer);
+    placeBackRankPieces(7, blackPlayer);
     for (int x = 0; x < Board::SIZE; ++x)
     {
         placePieceForPlayer(x, 1, PieceType::Pawn, whitePlayer);
         placePieceForPlayer(x, 6, PieceType::Pawn, blackPlayer);
     }
 
-    placeBackRank(0, whitePlayer);
-    placeBackRank(7, blackPlayer);
+
 }
 
 void Game::displayBoard(const settings& gameSettings)
@@ -54,7 +55,7 @@ void Game::placePieceForPlayer(int x, int y, PieceType type, Player& owner)
     owner.addPiece(*raw);
 }
 
-void Game::placeBackRank(int y, Player& owner)
+void Game::placeBackRankPieces(int y, Player& owner)
 {
     const std::array<PieceType, 8> order = {
         PieceType::Rook,

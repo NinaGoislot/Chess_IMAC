@@ -21,3 +21,22 @@ const Case& Board::getCase(int x, int y) const {
     return _cases[x][y];
 }
 
+bool Board::isInside(Vector2D pos) const {
+    return pos.getX() >= 0 && pos.getX() < SIZE && pos.getY() >= 0 && pos.getY() < SIZE;
+}
+
+bool Board::isEmpty(Vector2D pos) const {
+    if (!isInside(pos))
+        return false;
+
+    return !getCase(pos.getX(), pos.getY()).hasPiece();
+}
+
+bool Board::isEnemy(Vector2D pos, PieceColor color) const {
+    if (!isInside(pos))
+        return false;
+
+    const Case& caseAtPos = getCase(pos.getX(), pos.getY());
+    return caseAtPos.hasPiece() && caseAtPos.getPiece()->color() != color;
+}
+

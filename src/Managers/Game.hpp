@@ -1,7 +1,6 @@
 #pragma once
 
 #include <array>
-#include <vector>
 #include "Board/Board.hpp"
 #include "Game/Pieces/Piece.hpp"
 #include "Game/Player.hpp"
@@ -19,7 +18,7 @@ public:
 
 private:
     void placePieceForPlayer(int x, int y, PieceType type, Player& owner);
-    void placeBackRank(int y, Player& owner);
+    void placeBackRankPieces(int y, Player& owner);
 
     Board _board;
     TextureManager _textures;

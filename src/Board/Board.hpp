@@ -12,6 +12,10 @@ public:
     Case& getCase(int x, int y);
     const Case& getCase(int x, int y) const;
 
+    bool isInside(Vector2D pos) const;
+    bool isEmpty(Vector2D pos) const;
+    bool isEnemy(Vector2D pos, PieceColor color) const;
+
 
 private:
     std::array<std::array<Case, SIZE>, SIZE> _cases;

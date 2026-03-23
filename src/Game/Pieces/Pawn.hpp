@@ -12,5 +12,5 @@ public:
     void draw(const settings& gameSettings) override;
 
 private:
-    void setAllowedMoves() override;
+    void setAllowedMoves(const Board& board, Vector2D position) override;
 };

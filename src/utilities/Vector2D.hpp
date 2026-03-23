@@ -12,6 +12,9 @@ public:
     Vector2D operator*(float scalar) const;
     Vector2D operator/(float scalar) const;
 
+    float getX() const { return x; }
+    float getY() const { return y; }
+
 private:
     float x;
     float y;
