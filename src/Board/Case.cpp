@@ -2,7 +2,9 @@
 #include <iostream>
 #include "Game/Pieces/Piece.hpp"
 
-Case::Case(int x, int y) : _x(x), _y(y) {};
+Case::Case(int x, int y)
+    : _x(x), _y(y), _isActive(false) {
+    };
 
 int Case::getX() const
 {
@@ -14,11 +16,13 @@ int Case::getY() const
     return _y;
 };
 
-bool Case::isActive() const {
+bool Case::isActive() const
+{
     return _isActive;
 }
 
-void Case::setActive(bool active) {
+void Case::setActive(bool active)
+{
     _isActive = active;
 }
 

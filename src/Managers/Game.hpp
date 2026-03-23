@@ -1,6 +1,6 @@
 #pragma once
 
-#include <vector>
+#include <array>
 #include "Board/Board.hpp"
 #include "Game/Pieces/Piece.hpp"
 #include "Game/Player.hpp"
@@ -17,8 +17,11 @@ public:
     void init();
 
 private:
+    void placePieceForPlayer(int x, int y, PieceType type, Player& owner);
+    void placeBackRankPieces(int y, Player& owner);
+
     Board _board;
     TextureManager _textures;
     BoardRenderer _boardRenderer;
-    std::vector<Player> _players;
+    std::array<Player, 2> _players;
 };

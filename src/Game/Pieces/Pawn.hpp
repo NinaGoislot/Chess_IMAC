@@ -7,9 +7,10 @@ public:
     ~Pawn() override = default;
 
     explicit Pawn(ImTextureID texture);
+    Pawn(PieceColor color, ImTextureID texture);
 
     void draw(const settings& gameSettings) override;
 
 private:
-    void setAllowedMoves() override;
+    void setAllowedMoves(const Board& board, Vector2D position) override;
 };

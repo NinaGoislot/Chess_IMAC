@@ -1,6 +1,7 @@
 #include "Piece.hpp"
 
-Piece::Piece() = default;
+
+
 Piece::~Piece() = default;
 
 void Piece::draw(const settings& gameSettings)
@@ -11,7 +12,7 @@ void Piece::draw(const settings& gameSettings)
     ImGui::Image(_texture, ImVec2(gameSettings.buttonSize, gameSettings.buttonSize));
 }
 
-const std::vector<Vector2D>& Piece::getAllowedMoves() const
-{
-    return _allowedMoves;
-}
+// const std::vector<Vector2D>& Piece::getAllowedMoves() const
+// {
+//     return _allowedMoves;
+// }
