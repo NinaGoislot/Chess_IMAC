@@ -6,7 +6,7 @@ BoardRenderer::BoardRenderer(TextureManager& textures)
 {
 }
 
-void BoardRenderer::draw(const Board& board, const settings& gameSettings, PieceColor currentTurn)
+void BoardRenderer::draw(Board& board, const settings& gameSettings, PieceColor currentTurn)
 {
     if (gameSettings.use3D)
     {
