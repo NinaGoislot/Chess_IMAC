@@ -11,7 +11,7 @@ Pawn::Pawn()
     _color = PieceColor::White;
 }
 
-void Pawn::setAllowedMoves(const Board& board, Vector2D position)
+void Pawn::updateAllowedMoves(const Board& board, Vector2D position)
 {
     _allowedMoves.clear();
     if (_color == PieceColor::White) {

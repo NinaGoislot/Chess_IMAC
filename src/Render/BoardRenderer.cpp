@@ -7,7 +7,7 @@ BoardRenderer::BoardRenderer(TextureManager& textures)
 {
 }
 
-void BoardRenderer::draw(const Board& board, const settings& gameSettings)
+void BoardRenderer::draw(const Board& board, const settings& gameSettings, PieceColor currentTurn)
 {
     if (gameSettings.use3D)
     {
@@ -15,7 +15,7 @@ void BoardRenderer::draw(const Board& board, const settings& gameSettings)
         available.x      = std::max(available.x, 64.f);
         available.y      = std::max(available.y, 64.f);
 
-        _board3DRenderer.render(board, gameSettings, static_cast<int>(available.x), static_cast<int>(available.y));
+        _board3DRenderer.render(board, gameSettings, currentTurn, static_cast<int>(available.x), static_cast<int>(available.y));
 
         ImTextureID texture = _board3DRenderer.colorTexture();
         if (texture != nullptr)

@@ -34,13 +34,11 @@ void Game::placePieces()
         placePieceForPlayer(x, 1, PieceType::Pawn, whitePlayer);
         placePieceForPlayer(x, 6, PieceType::Pawn, blackPlayer);
     }
-
-
 }
 
 void Game::displayBoard(const settings& gameSettings)
 {
-    _boardRenderer.draw(_board, gameSettings);
+    _boardRenderer.draw(_board, gameSettings, _currentTurn);
 }
 
 void Game::placePieceForPlayer(int x, int y, PieceType type, Player& owner)

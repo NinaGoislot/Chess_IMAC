@@ -19,9 +19,8 @@ public:
     Board3DRenderer& operator=(const Board3DRenderer&) = delete;
 
     // main render function and texture
-    void render(const Board& board, const settings& gameSettings, int width, int height);
+    void render(const Board& board, const settings& gameSettings, PieceColor currentTurn, int width, int height);
     ImTextureID colorTexture() const;
-
     
 
 private:
@@ -42,7 +41,11 @@ private:
     bool         _initialized   = false;
 
     // shader and uniform locations
-    Shader _shader;
+    Shader _whiteTurnShader;
+    Shader _blackTurnShader;
+
+    const Shader* _activeShader = nullptr;
+
     int _mvpLoc      = -1;
     int _modelLoc    = -1;
     int _colorLoc    = -1;
@@ -50,8 +53,10 @@ private:
     int _ambientLoc  = -1;
 
     // rendering helper functions
-    bool prepareRenderState(int width, int height);
-    glm::mat4 calculateCameraViewProjection(const settings& gameSettings, float aspect) const;
+    bool prepareRenderState(int width, int height, PieceColor currentTurn);
+    void refreshUniformLocations();
+    glm::mat4 calculateCameraViewProjection(const settings& gameSettings, float aspect,const glm::vec3& target) const;
+    glm::vec3 calculatePieceTarget(const Board& board) const;
     void setupStaticLighting() const;
     void drawBoardTiles(const glm::mat4& viewProjection, const settings& gameSettings) const;
     void drawPieces(const glm::mat4& viewProjection, const Board& board, const settings& gameSettings) const;

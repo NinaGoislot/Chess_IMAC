@@ -13,7 +13,7 @@ Rook::Rook()
     _color = PieceColor::White;
 }
 
-void Rook::setAllowedMoves(const Board& board, Vector2D position)
+void Rook::updateAllowedMoves(const Board& board, Vector2D position)
 {
    std::vector<Vector2D> directions {
     {0, 1},   // up

@@ -13,7 +13,7 @@ Queen::Queen()
     _color = PieceColor::White;
 }
 
-void Queen::setAllowedMoves(const Board& board, Vector2D position)
+void Queen::updateAllowedMoves(const Board& board, Vector2D position)
 {
    std::vector<Vector2D> directions {
     {0, 1},   // up

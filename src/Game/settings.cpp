@@ -18,6 +18,7 @@ void settings::display()
     if (use3D)
     {
         ImGui::Checkbox("Draw Pieces In 3D", &drawPieces3D);
+        ImGui::Checkbox("Use Camera Piece", &cameraPieceTarget);
         ImGui::SliderFloat("Board Thickness", &boardThickness, 0.05f, 0.4f);
         ImGui::SliderFloat("Camera Yaw", &cameraYawDegrees, -180.f, 180.f);
         ImGui::SliderFloat("Camera Pitch", &cameraPitchDegrees, 10.f, 80.f);

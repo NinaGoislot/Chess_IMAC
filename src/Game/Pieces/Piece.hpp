@@ -42,5 +42,5 @@ protected:
     PieceColor            _color;
     PieceType             _type;
 
-    virtual void setAllowedMoves(const Board& board, Vector2D position) = 0;
+    virtual void updateAllowedMoves(const Board& board, Vector2D position) = 0;
 };

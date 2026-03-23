@@ -13,7 +13,7 @@ Bishop::Bishop()
     _color = PieceColor::White;
 }
 
-void Bishop::setAllowedMoves(const Board& board, Vector2D position)
+void Bishop::updateAllowedMoves(const Board& board, Vector2D position)
 {
    std::vector<Vector2D> directions {
     {1, 1},   // up-right

@@ -24,4 +24,5 @@ private:
     TextureManager _textures;
     BoardRenderer _boardRenderer;
     std::array<Player, 2> _players;
+    PieceColor _currentTurn = PieceColor::White;
 };
