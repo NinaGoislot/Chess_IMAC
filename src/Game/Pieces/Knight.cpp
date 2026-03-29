@@ -13,7 +13,7 @@ Knight::Knight()
     _color = PieceColor::White;
 }
 
-void Knight::setAllowedMoves(const Board& board, Vector2D position)
+void Knight::updateAllowedMoves(const Board& board, Vector2D position)
 {
    std::vector<Vector2D> directions {
     {1, 2},   // up-up-right

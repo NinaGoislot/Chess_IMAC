@@ -11,7 +11,7 @@ int main()
 {
     float value{0.f};
 
-    // Game must be created after quick_imgui initializes OpenGL, otherwise textures are created without a valid context.
+    // game has to be optional because it needs to be initialized after ImGui is set up (textures need to be loaded in the right context)
     std::optional<Game> game;
     settings            gameSettings;
 

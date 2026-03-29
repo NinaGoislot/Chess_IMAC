@@ -29,11 +29,12 @@ public:
 
     virtual void          draw(const settings& gameSettings);
     std::vector<Vector2D> getAllowedMoves() const { return _allowedMoves; }
-    void                  updateAllowedMoves(const Board& board, Vector2D position) { setAllowedMoves(board, position); }
+    // void                  updateAllowedMoves(const Board& board, Vector2D position) { getAllowedMoves(board, position); }
 
     PieceColor         color() const { return _color; }
     PieceType          type() const { return _type; }
     const std::string& name() const { return _name; }
+    virtual void updateAllowedMoves(const Board& board, Vector2D position) = 0;
 
 protected:
     std::string           _name;
@@ -43,5 +44,4 @@ protected:
     PieceColor  _color;
     PieceType   _type;
 
-    virtual void setAllowedMoves(const Board& board, Vector2D position) = 0;
 };

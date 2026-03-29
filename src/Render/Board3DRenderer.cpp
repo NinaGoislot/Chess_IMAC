@@ -1,6 +1,7 @@
 #include "Board3DRenderer.hpp"
 
 #include "3D/Primitives.hpp"
+#include "Board/Board.hpp"
 
 #include <cmath>
 #include <cstdint>
@@ -68,7 +69,7 @@ Board3DRenderer::~Board3DRenderer()
     destroyGlResources();
 }
 
-bool Board3DRenderer::prepareRenderState(int width, int height)
+bool Board3DRenderer::prepareRenderState(int width, int height, PieceColor currentTurn)
 {
     if (width <= 0 || height <= 0)
         return false;
@@ -88,21 +89,45 @@ bool Board3DRenderer::prepareRenderState(int width, int height)
     glClearColor(0.08f, 0.08f, 0.10f, 1.f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    _shader.use();
+    _activeShader = (currentTurn == PieceColor::White) ? &_whiteTurnShader : &_blackTurnShader;
+    _activeShader->use();
+    refreshUniformLocations();
+
+    if (_mvpLoc < 0 || _modelLoc < 0 || _colorLoc < 0 || _lightDirLoc < 0 || _ambientLoc < 0)
+        return false;
+
     glBindVertexArray(_vao);
 
     return true;
 }
 
-glm::mat4 Board3DRenderer::calculateCameraViewProjection(const settings& gameSettings, float aspect) const
+glm::vec3 Board3DRenderer::calculatePieceTarget(const Board& board) const
+{
+    for (int y = 0; y < Board::SIZE; ++y)
+    {
+        for (int x = 0; x < Board::SIZE; ++x)
+        {
+            const Case& currentCase = board.getCase(x, y);
+            if (currentCase.hasPiece())
+            {
+                const float boardOriginX = -(static_cast<float>(Board::SIZE) - 1.f) * 0.5f;
+                const float boardOriginZ = -(static_cast<float>(Board::SIZE) - 1.f) * 0.5f;
+                return glm::vec3{boardOriginX + static_cast<float>(x), 0.2f, boardOriginZ + static_cast<float>(y)};
+            }
+        }
+    }
+
+    return glm::vec3{0.f, 0.2f, 0.f};
+}
+
+glm::mat4 Board3DRenderer::calculateCameraViewProjection(const settings& gameSettings, float aspect,const glm::vec3& target) const
 {
     const glm::mat4 projection = glm::perspective(glm::radians(45.f), aspect, 0.1f, 100.f);
 
     const float yawRadians   = glm::radians(gameSettings.cameraYawDegrees);
     const float pitchRadians = glm::radians(gameSettings.cameraPitchDegrees);
 
-    const glm::vec3 target{0.f, 0.2f, 0.f};
-    const glm::vec3 eye{
+        const glm::vec3 eye{
         target.x + gameSettings.cameraDistance * std::cos(pitchRadians) * std::cos(yawRadians),
         target.y + gameSettings.cameraDistance * std::sin(pitchRadians),
         target.z + gameSettings.cameraDistance * std::cos(pitchRadians) * std::sin(yawRadians),
@@ -111,6 +136,8 @@ glm::mat4 Board3DRenderer::calculateCameraViewProjection(const settings& gameSet
     const glm::mat4 view = glm::lookAt(eye, target, glm::vec3{0.f, 1.f, 0.f});
     return projection * view;
 }
+
+
 
 void Board3DRenderer::setupStaticLighting() const
 {
@@ -170,13 +197,19 @@ void Board3DRenderer::drawPieces(const glm::mat4& viewProjection, const Board& b
     }
 }
 
-void Board3DRenderer::render(const Board& board, const settings& gameSettings, int width, int height)
+void Board3DRenderer::render(const Board& board, const settings& gameSettings, PieceColor currentTurn, int width, int height)
 {
-    if (!prepareRenderState(width, height))
+    if (!prepareRenderState(width, height, currentTurn))
         return;
 
     const float aspect = static_cast<float>(_framebufferW) / static_cast<float>(_framebufferH);
-    const glm::mat4 viewProjection = calculateCameraViewProjection(gameSettings, aspect);
+    
+    glm::vec3 target{0.f, 0.2f, 0.f};
+    if(gameSettings.cameraPieceTarget) {
+        target = calculatePieceTarget(board);
+    }
+
+    const glm::mat4 viewProjection = calculateCameraViewProjection(gameSettings, aspect, target);
 
     setupStaticLighting();
     drawBoardTiles(viewProjection, gameSettings);
@@ -193,6 +226,18 @@ ImTextureID Board3DRenderer::colorTexture() const
     return reinterpret_cast<ImTextureID>(static_cast<intptr_t>(_colorTexture));
 }
 
+void Board3DRenderer::refreshUniformLocations()
+{
+    if (_activeShader == nullptr)
+        return;
+
+    _mvpLoc      = _activeShader->getUniform("uMVP");
+    _modelLoc    = _activeShader->getUniform("uModel");
+    _colorLoc    = _activeShader->getUniform("uColor");
+    _lightDirLoc = _activeShader->getUniform("uLightDirection");
+    _ambientLoc  = _activeShader->getUniform("uAmbientStrength");
+}
+
 void Board3DRenderer::initializeIfNeeded()
 {
     if (_initialized)
@@ -204,8 +249,9 @@ void Board3DRenderer::initializeIfNeeded()
     const std::string shaderDir = "shaders";
 #endif
 
-    const bool loaded = _shader.load(shaderDir + "/board.vs.glsl", shaderDir + "/board.fs.glsl");
-    if (!loaded)
+    const bool whiteLoaded = _whiteTurnShader.load(shaderDir + "/board.vs.glsl", shaderDir + "/board_white_turn.fs.glsl");
+    const bool blackLoaded = _blackTurnShader.load(shaderDir + "/board.vs.glsl", shaderDir + "/board_black_turn.fs.glsl");
+    if (!whiteLoaded || !blackLoaded)
     {
         std::cout << "Failed to load board shaders from: " << shaderDir << "\n";
         return;
@@ -227,12 +273,6 @@ void Board3DRenderer::initializeIfNeeded()
     glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), reinterpret_cast<void*>(3 * sizeof(float)));
 
     glBindVertexArray(0);
-
-    _mvpLoc      = _shader.getUniform("uMVP");
-    _modelLoc    = _shader.getUniform("uModel");
-    _colorLoc    = _shader.getUniform("uColor");
-    _lightDirLoc = _shader.getUniform("uLightDirection");
-    _ambientLoc  = _shader.getUniform("uAmbientStrength");
 
     _initialized = true;
 }
