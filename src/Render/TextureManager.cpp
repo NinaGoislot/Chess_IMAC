@@ -50,6 +50,18 @@ ImTextureID loadFirstAvailableTexture(const std::vector<std::string>& candidates
               << std::filesystem::current_path().string() << "\n";
     return nullptr;
 }
+
+std::vector<std::string> textureBaseFolders()
+{
+    std::vector<std::string> folders;
+    folders.reserve(4U);
+
+    folders.push_back("../assets/textures/pieces");
+    folders.push_back("assets/textures/pieces");
+    folders.push_back("../../assets/textures/pieces");
+    folders.push_back("textures/pieces");
+    return folders;
+}
 } // namespace
 
 void TextureManager::load()
@@ -68,12 +80,7 @@ void TextureManager::load()
         std::pair{PieceType::King, std::string{"king"}},
     };
 
-    const std::vector<std::string> baseFolders = {
-        "../assets/textures/pieces",
-        "assets/textures/pieces",
-        "bin/assets/textures/pieces",
-        "textures/pieces",
-    };
+    const std::vector<std::string> baseFolders = textureBaseFolders();
 
     for (const auto& [color, colorName] : colors)
     {

@@ -5,8 +5,8 @@
 
 class LoiWeibull {
 private:
-    double _k;      // Paramètre de forme (shape)
-    double _lambda; // Paramètre d'échelle (scale)
+    double _k;      // Paramètre de forme (shape) = 1 : distribution exponentielle, < 1 : décroissance rapide, > 1 : décroissance lente
+    double _lambda; // Paramètre d'échelle (scale) = durée de vie moyenne
 
 public:
     LoiWeibull(double shape_k, double scale_lambda) : _k(shape_k), _lambda(scale_lambda) {};

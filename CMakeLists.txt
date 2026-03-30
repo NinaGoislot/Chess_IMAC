@@ -10,6 +10,8 @@
 
 cmake_minimum_required(VERSION 3.20)
 
+include(FetchContent)
+
 # You can set the name of your project here
 project(ImGuiTemplate)
 add_executable(${PROJECT_NAME})
@@ -41,6 +43,14 @@ file(GLOB_RECURSE MY_SOURCES CONFIGURE_DEPENDS src/*)
 target_sources(${PROJECT_NAME} PRIVATE ${MY_SOURCES})
 target_include_directories(${PROJECT_NAME} PRIVATE src)
 
+FetchContent_Declare(
+    tinygltf
+    GIT_REPOSITORY https://github.com/syoyo/tinygltf.git
+    GIT_TAG v2.9.5
+)
+FetchContent_MakeAvailable(tinygltf)
+target_include_directories(${PROJECT_NAME} PRIVATE ${tinygltf_SOURCE_DIR})
+
 # Keep GLSL files visible in IDE and available at runtime.
 file(GLOB SHADER_SOURCES CONFIGURE_DEPENDS src/Render/3D/shaders/*.glsl)
 target_sources(${PROJECT_NAME} PRIVATE ${SHADER_SOURCES})
@@ -54,6 +64,10 @@ add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_if_different
             ${SHADER_SOURCES}
             "$<TARGET_FILE_DIR:${PROJECT_NAME}>/shaders"
+    COMMAND ${CMAKE_COMMAND} -E make_directory "$<TARGET_FILE_DIR:${PROJECT_NAME}>/assets"
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+            "${CMAKE_SOURCE_DIR}/assets/models"
+            "$<TARGET_FILE_DIR:${PROJECT_NAME}>/assets/models"
 )
 
 # Add quick-imgui library

@@ -12,7 +12,7 @@ struct settings {
     // 3D rendering settings
     bool use3D = true;
     bool drawPieces3D = true;
-    bool cameraPieceTarget = true;
+    bool cameraPieceTarget = false;
     
     float boardThickness = 0.18f;
     float cameraYawDegrees = 45.f;
