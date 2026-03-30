@@ -11,6 +11,7 @@ public:
 
     PieceColor color() const { return _color; }
     const std::string& getName() const { return _name; }
+    
     void addPiece(const Piece& piece);
     void removePiece(const Piece& piece);
     bool owns(const Piece& piece) const;
