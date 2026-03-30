@@ -4,7 +4,7 @@
 #include <stb_image/stb_image.h>
 
 
-inline ImTextureID LoadTexture(const char* filename)
+inline ImTextureID LoadTexture(const char* filename, bool logFailure = true)
 {
     int            width    = 0;
     int            height   = 0;
@@ -13,7 +13,10 @@ inline ImTextureID LoadTexture(const char* filename)
 
     if (!data)
     {
-        printf("Failed to load texture: %s\n", filename);
+        if (logFailure)
+        {
+            printf("Failed to load texture: %s\n", filename);
+        }
         return nullptr;
     }
 

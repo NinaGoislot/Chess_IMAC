@@ -2,20 +2,21 @@
 #include <imgui.h>
 #include <array>
 #include <memory>
-#include "Game/PieceFactory.hpp"
 #include "Game/settings.hpp"
 
 // #include "quick_imgui/quick_imgui.hpp"
 
-void Game::init(){}
+void Game::init() {}
 
 Game::Game()
     : _board()
     , _textures()
     , _boardRenderer(_textures)
-    , _players{Player(PieceColor::White, "White"), Player(PieceColor::Black, "Black")}
+    , _players{}
 {
     _textures.load();
+    _players[0] = Player(PieceColor::White, "White", _textures);
+    _players[1] = Player(PieceColor::Black, "Black", _textures);
     placePieces();
 }
 
@@ -24,16 +25,11 @@ void Game::placePieces()
     _players[0].resetPieces();
     _players[1].resetPieces();
 
-    Player& whitePlayer = _players[0];
-    Player& blackPlayer = _players[1];
+    // Pass the Y-coordinates for White (backrank 0, pawns 1)
+    placePiecesForPlayer(0, 1, _players[0]);
 
-    placeBackRankPieces(0, whitePlayer);
-    placeBackRankPieces(7, blackPlayer);
-    for (int x = 0; x < Board::SIZE; ++x)
-    {
-        placePieceForPlayer(x, 1, PieceType::Pawn, whitePlayer);
-        placePieceForPlayer(x, 6, PieceType::Pawn, blackPlayer);
-    }
+    // Pass the Y-coordinates for Black (backrank 7, pawns 6)
+    placePiecesForPlayer(7, 6, _players[1]);
 }
 
 void Game::displayBoard(const settings& gameSettings)
@@ -41,33 +37,19 @@ void Game::displayBoard(const settings& gameSettings)
     _boardRenderer.draw(_board, gameSettings, _currentTurn);
 }
 
-void Game::placePieceForPlayer(int x, int y, PieceType type, Player& owner)
+void Game::placePiecesForPlayer(int backRankY, int pawnRankY, Player& owner)
 {
-    const PieceColor color   = owner.color();
-    ImTextureID texture = _textures.getPieceTexture(color, type);
+    const auto& pieces = owner.getAllPieces();
 
-    std::unique_ptr<Piece> piece = PieceFactory::create(type, color, texture);
-    Piece*                 raw   = piece.get();
-
-    _board.getCase(x, y).setPiece(std::move(piece));
-    owner.addPiece(*raw);
-}
-
-void Game::placeBackRankPieces(int y, Player& owner)
-{
-    const std::array<PieceType, 8> order = {
-        PieceType::Rook,
-        PieceType::Knight,
-        PieceType::Bishop,
-        PieceType::Queen,
-        PieceType::King,
-        PieceType::Bishop,
-        PieceType::Knight,
-        PieceType::Rook,
-    };
-
+    // We know pieces 0-7 are the back rank. Loop and place!
     for (int x = 0; x < Board::SIZE; ++x)
     {
-        placePieceForPlayer(x, y, order[x], owner);
+        _board.getCase(x, backRankY).setPiece(pieces[x].get());
+    }
+
+    // We know pieces 8-15 are the pawns. Loop and place!
+    for (int x = 0; x < Board::SIZE; ++x)
+    {
+        _board.getCase(x, pawnRankY).setPiece(pieces[x + 8].get());
     }
 }

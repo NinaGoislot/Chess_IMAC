@@ -37,7 +37,7 @@ ImTextureID loadFirstAvailableTexture(const std::vector<std::string>& candidates
 {
     for (const std::string& path : candidates)
     {
-        ImTextureID texture = LoadTexture(path.c_str());
+        ImTextureID texture = LoadTexture(path.c_str(), false);
         if (texture != nullptr)
         {
             std::cout << "Loaded " << label << " texture from: " << path << "\n";
@@ -45,8 +45,8 @@ ImTextureID loadFirstAvailableTexture(const std::vector<std::string>& candidates
         }
     }
 
-    std::cout << "Failed to load " << label
-              << " texture from all candidates. Current working directory: "
+    std::cout << "Failed to load " << label << " texture. Tried " << candidates.size()
+              << " candidate paths. Current working directory: "
               << std::filesystem::current_path().string() << "\n";
     return nullptr;
 }
@@ -56,8 +56,8 @@ std::vector<std::string> textureBaseFolders()
     std::vector<std::string> folders;
     folders.reserve(4U);
 
-    folders.push_back("../assets/textures/pieces");
     folders.push_back("assets/textures/pieces");
+    folders.push_back("../assets/textures/pieces");
     folders.push_back("../../assets/textures/pieces");
     folders.push_back("textures/pieces");
     return folders;

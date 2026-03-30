@@ -33,22 +33,24 @@ bool Case::hasPiece() const
 
 Piece* Case::getPiece() const
 {
-    return _piece.get();
+    return _piece;
 }
 
-void Case::setPiece(std::unique_ptr<Piece> p)
+void Case::setPiece(Piece* p)
 {
-    _piece = std::move(p);
+    _piece = p;
 }
 
-std::unique_ptr<Piece> Case::takePiece()
+Piece* Case::takePiece()
 {
-    return std::move(_piece);
+    Piece* movedPiece = _piece;
+    _piece           = nullptr;
+    return movedPiece;
 }
 
 void Case::removePiece()
 {
-    _piece.reset();
+    _piece = nullptr;
 }
 
 void Case::onClick()

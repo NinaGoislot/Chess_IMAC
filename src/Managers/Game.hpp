@@ -17,8 +17,7 @@ public:
     void init();
 
 private:
-    void placePieceForPlayer(int x, int y, PieceType type, Player& owner);
-    void placeBackRankPieces(int y, Player& owner);
+    void placePiecesForPlayer(int backRankY, int pawnRankY, Player& owner);
 
     Board _board;
     TextureManager _textures;
