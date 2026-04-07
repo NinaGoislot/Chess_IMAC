@@ -38,6 +38,8 @@ private:
     void placePieces();
     void placePieceForPlayer(int x, int y, PieceType type, Player& owner);
     void placeBackRankPieces(int y, Player& owner);
+    void displayBoard(const settings& gameSettings);
+    void placePiecesForPlayer(int backRankY, int pawnRankY, Player& owner);
 
     // Parameters
     Board                    _board;
