@@ -1,13 +1,16 @@
 #include "BoardRenderer.hpp"
 #include <imgui.h>
+#include "Managers/Game.hpp"
+#include "Managers/InputManager.hpp"
 
 BoardRenderer::BoardRenderer(TextureManager& textures)
     : _textures(textures)
 {
 }
 
-void BoardRenderer::draw(Board& board, const settings& gameSettings, PieceColor currentTurn)
+void BoardRenderer::draw(Board& board, const settings& gameSettings)
 {
+    const PieceColor currentTurn = Game::instance().turnManager().current();
     if (gameSettings.use3D)
     {
         ImVec2 available = ImGui::GetContentRegionAvail();
@@ -49,7 +52,7 @@ void BoardRenderer::draw(Board& board, const settings& gameSettings, PieceColor 
 
                 if (ImGui::Button(" ", ImVec2{gameSettings.buttonSize, gameSettings.buttonSize}))
                 {
-                    board.onCaseClicked(x, y);
+                    InputManager::instance().onCaseClicked(board, x, y);
                 }
 
                 if (currentCase.hasPiece())

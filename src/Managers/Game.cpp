@@ -45,7 +45,7 @@ const std::vector<std::string>& Game::getMoveHistory() const
 
 void Game::newGame()
 {
-    _currentTurn = PieceColor::White;
+    _turnManager.reset(PieceColor::White);
     _players[0] = Player(PieceColor::White, "White", _textures);
     _players[1] = Player(PieceColor::Black, "Black", _textures);
     placePieces();
@@ -54,7 +54,7 @@ void Game::newGame()
 
 void Game::displayBoard()
 {
-    _boardRenderer.draw(_board, _settings, _currentTurn);
+    _boardRenderer.draw(_board, _settings);
 }
 
 //-------- ADD or UPDATE --------
@@ -74,7 +74,6 @@ void Game::addMoveToHistory(const std::string& move)
     _moveHistory.push_back(move);
 }
 
-
 //-------- FUNCTIONs --------
 
 void Game::placePieces()
@@ -88,7 +87,6 @@ void Game::placePieces()
     // Pass the Y-coordinates for Black (backrank 7, pawns 6)
     placePiecesForPlayer(7, 6, _players[1]);
 }
-
 
 void Game::placePiecesForPlayer(int backRankY, int pawnRankY, Player& owner)
 {

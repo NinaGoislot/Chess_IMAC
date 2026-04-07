@@ -5,11 +5,12 @@
 #include "Game/settings.hpp"
 #include "TextureManager.hpp"
 
+
 class BoardRenderer {
 public:
     explicit BoardRenderer(TextureManager& textures);
 
-    void draw(Board& board, const settings& gameSettings, PieceColor currentTurn);
+    void draw(Board& board, const settings& gameSettings);
 
 private:
     TextureManager  _textures;

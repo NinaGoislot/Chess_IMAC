@@ -5,6 +5,7 @@
 #include "Game/Pieces/Piece.hpp"
 #include "Game/Player.hpp"
 #include "Game/settings.hpp"
+#include "Managers/TurnManager.hpp"
 #include "Render/BoardRenderer.hpp"
 
 class Game {
@@ -18,10 +19,12 @@ public:
     Game& operator=(Game&&)      = delete;
     ~Game()                      = default;
 
-     // Getters
+    // Getters
     settings&                       getSettings();
     const settings&                 getSettings() const;
     const std::vector<std::string>& getMoveHistory() const;
+    const TurnManager&              turnManager() const { return _turnManager; }
+    TurnManager&                    turnManager() { return _turnManager; }
 
     // Setters
     void addPlayerWhite(const std::string& name);
@@ -38,7 +41,6 @@ private:
     void placePieces();
     void placePieceForPlayer(int x, int y, PieceType type, Player& owner);
     void placeBackRankPieces(int y, Player& owner);
-    void displayBoard(const settings& gameSettings);
     void placePiecesForPlayer(int backRankY, int pawnRankY, Player& owner);
 
     // Parameters
@@ -46,7 +48,7 @@ private:
     TextureManager           _textures;
     BoardRenderer            _boardRenderer;
     std::array<Player, 2>    _players;
-    PieceColor               _currentTurn = PieceColor::White;
+    TurnManager              _turnManager;
     settings                 _settings;
     std::vector<std::string> _moveHistory;
 };

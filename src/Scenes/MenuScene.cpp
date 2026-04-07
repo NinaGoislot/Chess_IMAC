@@ -1,6 +1,5 @@
 #include "MenuScene.hpp"
 #include <imgui.h>
-#include <array>
 #include "Managers/Game.hpp"
 #include "Managers/SceneManager.hpp"
 
