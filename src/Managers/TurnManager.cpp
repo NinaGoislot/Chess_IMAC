@@ -1,6 +1,7 @@
 #include "TurnManager.hpp"
 
-void TurnManager::advance()
+// Functions
+void TurnManager::nextTurn()
 {
     _current = (_current == PieceColor::White) ? PieceColor::Black : PieceColor::White;
 }

@@ -12,6 +12,7 @@ public:
     InputManager& operator=(InputManager&&)      = delete;
     ~InputManager()                              = default;
 
+    // Functions
     void onCaseClicked(Board& board, int x, int y);
 
 private:

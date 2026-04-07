@@ -4,12 +4,19 @@
 
 class TurnManager {
 public:
+    // Constructors
     TurnManager() = default;
 
-    PieceColor current() const { return _current; }
-    void       reset(PieceColor start) { _current = start; }
-    void       advance();
+    // Getters
+    PieceColor getCurrent() const { return _current; }
+
+    // Setters
+    void setCurrent(PieceColor start) { _current = start; }
+
+    // Functions
+    void nextTurn();
 
 private:
+    // Parameters
     PieceColor _current = PieceColor::White;
 };

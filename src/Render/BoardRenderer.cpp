@@ -10,7 +10,7 @@ BoardRenderer::BoardRenderer(TextureManager& textures)
 
 void BoardRenderer::draw(Board& board, const settings& gameSettings)
 {
-    const PieceColor currentTurn = Game::instance().turnManager().current();
+    const PieceColor currentTurn = Game::instance().turnManager().getCurrent();
     if (gameSettings.use3D)
     {
         ImVec2 available = ImGui::GetContentRegionAvail();

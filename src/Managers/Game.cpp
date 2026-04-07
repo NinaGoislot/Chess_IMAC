@@ -45,7 +45,7 @@ const std::vector<std::string>& Game::getMoveHistory() const
 
 void Game::newGame()
 {
-    _turnManager.reset(PieceColor::White);
+    _turnManager.setCurrent(PieceColor::White);
     _players[0] = Player(PieceColor::White, "White", _textures);
     _players[1] = Player(PieceColor::Black, "Black", _textures);
     placePieces();
