@@ -43,15 +43,15 @@ static void set_glfw_callbacks(GLFWwindow* window, Callbacks& callbacks)
     });
 }
 
-void loop(const char* window_name, Callbacks callbacks)
+void loop(const char* window_name, Callbacks callbacks, std::function<bool()> stopFlag)
 {
     GLFWwindow* const window = ImGuiWrapper::create_window(window_name);
     set_glfw_callbacks(window, callbacks);
     callbacks.init();
 
-    while (!glfwWindowShouldClose(window))
+    while (!glfwWindowShouldClose(window) && !stopFlag())
     {
-        glfwPollEvents();
+        glfwPollEvents(); 
         ImGuiWrapper::begin_frame({0.302f, 0.302f, 0.302f, 1.000f});
         callbacks.loop();
         ImGuiWrapper::end_frame(window);

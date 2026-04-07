@@ -7,8 +7,14 @@
 
 // #include "quick_imgui/quick_imgui.hpp"
 
-void Game::init(){}
+//-------- GET INsTANCE --------
+Game& Game::instance()
+{
+    static Game instance;
+    return instance;
+}
 
+//-------- CONsTRUCTOR --------
 Game::Game()
     : _board()
     , _textures()
@@ -16,8 +22,59 @@ Game::Game()
     , _players{Player(PieceColor::White, "White"), Player(PieceColor::Black, "Black")}
 {
     _textures.load();
+    newGame();
+}
+
+//-------- GETTERs --------
+
+settings& Game::getSettings()
+{
+    return _settings;
+}
+
+const settings& Game::getSettings() const
+{
+    return _settings;
+}
+
+const std::vector<std::string>& Game::getMoveHistory() const
+{
+    return _moveHistory;
+}
+
+//-------- INIT --------
+
+void Game::newGame()
+{
+    _currentTurn = PieceColor::White;
     placePieces();
 }
+//-------- DRAw --------
+
+void Game::displayBoard()
+{
+    _boardRenderer.draw(_board, _settings, _currentTurn);
+}
+
+//-------- ADD or UPDATE --------
+
+void Game::addPlayerWhite(const std::string& name)
+{
+    _players[0].setName(name);
+}
+
+void Game::addPlayerBlack(const std::string& name)
+{
+    _players[1].setName(name);
+}
+
+void Game::addMoveToHistory(const std::string& move)
+{
+    _moveHistory.push_back(move);
+}
+
+
+//-------- FUNCTIONs --------
 
 void Game::placePieces()
 {
@@ -36,15 +93,10 @@ void Game::placePieces()
     }
 }
 
-void Game::displayBoard(const settings& gameSettings)
-{
-    _boardRenderer.draw(_board, gameSettings, _currentTurn);
-}
-
 void Game::placePieceForPlayer(int x, int y, PieceType type, Player& owner)
 {
     const PieceColor color   = owner.color();
-    ImTextureID texture = _textures.getPieceTexture(color, type);
+    ImTextureID      texture = _textures.getPieceTexture(color, type);
 
     std::unique_ptr<Piece> piece = PieceFactory::create(type, color, texture);
     Piece*                 raw   = piece.get();
