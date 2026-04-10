@@ -2,117 +2,176 @@
 
 #define TINYGLTF_NO_STB_IMAGE
 #define TINYGLTF_NO_STB_IMAGE_WRITE
-#define TINYGLTF_IMPLEMENTATION
 #include <tiny_gltf.h>
 
+#include <algorithm>
 #include <cmath>
 #include <cstddef>
 #include <cstdint>
-#include <iostream>
+#include <cstring>
 #include <string>
 #include <vector>
 
-#include <glm/glm.hpp>
+#include <glm/geometric.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/quaternion.hpp>
+#include <glm/gtc/type_ptr.hpp>
 
 namespace {
 
-bool readAccessor(const tinygltf::Model& model, const tinygltf::Accessor& accessor, const unsigned char*& data, std::size_t& stride, std::size_t& elementSize)
+constexpr float kEpsilon = 1e-6f;
+
+std::size_t toSize(const int value)
 {
-    if (accessor.bufferView < 0 || accessor.bufferView >= static_cast<int>(model.bufferViews.size()))
-        return false;
+    return static_cast<std::size_t>(value);
+}
 
-    const tinygltf::BufferView& view = model.bufferViews[static_cast<std::size_t>(accessor.bufferView)];
-    if (view.buffer < 0 || view.buffer >= static_cast<int>(model.buffers.size()))
-        return false;
+template <typename Container>
+bool isValidIndex(const int index, const Container& container)
+{
+    return index >= 0 && toSize(index) < container.size();
+}
 
-    const tinygltf::Buffer& buffer = model.buffers[static_cast<std::size_t>(view.buffer)];
+struct AccessorView
+{
+    const unsigned char* data        = nullptr;
+    std::size_t          stride      = 0u;
+    std::size_t          elementSize = 0u;
+    std::size_t          count       = 0u;
+};
+
+bool readAccessor(const tinygltf::Model& model, const tinygltf::Accessor& accessor, AccessorView& out, std::string& error)
+{
+    if (!isValidIndex(accessor.bufferView, model.bufferViews))
+    {
+        error = "Accessor references an invalid buffer view.";
+        return false;
+    }
+
+    const tinygltf::BufferView& view = model.bufferViews[toSize(accessor.bufferView)];
+    if (!isValidIndex(view.buffer, model.buffers))
+    {
+        error = "Buffer view references an invalid buffer.";
+        return false;
+    }
+
+    const tinygltf::Buffer& buffer = model.buffers[toSize(view.buffer)];
 
     const int componentSize = tinygltf::GetComponentSizeInBytes(accessor.componentType);
     const int componentCount = tinygltf::GetNumComponentsInType(accessor.type);
     if (componentSize <= 0 || componentCount <= 0)
+    {
+        error = "Accessor has an invalid component description.";
         return false;
+    }
 
-    elementSize = static_cast<std::size_t>(componentSize) * static_cast<std::size_t>(componentCount);
-
-    const int declaredStride = accessor.ByteStride(view);
-    stride = (declaredStride > 0) ? static_cast<std::size_t>(declaredStride) : elementSize;
+    const std::size_t elementSize = static_cast<std::size_t>(componentSize) * static_cast<std::size_t>(componentCount);
+    const int         declaredStride = accessor.ByteStride(view);
+    const std::size_t stride = (declaredStride > 0) ? static_cast<std::size_t>(declaredStride) : elementSize;
 
     const std::size_t start = static_cast<std::size_t>(view.byteOffset) + static_cast<std::size_t>(accessor.byteOffset);
     if (start > buffer.data.size())
+    {
+        error = "Accessor start offset is outside of the source buffer.";
         return false;
+    }
 
-    if (accessor.count <= 0)
+    if (accessor.count == 0u)
+    {
+        error = "Accessor has zero elements.";
         return false;
+    }
 
-    const std::size_t lastOffset = start + stride * (static_cast<std::size_t>(accessor.count) - 1u);
+    const std::size_t elementCount = accessor.count;
+    const std::size_t lastOffset = start + stride * (elementCount - 1u);
     if (lastOffset + elementSize > buffer.data.size())
+    {
+        error = "Accessor range exceeds source buffer size.";
         return false;
+    }
 
-    data = buffer.data.data() + start;
+    out.data        = buffer.data.data() + start;
+    out.stride      = stride;
+    out.elementSize = elementSize;
+    out.count       = elementCount;
     return true;
 }
 
-bool readVec3FloatAccessor(const tinygltf::Model& model, int accessorIndex, std::vector<float>& out)
+bool readVec3FloatAccessor(const tinygltf::Model& model, const int accessorIndex, std::vector<glm::vec3>& out, std::string& error)
 {
-    if (accessorIndex < 0 || accessorIndex >= static_cast<int>(model.accessors.size()))
-        return false;
-
-    const tinygltf::Accessor& accessor = model.accessors[static_cast<std::size_t>(accessorIndex)];
-    if (accessor.componentType != TINYGLTF_COMPONENT_TYPE_FLOAT || accessor.type != TINYGLTF_TYPE_VEC3)
-        return false;
-
-    const unsigned char* data = nullptr;
-    std::size_t          stride = 0u;
-    std::size_t          elementSize = 0u;
-    if (!readAccessor(model, accessor, data, stride, elementSize))
-        return false;
-
-    out.resize(static_cast<std::size_t>(accessor.count) * 3u);
-    for (std::size_t i = 0u; i < static_cast<std::size_t>(accessor.count); ++i)
+    if (!isValidIndex(accessorIndex, model.accessors))
     {
-        const float* element = reinterpret_cast<const float*>(data + i * stride);
-        out[i * 3u + 0u] = element[0];
-        out[i * 3u + 1u] = element[1];
-        out[i * 3u + 2u] = element[2];
+        error = "Invalid accessor index for VEC3 data.";
+        return false;
+    }
+
+    const tinygltf::Accessor& accessor = model.accessors[toSize(accessorIndex)];
+    if (accessor.componentType != TINYGLTF_COMPONENT_TYPE_FLOAT || accessor.type != TINYGLTF_TYPE_VEC3)
+    {
+        error = "Accessor must be FLOAT VEC3.";
+        return false;
+    }
+
+    AccessorView view;
+    if (!readAccessor(model, accessor, view, error))
+        return false;
+
+    out.resize(view.count);
+    for (std::size_t i = 0u; i < view.count; ++i)
+    {
+        float values[3]{};
+        std::memcpy(values, view.data + i * view.stride, sizeof(values));
+        out[i] = glm::vec3{values[0], values[1], values[2]};
     }
 
     return true;
 }
 
-bool readIndicesAccessor(const tinygltf::Model& model, int accessorIndex, std::vector<uint32_t>& out)
+template <typename Scalar>
+Scalar readScalarUnaligned(const unsigned char* data)
 {
-    if (accessorIndex < 0 || accessorIndex >= static_cast<int>(model.accessors.size()))
-        return false;
+    Scalar value{};
+    std::memcpy(&value, data, sizeof(Scalar));
+    return value;
+}
 
-    const tinygltf::Accessor& accessor = model.accessors[static_cast<std::size_t>(accessorIndex)];
-    if (accessor.type != TINYGLTF_TYPE_SCALAR)
-        return false;
-
-    const unsigned char* data = nullptr;
-    std::size_t          stride = 0u;
-    std::size_t          elementSize = 0u;
-    if (!readAccessor(model, accessor, data, stride, elementSize))
-        return false;
-
-    out.resize(static_cast<std::size_t>(accessor.count));
-
-    for (std::size_t i = 0u; i < static_cast<std::size_t>(accessor.count); ++i)
+bool readIndicesAccessor(const tinygltf::Model& model, const int accessorIndex, std::vector<std::uint32_t>& out, std::string& error)
+{
+    if (!isValidIndex(accessorIndex, model.accessors))
     {
-        const unsigned char* element = data + i * stride;
+        error = "Invalid accessor index for index data.";
+        return false;
+    }
+
+    const tinygltf::Accessor& accessor = model.accessors[toSize(accessorIndex)];
+    if (accessor.type != TINYGLTF_TYPE_SCALAR)
+    {
+        error = "Index accessor must be SCALAR.";
+        return false;
+    }
+
+    AccessorView view;
+    if (!readAccessor(model, accessor, view, error))
+        return false;
+
+    out.resize(view.count);
+    for (std::size_t i = 0u; i < view.count; ++i)
+    {
+        const unsigned char* element = view.data + i * view.stride;
+
         switch (accessor.componentType)
         {
         case TINYGLTF_COMPONENT_TYPE_UNSIGNED_BYTE:
-            out[i] = static_cast<uint32_t>(*reinterpret_cast<const uint8_t*>(element));
+            out[i] = static_cast<std::uint32_t>(readScalarUnaligned<std::uint8_t>(element));
             break;
         case TINYGLTF_COMPONENT_TYPE_UNSIGNED_SHORT:
-            out[i] = static_cast<uint32_t>(*reinterpret_cast<const uint16_t*>(element));
+            out[i] = static_cast<std::uint32_t>(readScalarUnaligned<std::uint16_t>(element));
             break;
         case TINYGLTF_COMPONENT_TYPE_UNSIGNED_INT:
-            out[i] = *reinterpret_cast<const uint32_t*>(element);
+            out[i] = readScalarUnaligned<std::uint32_t>(element);
             break;
         default:
+            error = "Unsupported index component type.";
             return false;
         }
     }
@@ -120,103 +179,64 @@ bool readIndicesAccessor(const tinygltf::Model& model, int accessorIndex, std::v
     return true;
 }
 
-void generateVertexNormals(const std::vector<float>& positions, const std::vector<uint32_t>& indices, std::vector<float>& normals)
+std::vector<glm::vec3> generateAreaWeightedVertexNormals(const std::vector<glm::vec3>& positions, const std::vector<std::uint32_t>& indices)
 {
-    const std::size_t vertexCount = positions.size() / 3u;
-    normals.assign(vertexCount * 3u, 0.f);
+    std::vector<glm::vec3> normals(positions.size(), glm::vec3{0.f, 0.f, 0.f});
 
     if (indices.size() < 3u)
     {
-        for (std::size_t i = 0u; i < vertexCount; ++i)
-            normals[i * 3u + 1u] = 1.f;
-        return;
+        for (glm::vec3& normal : normals)
+            normal = glm::vec3{0.f, 1.f, 0.f};
+        return normals;
     }
 
     for (std::size_t i = 0u; i + 2u < indices.size(); i += 3u)
     {
-        const uint32_t i0 = indices[i + 0u];
-        const uint32_t i1 = indices[i + 1u];
-        const uint32_t i2 = indices[i + 2u];
+        const std::uint32_t i0 = indices[i + 0u];
+        const std::uint32_t i1 = indices[i + 1u];
+        const std::uint32_t i2 = indices[i + 2u];
 
-        if (i0 >= vertexCount || i1 >= vertexCount || i2 >= vertexCount)
+        if (i0 >= positions.size() || i1 >= positions.size() || i2 >= positions.size())
             continue;
 
-        const float x0 = positions[static_cast<std::size_t>(i0) * 3u + 0u];
-        const float y0 = positions[static_cast<std::size_t>(i0) * 3u + 1u];
-        const float z0 = positions[static_cast<std::size_t>(i0) * 3u + 2u];
+        const glm::vec3& p0 = positions[i0];
+        const glm::vec3& p1 = positions[i1];
+        const glm::vec3& p2 = positions[i2];
 
-        const float x1 = positions[static_cast<std::size_t>(i1) * 3u + 0u];
-        const float y1 = positions[static_cast<std::size_t>(i1) * 3u + 1u];
-        const float z1 = positions[static_cast<std::size_t>(i1) * 3u + 2u];
+        const glm::vec3 edge1 = p1 - p0;
+        const glm::vec3 edge2 = p2 - p0;
+        const glm::vec3 crossProduct = glm::cross(edge1, edge2);
 
-        const float x2 = positions[static_cast<std::size_t>(i2) * 3u + 0u];
-        const float y2 = positions[static_cast<std::size_t>(i2) * 3u + 1u];
-        const float z2 = positions[static_cast<std::size_t>(i2) * 3u + 2u];
+        const float twiceArea = glm::length(crossProduct);
+        if (twiceArea <= kEpsilon)
+            continue;
 
-        const float e1x = x1 - x0;
-        const float e1y = y1 - y0;
-        const float e1z = z1 - z0;
+        const glm::vec3 faceNormal = crossProduct / twiceArea;
+        const float     area = 0.5f * twiceArea;
+        const glm::vec3 weightedNormal = faceNormal * area;
 
-        const float e2x = x2 - x0;
-        const float e2y = y2 - y0;
-        const float e2z = z2 - z0;
-
-        const float nx = e1y * e2z - e1z * e2y;
-        const float ny = e1z * e2x - e1x * e2z;
-        const float nz = e1x * e2y - e1y * e2x;
-
-        normals[static_cast<std::size_t>(i0) * 3u + 0u] += nx;
-        normals[static_cast<std::size_t>(i0) * 3u + 1u] += ny;
-        normals[static_cast<std::size_t>(i0) * 3u + 2u] += nz;
-
-        normals[static_cast<std::size_t>(i1) * 3u + 0u] += nx;
-        normals[static_cast<std::size_t>(i1) * 3u + 1u] += ny;
-        normals[static_cast<std::size_t>(i1) * 3u + 2u] += nz;
-
-        normals[static_cast<std::size_t>(i2) * 3u + 0u] += nx;
-        normals[static_cast<std::size_t>(i2) * 3u + 1u] += ny;
-        normals[static_cast<std::size_t>(i2) * 3u + 2u] += nz;
+        normals[i0] += weightedNormal;
+        normals[i1] += weightedNormal;
+        normals[i2] += weightedNormal;
     }
 
-    for (std::size_t i = 0u; i < vertexCount; ++i)
+    for (glm::vec3& normal : normals)
     {
-        float nx = normals[i * 3u + 0u];
-        float ny = normals[i * 3u + 1u];
-        float nz = normals[i * 3u + 2u];
-
-        const float len = std::sqrt(nx * nx + ny * ny + nz * nz);
-        if (len > 1e-6f)
-        {
-            nx /= len;
-            ny /= len;
-            nz /= len;
-        }
+        const float len = glm::length(normal);
+        if (len > kEpsilon)
+            normal /= len;
         else
-        {
-            nx = 0.f;
-            ny = 1.f;
-            nz = 0.f;
-        }
-
-        normals[i * 3u + 0u] = nx;
-        normals[i * 3u + 1u] = ny;
-        normals[i * 3u + 2u] = nz;
+            normal = glm::vec3{0.f, 1.f, 0.f};
     }
+
+    return normals;
 }
 
 glm::mat4 nodeLocalTransform(const tinygltf::Node& node)
 {
     if (node.matrix.size() == 16u)
     {
-        glm::mat4 m{1.f};
-        for (int col = 0; col < 4; ++col)
-        {
-            for (int row = 0; row < 4; ++row)
-            {
-                m[col][row] = static_cast<float>(node.matrix[static_cast<std::size_t>(col * 4 + row)]);
-            }
-        }
-        return m;
+        return glm::mat4{glm::make_mat4(node.matrix.data())};
     }
 
     glm::vec3 translation{0.f, 0.f, 0.f};
@@ -256,29 +276,29 @@ struct PrimitiveSelection
     glm::mat4                  worldTransform{1.f};
 };
 
-bool visitNodeForPrimitive(const tinygltf::Model& model, int nodeIndex, const glm::mat4& parentTransform, PrimitiveSelection& out)
+bool visitNodeForPrimitive(const tinygltf::Model& model, const int nodeIndex, const glm::mat4& parentTransform, PrimitiveSelection& out)
 {
-    if (nodeIndex < 0 || nodeIndex >= static_cast<int>(model.nodes.size()))
+    if (!isValidIndex(nodeIndex, model.nodes))
         return false;
 
-    const tinygltf::Node& node = model.nodes[static_cast<std::size_t>(nodeIndex)];
+    const tinygltf::Node& node = model.nodes[toSize(nodeIndex)];
     const glm::mat4       worldTransform = parentTransform * nodeLocalTransform(node);
 
-    if (node.mesh >= 0 && node.mesh < static_cast<int>(model.meshes.size()))
+    if (isValidIndex(node.mesh, model.meshes))
     {
-        const tinygltf::Mesh& mesh = model.meshes[static_cast<std::size_t>(node.mesh)];
+        const tinygltf::Mesh& mesh = model.meshes[toSize(node.mesh)];
         for (const tinygltf::Primitive& primitive : mesh.primitives)
         {
             if (primitive.attributes.contains("POSITION"))
             {
-                out.primitive = &primitive;
+                out.primitive      = &primitive;
                 out.worldTransform = worldTransform;
                 return true;
             }
         }
     }
 
-    for (int childIndex : node.children)
+    for (const int childIndex : node.children)
     {
         if (visitNodeForPrimitive(model, childIndex, worldTransform, out))
             return true;
@@ -289,40 +309,38 @@ bool visitNodeForPrimitive(const tinygltf::Model& model, int nodeIndex, const gl
 
 std::vector<int> rootNodesForTraversal(const tinygltf::Model& model)
 {
-    std::vector<int> roots;
-
     int sceneIndex = model.defaultScene;
     if (sceneIndex < 0 && !model.scenes.empty())
         sceneIndex = 0;
 
-    if (sceneIndex >= 0 && sceneIndex < static_cast<int>(model.scenes.size()))
-    {
-        roots = model.scenes[static_cast<std::size_t>(sceneIndex)].nodes;
-        return roots;
-    }
+    if (isValidIndex(sceneIndex, model.scenes))
+        return model.scenes[toSize(sceneIndex)].nodes;
 
     std::vector<bool> hasParent(model.nodes.size(), false);
     for (const tinygltf::Node& node : model.nodes)
     {
-        for (int child : node.children)
+        for (const int child : node.children)
         {
-            if (child >= 0 && child < static_cast<int>(hasParent.size()))
-                hasParent[static_cast<std::size_t>(child)] = true;
+            if (child >= 0 && toSize(child) < hasParent.size())
+                hasParent[toSize(child)] = true;
         }
     }
 
+    std::vector<int> roots;
+    roots.reserve(model.nodes.size());
     for (std::size_t i = 0u; i < hasParent.size(); ++i)
     {
         if (!hasParent[i])
             roots.push_back(static_cast<int>(i));
     }
 
-    if (roots.empty())
-    {
-        roots.reserve(model.nodes.size());
-        for (std::size_t i = 0u; i < model.nodes.size(); ++i)
-            roots.push_back(static_cast<int>(i));
-    }
+    if (!roots.empty())
+        return roots;
+
+    roots.clear();
+    roots.reserve(model.nodes.size());
+    for (std::size_t i = 0u; i < model.nodes.size(); ++i)
+        roots.push_back(static_cast<int>(i));
 
     return roots;
 }
@@ -330,7 +348,7 @@ std::vector<int> rootNodesForTraversal(const tinygltf::Model& model)
 bool findPrimitiveWithWorldTransform(const tinygltf::Model& model, PrimitiveSelection& out)
 {
     const std::vector<int> roots = rootNodesForTraversal(model);
-    for (int root : roots)
+    for (const int root : roots)
     {
         if (visitNodeForPrimitive(model, root, glm::mat4{1.f}, out))
             return true;
@@ -339,42 +357,82 @@ bool findPrimitiveWithWorldTransform(const tinygltf::Model& model, PrimitiveSele
     return false;
 }
 
-void applyTransformToPositions(std::vector<float>& positions, const glm::mat4& transform)
+void applyTransformToPositions(std::vector<glm::vec3>& positions, const glm::mat4& transform)
 {
-    for (std::size_t i = 0u; i < positions.size(); i += 3u)
+    for (glm::vec3& position : positions)
     {
-        const glm::vec4 p = transform * glm::vec4{positions[i + 0u], positions[i + 1u], positions[i + 2u], 1.f};
-        positions[i + 0u] = p.x;
-        positions[i + 1u] = p.y;
-        positions[i + 2u] = p.z;
+        const glm::vec4 transformed = transform * glm::vec4{position, 1.f};
+        position = glm::vec3{transformed};
     }
 }
 
-void applyTransformToNormals(std::vector<float>& normals, const glm::mat4& transform)
+void applyTransformToNormals(std::vector<glm::vec3>& normals, const glm::mat4& transform)
 {
-    const glm::mat3 normalMatrix = glm::transpose(glm::inverse(glm::mat3(transform)));
+    if (normals.empty())
+        return;
 
-    for (std::size_t i = 0u; i < normals.size(); i += 3u)
+    const glm::mat3 linear = glm::mat3(transform);
+    if (std::abs(glm::determinant(linear)) <= kEpsilon)
+        return;
+
+    const glm::mat3 normalMatrix = glm::transpose(glm::inverse(linear));
+
+    for (glm::vec3& normal : normals)
     {
-        glm::vec3 n = normalMatrix * glm::vec3{normals[i + 0u], normals[i + 1u], normals[i + 2u]};
-        const float len = glm::length(n);
-        if (len > 1e-6f)
-            n /= len;
+        normal = normalMatrix * normal;
+        const float len = glm::length(normal);
+        if (len > kEpsilon)
+            normal /= len;
         else
-            n = glm::vec3{0.f, 1.f, 0.f};
+            normal = glm::vec3{0.f, 1.f, 0.f};
+    }
+}
 
-        normals[i + 0u] = n.x;
-        normals[i + 1u] = n.y;
-        normals[i + 2u] = n.z;
+void normalizePositionsToGroundedUnitHeight(std::vector<glm::vec3>& positions)
+{
+    if (positions.empty())
+        return;
+
+    glm::vec3 minP = positions.front();
+    glm::vec3 maxP = positions.front();
+
+    for (const glm::vec3& p : positions)
+    {
+        minP = glm::min(minP, p);
+        maxP = glm::max(maxP, p);
+    }
+
+    const float centerX = 0.5f * (minP.x + maxP.x);
+    const float centerZ = 0.5f * (minP.z + maxP.z);
+    const float height  = maxP.y - minP.y;
+
+    float normalizingScale = 1.f;
+    if (height > kEpsilon)
+    {
+        normalizingScale = 1.f / height;
+    }
+    else
+    {
+        const float extentX = maxP.x - minP.x;
+        const float extentZ = maxP.z - minP.z;
+        const float extent  = std::max(extentX, extentZ);
+        if (extent > kEpsilon)
+            normalizingScale = 1.f / extent;
+    }
+
+    for (glm::vec3& p : positions)
+    {
+        p.x = (p.x - centerX) * normalizingScale;
+        p.y = (p.y - minP.y) * normalizingScale;
+        p.z = (p.z - centerZ) * normalizingScale;
     }
 }
 
 } // namespace
 
-bool loadGLBMesh(const std::string& filepath, ModelMeshData& outMesh)
+RawMeshLoadResult loadRawGLBMesh(const std::string& filepath)
 {
-    outMesh.vertices.clear();
-    outMesh.indices.clear();
+    RawMeshLoadResult result;
 
     tinygltf::Model    model;
     tinygltf::TinyGLTF loader;
@@ -382,73 +440,151 @@ bool loadGLBMesh(const std::string& filepath, ModelMeshData& outMesh)
     std::string        warn;
 
     const bool loaded = loader.LoadBinaryFromFile(&model, &err, &warn, filepath);
-    if (!warn.empty())
-        std::cout << "GLB warning (" << filepath << "): " << warn << "\n";
-    if (!err.empty())
-        std::cout << "GLB error (" << filepath << "): " << err << "\n";
     if (!loaded)
-        return false;
+    {
+        result.error = !err.empty() ? err : std::string{"Failed to load GLB file."};
+        if (!warn.empty())
+            result.error += " Warning: " + warn;
+        return result;
+    }
 
     PrimitiveSelection selection;
     if (!findPrimitiveWithWorldTransform(model, selection) || selection.primitive == nullptr)
-        return false;
-
-    const tinygltf::Primitive& primitiveToUse = *selection.primitive;
-    if (primitiveToUse.mode != TINYGLTF_MODE_TRIANGLES)
     {
-        std::cout << "Unsupported primitive mode in " << filepath << ". Only triangle meshes are supported.\n";
-        return false;
+        result.error = "No mesh primitive with POSITION attribute was found.";
+        return result;
     }
 
-    const auto posIt = primitiveToUse.attributes.find("POSITION");
-    if (posIt == primitiveToUse.attributes.end())
-        return false;
-
-    std::vector<float> positions;
-    if (!readVec3FloatAccessor(model, posIt->second, positions))
-        return false;
-
-    const std::size_t vertexCount = positions.size() / 3u;
-    if (vertexCount == 0u)
-        return false;
-
-    std::vector<float> normals;
-    const auto         normalIt = primitiveToUse.attributes.find("NORMAL");
-    const bool         hasNormals = (normalIt != primitiveToUse.attributes.end())
-                                  && readVec3FloatAccessor(model, normalIt->second, normals)
-                                  && normals.size() == positions.size();
-
-    if (primitiveToUse.indices >= 0)
+    const tinygltf::Primitive& primitive = *selection.primitive;
+    if (primitive.mode != TINYGLTF_MODE_TRIANGLES)
     {
-        if (!readIndicesAccessor(model, primitiveToUse.indices, outMesh.indices))
-            return false;
+        result.error = "Unsupported primitive mode. Only TRIANGLES are supported.";
+        return result;
+    }
+
+    const auto positionIt = primitive.attributes.find("POSITION");
+    if (positionIt == primitive.attributes.end())
+    {
+        result.error = "Primitive is missing POSITION attribute.";
+        return result;
+    }
+
+    std::string accessError;
+    if (!readVec3FloatAccessor(model, positionIt->second, result.mesh.positions, accessError))
+    {
+        result.error = "Failed to read POSITION accessor: " + accessError;
+        return result;
+    }
+
+    if (result.mesh.positions.empty())
+    {
+        result.error = "Mesh has no vertices.";
+        return result;
+    }
+
+    const auto normalIt = primitive.attributes.find("NORMAL");
+    if (normalIt != primitive.attributes.end())
+    {
+        std::vector<glm::vec3> normals;
+        if (readVec3FloatAccessor(model, normalIt->second, normals, accessError))
+        {
+            if (normals.size() == result.mesh.positions.size())
+                result.mesh.normals = std::move(normals);
+        }
+    }
+
+    if (primitive.indices >= 0)
+    {
+        if (!readIndicesAccessor(model, primitive.indices, result.mesh.indices, accessError))
+        {
+            result.error = "Failed to read index accessor: " + accessError;
+            return result;
+        }
     }
     else
     {
-        outMesh.indices.resize(vertexCount);
-        for (std::size_t i = 0u; i < vertexCount; ++i)
-            outMesh.indices[i] = static_cast<uint32_t>(i);
+        result.mesh.indices.resize(result.mesh.positions.size());
+        for (std::size_t i = 0u; i < result.mesh.indices.size(); ++i)
+            result.mesh.indices[i] = static_cast<std::uint32_t>(i);
     }
 
-    if (!hasNormals)
-        generateVertexNormals(positions, outMesh.indices, normals);
-
-    applyTransformToPositions(positions, selection.worldTransform);
-    applyTransformToNormals(normals, selection.worldTransform);
-
-    outMesh.vertices.resize(vertexCount * 6u);
-    for (std::size_t i = 0u; i < vertexCount; ++i)
+    if (result.mesh.indices.empty())
     {
-        const std::size_t dst = i * 6u;
-        const std::size_t src = i * 3u;
-
-        outMesh.vertices[dst + 0u] = positions[src + 0u];
-        outMesh.vertices[dst + 1u] = positions[src + 1u];
-        outMesh.vertices[dst + 2u] = positions[src + 2u];
-        outMesh.vertices[dst + 3u] = normals[src + 0u];
-        outMesh.vertices[dst + 4u] = normals[src + 1u];
-        outMesh.vertices[dst + 5u] = normals[src + 2u];
+        result.error = "Mesh has no indices.";
+        return result;
     }
 
-    return !outMesh.vertices.empty() && !outMesh.indices.empty();
+    result.mesh.worldTransform = selection.worldTransform;
+    result.success             = true;
+    return result;
+}
+
+void normalizeRawMesh(RawMeshData& mesh, const MeshNormalizationOptions& options)
+{
+    if (mesh.positions.empty())
+        return;
+
+    if (options.applyWorldTransform)
+    {
+        applyTransformToPositions(mesh.positions, mesh.worldTransform);
+        applyTransformToNormals(mesh.normals, mesh.worldTransform);
+        mesh.worldTransform = glm::mat4{1.f};
+    }
+
+    if (options.normalizeToUnitHeight)
+        normalizePositionsToGroundedUnitHeight(mesh.positions);
+}
+
+MeshLoadResult buildMeshData(const RawMeshData& rawMesh)
+{
+    MeshLoadResult result;
+
+    if (rawMesh.positions.empty())
+    {
+        result.error = "Cannot build mesh data from empty positions.";
+        return result;
+    }
+
+    if (rawMesh.indices.empty())
+    {
+        result.error = "Cannot build mesh data from empty indices.";
+        return result;
+    }
+
+    for (const std::uint32_t index : rawMesh.indices)
+    {
+        if (index >= rawMesh.positions.size())
+        {
+            result.error = "Index buffer references vertices out of range.";
+            return result;
+        }
+    }
+
+    std::vector<glm::vec3> normals = rawMesh.normals;
+    if (normals.size() != rawMesh.positions.size())
+        normals = generateAreaWeightedVertexNormals(rawMesh.positions, rawMesh.indices);
+
+    result.mesh.vertices.resize(rawMesh.positions.size());
+    for (std::size_t i = 0u; i < rawMesh.positions.size(); ++i)
+    {
+        result.mesh.vertices[i].position = rawMesh.positions[i];
+        result.mesh.vertices[i].normal   = normals[i];
+    }
+
+    result.mesh.indices = rawMesh.indices;
+    result.success      = !result.mesh.vertices.empty() && !result.mesh.indices.empty();
+    if (!result.success)
+        result.error = "Mesh conversion produced an empty result.";
+
+    return result;
+}
+
+MeshLoadResult loadGLBMesh(const std::string& filepath, const MeshNormalizationOptions& options)
+{
+    RawMeshLoadResult rawResult = loadRawGLBMesh(filepath);
+    if (!rawResult.success)
+        return MeshLoadResult{false, {}, rawResult.error};
+
+    normalizeRawMesh(rawResult.mesh, options);
+    return buildMeshData(rawResult.mesh);
 }

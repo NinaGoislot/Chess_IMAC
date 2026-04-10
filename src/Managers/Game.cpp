@@ -6,12 +6,15 @@
 
 // #include "quick_imgui/quick_imgui.hpp"
 
-void Game::init() {}
+void Game::init()
+{
+    _renderer.initialize();
+}
 
 Game::Game()
     : _board()
     , _textures()
-    , _boardRenderer(_textures)
+    , _renderer(_textures)
     , _players{}
 {
     _textures.load();
@@ -32,9 +35,9 @@ void Game::placePieces()
     placePiecesForPlayer(7, 6, _players[1]);
 }
 
-void Game::displayBoard(const settings& gameSettings)
+void Game::displayBoard(const settings& gameSettings, float deltaTimeSeconds)
 {
-    _boardRenderer.draw(_board, gameSettings, _currentTurn);
+    _renderer.draw(_board, gameSettings, _currentTurn, deltaTimeSeconds);
 }
 
 void Game::placePiecesForPlayer(int backRankY, int pawnRankY, Player& owner)

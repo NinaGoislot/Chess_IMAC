@@ -1,12 +1,18 @@
-#include "BoardRenderer.hpp"
+#include "Renderer.hpp"
+#include <algorithm>
 #include <imgui.h>
 
-BoardRenderer::BoardRenderer(TextureManager& textures)
+Renderer::Renderer(TextureManager& textures)
     : _textures(textures)
 {
 }
 
-void BoardRenderer::draw(Board& board, const settings& gameSettings, PieceColor currentTurn)
+void Renderer::initialize()
+{
+    _board3DRenderer.initialize();
+}
+
+void Renderer::draw(Board& board, const settings& gameSettings, PieceColor currentTurn, float deltaTimeSeconds)
 {
     if (gameSettings.use3D)
     {
@@ -14,7 +20,7 @@ void BoardRenderer::draw(Board& board, const settings& gameSettings, PieceColor 
         available.x      = std::max(available.x, 64.f);
         available.y      = std::max(available.y, 64.f);
 
-        _board3DRenderer.render(board, gameSettings, currentTurn, static_cast<int>(available.x), static_cast<int>(available.y));
+        _board3DRenderer.render(board, gameSettings, currentTurn, static_cast<int>(available.x), static_cast<int>(available.y), deltaTimeSeconds);
 
         ImTextureID texture = _board3DRenderer.colorTexture();
         if (texture != nullptr)

@@ -69,5 +69,5 @@ target_sources(ImGui PRIVATE lib/imgui/backends/imgui_impl_glfw.cpp)
 target_sources(ImGui PRIVATE lib/imgui/backends/imgui_impl_opengl3.cpp)
 
 # Link to ImGui
-target_link_libraries(quick_imgui PUBLIC ImGui)
-target_link_libraries(quick_imgui PUBLIC glm glimac)
+target_link_libraries(quick_imgui PUBLIC ImGui glm glimac)
+# target_link_libraries(quick_imgui PUBLIC glm glimac)
