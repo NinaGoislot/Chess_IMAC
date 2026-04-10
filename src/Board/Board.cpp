@@ -21,17 +21,20 @@ const Case& Board::getCase(int x, int y) const
     return _cases[x][y];
 }
 
-void Board::onCaseClicked(int x, int y)
+bool Board::onCaseClicked(int x, int y, const PieceColor& currentTurn)
 {
     Case& clicked = getCase(x, y);
 
     if (_selectedCase == nullptr)
     {
         if (!clicked.hasPiece())
-            return;
+            return false;
+
+        Piece* piece = clicked.getPiece();
+        if (piece->color() != currentTurn)
+            return false;
 
         _selectedCase = &clicked;
-        Piece* piece  = clicked.getPiece();
         piece->updateAllowedMoves(*this, Vector2D(static_cast<float>(x), static_cast<float>(y)));
         auto moves = piece->getAllowedMoves();
 
@@ -46,14 +49,14 @@ void Board::onCaseClicked(int x, int y)
             getCase(static_cast<int>(move.getX()), static_cast<int>(move.getY())).setActive(true);
         }
 
-        return;
+        return false;
     }
 
     if (&clicked == _selectedCase)
     {
         clearHighlights();
         _selectedCase = nullptr;
-        return;
+        return false;
     }
 
     if (clicked.isActive())
@@ -62,7 +65,19 @@ void Board::onCaseClicked(int x, int y)
 
         clearHighlights();
         _selectedCase = nullptr;
+        return true;
     }
+
+    if (clicked.hasPiece() && clicked.getPiece()->color() == currentTurn)
+    {
+        clearHighlights();
+        _selectedCase = nullptr;
+        return onCaseClicked(x, y, currentTurn);
+    }
+
+    clearHighlights();
+    _selectedCase = nullptr;
+    return false;
 }
 
 void Board::clearHighlights()

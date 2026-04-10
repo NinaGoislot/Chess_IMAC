@@ -11,12 +11,11 @@ public:
 
     Case&       getCase(int x, int y);
     const Case& getCase(int x, int y) const;
-    void onCaseClicked(int x, int y);
+    bool        onCaseClicked(int x, int y, const PieceColor& currentTurn);
 
     bool isInside(Vector2D pos) const;
     bool isEmpty(Vector2D pos) const;
     bool isEnemy(Vector2D pos, PieceColor color) const;
-
 
 private:
     Case*                                    _selectedCase = nullptr;

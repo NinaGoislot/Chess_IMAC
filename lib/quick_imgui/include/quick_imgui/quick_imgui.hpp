@@ -16,7 +16,7 @@ struct Callbacks {
     std::function<void(int, int)> window_size_callback { [](int width, int height) {} }; // NOLINT(*-easily-swappable-parameters)
 };
 
-void loop(const char* window_name, Callbacks callbacks);
+void loop(const char* window_name, Callbacks callbacks, std::function<bool()> stopFlag);
 
 /// A convenience class to measure the performance of a block of code, and display it with ImGui
 /// Press space to pause the graphics
