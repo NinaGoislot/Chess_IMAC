@@ -2,7 +2,6 @@
 #include <algorithm>
 #include <imgui.h>
 #include "Managers/Game.hpp"
-#include "Managers/InputManager.hpp"
 
 Renderer::Renderer(TextureManager& textures)
     : _textures(textures)
@@ -16,7 +15,6 @@ void Renderer::initialize()
 
 void Renderer::draw(Board& board, const settings& gameSettings, PieceColor currentTurn, float deltaTimeSeconds)
 {
-    const PieceColor currentTurn = Game::instance().turnManager().getCurrent();
     if (gameSettings.use3D)
     {
         ImVec2 available = ImGui::GetContentRegionAvail();
@@ -58,7 +56,10 @@ void Renderer::draw(Board& board, const settings& gameSettings, PieceColor curre
 
                 if (ImGui::Button(" ", ImVec2{gameSettings.buttonSize, gameSettings.buttonSize}))
                 {
-                    InputManager::instance().onCaseClicked(board, x, y);
+                    if (board.onCaseClicked(x, y, currentTurn))
+                    {
+                        Game::instance().turnManager().nextTurn();
+                    }
                 }
 
                 if (currentCase.hasPiece())

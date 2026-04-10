@@ -21,6 +21,7 @@ Game::Game()
     , _players{}
 {
     _textures.load();
+    _renderer.initialize();
     newGame();
 }
 
@@ -54,7 +55,7 @@ void Game::newGame()
 
 void Game::displayBoard()
 {
-    _boardRenderer.draw(_board, _settings);
+    _renderer.draw(_board, _settings, _turnManager.getCurrent(), ImGui::GetIO().DeltaTime);
 }
 
 //-------- ADD or UPDATE --------
@@ -86,11 +87,6 @@ void Game::placePieces()
 
     // Pass the Y-coordinates for Black (backrank 7, pawns 6)
     placePiecesForPlayer(7, 6, _players[1]);
-}
-
-void Game::displayBoard(const settings& gameSettings, float deltaTimeSeconds)
-{
-    _renderer.draw(_board, gameSettings, _currentTurn, deltaTimeSeconds);
 }
 
 void Game::placePiecesForPlayer(int backRankY, int pawnRankY, Player& owner)
