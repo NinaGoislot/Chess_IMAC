@@ -27,9 +27,6 @@ struct settings {
     float cameraPitchDegrees = 32.f;
     float cameraDistance = 13.5f;
 
-    // UI settings
-    void display();
-
     ImVec4 getWhite() const { return whiteColor; }
     ImVec4 getBlack() const { return blackColor; }
     ImVec4 getHighlight() const { return _highlight; }

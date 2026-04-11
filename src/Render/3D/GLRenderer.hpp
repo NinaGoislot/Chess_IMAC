@@ -12,20 +12,34 @@ namespace Render3D {
 
 class ResourceManager;
 
-class BoardRenderer {
+// -------- EXPLANATION --------
+// GLRenderer is the "Painter". It holds shaders, VAOs, and knows how to draw the board and pieces.
+// It is a simple renderer for 3D graphics.
+
+class GLRenderer {
 public:
-    BoardRenderer() = default;
-    ~BoardRenderer();
+    // Constructor and destructor
+    GLRenderer() = default;
+    ~GLRenderer();
 
-    BoardRenderer(const BoardRenderer&)            = delete;
-    BoardRenderer& operator=(const BoardRenderer&) = delete;
+    // Non-copyable
+    GLRenderer(const GLRenderer&)            = delete;
+    GLRenderer& operator=(const GLRenderer&) = delete;
 
+    // Initialization and cleanup
     bool initialize(const std::string& shaderDir);
     void destroy();
 
+    // Rendering functions
     bool beginBoardPass(PieceColor currentTurn) const;
     void setupStaticLighting() const;
-    void drawBoardTiles(const glm::mat4& viewProjection, const settings& gameSettings) const;
+
+
+    void drawBoard(const glm::mat4& viewProjection, const Board& board, const settings& gameSettings) const;
+    void drawBoardGaps(const glm::mat4& viewProjection, const settings& gameSettings) const;
+    void drawTiles(const glm::mat4& viewProjection, const Board& board, const settings& gameSettings) const;
+    void drawBoardEdges(const glm::mat4& viewProjection, const settings& gameSettings) const;
+
     void drawPieces(const glm::mat4& viewProjection, const Board& board, const settings& gameSettings, const ResourceManager& resourceManager) const;
     void drawSkybox(const glm::mat4& view, const glm::mat4& projection, const settings& gameSettings) const;
 
@@ -61,6 +75,8 @@ private:
 
     static UniformLocations queryUniformLocations(const Shader& shader);
     void                    initializeCubeGeometry();
+
+    void drawSinglePiece(const glm::mat4& viewProj, const Piece* piece, int x, int y, float originX, float originZ, float topY, const ResourceManager& resourceManager) const;
 
     unsigned int _vao        = 0;
     unsigned int _vbo        = 0;

@@ -1,24 +1,25 @@
-#include "BoardRenderer.hpp"
+#include "GLRenderer.hpp"
 #include <glad/glad.h>
 #include <array>
 #include <cstddef>
 #include <glm/geometric.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
+#include "Board/Board.hpp"
 #include "Primitives.hpp"
 #include "ResourceManager.hpp"
-#include "Board/Board.hpp"
+
 
 namespace {
 
-constexpr std::size_t kPieceTypeCount = 6u;
+constexpr std::size_t PIECE_TYPE_COUNT = 6u;
 
-constexpr float kBoardTileSize  = 0.94f;
-constexpr float kBoardCenterY   = -0.05f;
-constexpr float kPieceLiftY     = 0.01f;
-constexpr float kPieceBaseWidth = 0.45f;
+constexpr float BOARD_TILE_SIZE  = 0.94f;
+constexpr float BOARD_CENTER_Y   = -0.05f;
+constexpr float PIECE_LIFT_Y     = 0.01f;
+constexpr float PIECE_BASE_WIDTH = 0.45f;
 
-constexpr std::array<float, kPieceTypeCount> kPieceHeights = {
+constexpr std::array<float, PIECE_TYPE_COUNT> PIECES_HEIGHT = {
     0.6f,
     0.95f,
     0.8f,
@@ -27,8 +28,8 @@ constexpr std::array<float, kPieceTypeCount> kPieceHeights = {
     1.2f,
 };
 
-const glm::vec3 kWhiteTurnTint{1.08f, 1.06f, 1.00f};
-const glm::vec3 kBlackTurnTint{0.88f, 0.94f, 1.08f};
+const glm::vec3 WHITE_TURN_TINT{1.08f, 1.06f, 1.00f};
+const glm::vec3 BLACK_TURN_TINT{0.88f, 0.94f, 1.08f};
 
 std::size_t pieceTypeIndex(PieceType type)
 {
@@ -69,12 +70,12 @@ void drawIndexedMesh(int mvpLocation, int modelLocation, int colorLocation, cons
 
 namespace Render3D {
 
-BoardRenderer::~BoardRenderer()
+GLRenderer::~GLRenderer()
 {
     destroy();
 }
 
-BoardRenderer::UniformLocations BoardRenderer::queryUniformLocations(const Shader& shader)
+GLRenderer::UniformLocations GLRenderer::queryUniformLocations(const Shader& shader)
 {
     UniformLocations locations;
     locations.mvp      = shader.getUniform("uMVP");
@@ -86,7 +87,7 @@ BoardRenderer::UniformLocations BoardRenderer::queryUniformLocations(const Shade
     return locations;
 }
 
-void BoardRenderer::initializeCubeGeometry()
+void GLRenderer::initializeCubeGeometry()
 {
     const auto& vertices = Primitives::cubeVertices();
 
@@ -106,7 +107,7 @@ void BoardRenderer::initializeCubeGeometry()
     glBindVertexArray(0);
 }
 
-bool BoardRenderer::initialize(const std::string& shaderDir)
+bool GLRenderer::initialize(const std::string& shaderDir)
 {
     if (_initialized)
         return true;
@@ -128,17 +129,17 @@ bool BoardRenderer::initialize(const std::string& shaderDir)
     const bool skyboxShaderLoaded = _skyboxShader.load(shaderDir + "/skybox.vs.glsl", shaderDir + "/skybox.fs.glsl");
     if (skyboxShaderLoaded)
     {
-        _skyboxUniforms.vp           = _skyboxShader.getUniform("uVP");
-        _skyboxUniforms.topColor     = _skyboxShader.getUniform("uTopColor");
-        _skyboxUniforms.bottomColor  = _skyboxShader.getUniform("uBottomColor");
-        _skyboxReady                 = _skyboxUniforms.isValid();
+        _skyboxUniforms.vp          = _skyboxShader.getUniform("uVP");
+        _skyboxUniforms.topColor    = _skyboxShader.getUniform("uTopColor");
+        _skyboxUniforms.bottomColor = _skyboxShader.getUniform("uBottomColor");
+        _skyboxReady                = _skyboxUniforms.isValid();
     }
 
     _initialized = true;
     return true;
 }
 
-void BoardRenderer::destroy()
+void GLRenderer::destroy()
 {
     glDeleteBuffers(1, &_vbo);
     _vbo = 0;
@@ -152,21 +153,21 @@ void BoardRenderer::destroy()
     _initialized    = false;
 }
 
-bool BoardRenderer::beginBoardPass(PieceColor currentTurn) const
+bool GLRenderer::beginBoardPass(PieceColor currentTurn) const
 {
     if (!_initialized || !_boardUniforms.isValid() || _vao == 0)
         return false;
 
     _boardShader.use();
 
-    const glm::vec3 turnTint = (currentTurn == PieceColor::White) ? kWhiteTurnTint : kBlackTurnTint;
+    const glm::vec3 turnTint = (currentTurn == PieceColor::White) ? WHITE_TURN_TINT : BLACK_TURN_TINT;
     glUniform3f(_boardUniforms.turnTint, turnTint.x, turnTint.y, turnTint.z);
 
     glBindVertexArray(_vao);
     return true;
 }
 
-void BoardRenderer::setupStaticLighting() const
+void GLRenderer::setupStaticLighting() const
 {
     if (!_boardUniforms.isValid())
         return;
@@ -175,50 +176,72 @@ void BoardRenderer::setupStaticLighting() const
     glUniform1f(_boardUniforms.ambient, 0.30f);
 }
 
-void BoardRenderer::drawBoardTiles(const glm::mat4& viewProjection, const settings& gameSettings) const
+void GLRenderer::drawBoard(const glm::mat4& viewProjection, const Board& board, const settings& gameSettings) const
 {
     if (!_boardUniforms.isValid())
         return;
 
-    const float     tileSize       = kBoardTileSize;
-    const float     boardCenterY   = kBoardCenterY;
-    const float     boardOriginX   = -(static_cast<float>(Board::SIZE) - 1.f) * 0.5f;
-    const float     boardOriginZ   = -(static_cast<float>(Board::SIZE) - 1.f) * 0.5f;
-    const float     boardHalfSize  = (static_cast<float>(Board::SIZE) - 1.f) * 0.5f + tileSize * 0.5f;
-    const glm::vec3 whiteTileColor = gameSettings.getWhiteVec3();
-    const glm::vec3 blackTileColor = gameSettings.getBlackVec3();
-    const glm::vec3 boardGapColor  = gameSettings.getBoardGapColorVec3();
-    const glm::mat4 tileScale      = glm::scale(glm::mat4{1.f}, glm::vec3{tileSize, gameSettings.boardThickness, tileSize});
+    // The main function is now just a clean orchestrator.
+    drawBoardGaps(viewProjection, gameSettings);
+    drawTiles(viewProjection, board, gameSettings);
+    drawBoardEdges(viewProjection, gameSettings);
+}
 
-    const float     fullBoardSize   = boardHalfSize * 2.f;
-    const float     gapLayerHeight  = gameSettings.boardThickness * 0.4f;
-    const float     gapLayerTopY    = boardCenterY + gameSettings.boardThickness * 0.5f - 0.004f;
-    const float     gapLayerCenterY = gapLayerTopY - gapLayerHeight * 0.5f;
-    const glm::mat4 gapLayerModel   = glm::translate(glm::mat4{1.f}, glm::vec3{0.f, gapLayerCenterY, 0.f})
-                                    * glm::scale(glm::mat4{1.f}, glm::vec3{fullBoardSize, gapLayerHeight, fullBoardSize});
+void GLRenderer::drawBoardGaps(const glm::mat4& viewProjection, const settings& gameSettings) const
+{
+    const float boardHalfSize   = (static_cast<float>(Board::SIZE) - 1.f) * 0.5f + BOARD_TILE_SIZE * 0.5f;
+    const float fullBoardSize   = boardHalfSize * 2.f;
+    const float gapLayerHeight  = gameSettings.boardThickness * 0.4f;
+    const float gapLayerTopY    = BOARD_CENTER_Y + gameSettings.boardThickness * 0.5f - 0.004f;
+    const float gapLayerCenterY = gapLayerTopY - gapLayerHeight * 0.5f;
+    
+    const glm::vec3 boardGapColor = gameSettings.getBoardGapColorVec3();
+    const glm::mat4 gapLayerModel = glm::translate(glm::mat4{1.f}, glm::vec3{0.f, gapLayerCenterY, 0.f})
+                                  * glm::scale(glm::mat4{1.f}, glm::vec3{fullBoardSize, gapLayerHeight, fullBoardSize});
 
     drawCube(_boardUniforms.mvp, _boardUniforms.model, _boardUniforms.color, viewProjection, gapLayerModel, boardGapColor);
+}
+
+void GLRenderer::drawTiles(const glm::mat4& viewProjection, const Board& board, const settings& gameSettings) const
+{
+    // Math specific to the tiles lives here now
+    const float boardOriginX = -(static_cast<float>(Board::SIZE) - 1.f) * 0.5f;
+    const float boardOriginZ = -(static_cast<float>(Board::SIZE) - 1.f) * 0.5f;
+    
+    const glm::vec3 whiteTileColor = gameSettings.getWhiteVec3();
+    const glm::vec3 blackTileColor = gameSettings.getBlackVec3();
+    const ImVec4    activeColorIm  = gameSettings.getHighlight();
+    const glm::vec3 activeTileColor{activeColorIm.x, activeColorIm.y, activeColorIm.z};
+    
+    const glm::mat4 tileScale = glm::scale(glm::mat4{1.f}, glm::vec3{BOARD_TILE_SIZE, gameSettings.boardThickness, BOARD_TILE_SIZE});
 
     for (int y = 0; y < Board::SIZE; ++y)
     {
         for (int x = 0; x < Board::SIZE; ++x)
         {
+            const Case&     tileCase    = board.getCase(x, y);
             const bool      isWhiteTile = ((x + y) % 2) == 0;
-            const glm::vec3 tileColor   = isWhiteTile ? whiteTileColor : blackTileColor;
+            const glm::vec3 tileColor   = tileCase.isActive() ? activeTileColor : (isWhiteTile ? whiteTileColor : blackTileColor);
 
             const float worldX = boardOriginX + static_cast<float>(x);
             const float worldZ = boardOriginZ + static_cast<float>(y);
 
-            const glm::mat4 model = glm::translate(glm::mat4{1.f}, glm::vec3{worldX, boardCenterY, worldZ}) * tileScale;
+            const glm::mat4 model = glm::translate(glm::mat4{1.f}, glm::vec3{worldX, BOARD_CENTER_Y, worldZ}) * tileScale;
 
             drawCube(_boardUniforms.mvp, _boardUniforms.model, _boardUniforms.color, viewProjection, model, tileColor);
         }
     }
+}
 
+void GLRenderer::drawBoardEdges(const glm::mat4& viewProjection, const settings& gameSettings) const
+{
+    const float boardHalfSize = (static_cast<float>(Board::SIZE) - 1.f) * 0.5f + BOARD_TILE_SIZE * 0.5f;
+    
     const float     sideThickness       = gameSettings.boardSideThickness;
     const float     sideHeight          = gameSettings.boardThickness + gameSettings.boardSideDrop;
-    const float     sideCenterY         = boardCenterY - gameSettings.boardSideDrop * 0.5f;
+    const float     sideCenterY         = BOARD_CENTER_Y - gameSettings.boardSideDrop * 0.5f;
     const float     sideLength          = (boardHalfSize + sideThickness) * 2.f;
+    
     const glm::vec3 sideColor           = gameSettings.getBoardSideColorVec3();
     const glm::mat4 horizontalSideScale = glm::scale(glm::mat4{1.f}, glm::vec3{sideLength, sideHeight, sideThickness});
     const glm::mat4 verticalSideScale   = glm::scale(glm::mat4{1.f}, glm::vec3{sideThickness, sideHeight, sideLength});
@@ -227,10 +250,10 @@ void BoardRenderer::drawBoardTiles(const glm::mat4& viewProjection, const settin
                                 * horizontalSideScale;
     const glm::mat4 southSide = glm::translate(glm::mat4{1.f}, glm::vec3{0.f, sideCenterY, -(boardHalfSize + sideThickness * 0.5f)})
                                 * horizontalSideScale;
-    const glm::mat4 eastSide = glm::translate(glm::mat4{1.f}, glm::vec3{boardHalfSize + sideThickness * 0.5f, sideCenterY, 0.f})
-                               * verticalSideScale;
-    const glm::mat4 westSide = glm::translate(glm::mat4{1.f}, glm::vec3{-(boardHalfSize + sideThickness * 0.5f), sideCenterY, 0.f})
-                               * verticalSideScale;
+    const glm::mat4 eastSide  = glm::translate(glm::mat4{1.f}, glm::vec3{boardHalfSize + sideThickness * 0.5f, sideCenterY, 0.f})
+                                * verticalSideScale;
+    const glm::mat4 westSide  = glm::translate(glm::mat4{1.f}, glm::vec3{-(boardHalfSize + sideThickness * 0.5f), sideCenterY, 0.f})
+                                * verticalSideScale;
 
     drawCube(_boardUniforms.mvp, _boardUniforms.model, _boardUniforms.color, viewProjection, northSide, sideColor);
     drawCube(_boardUniforms.mvp, _boardUniforms.model, _boardUniforms.color, viewProjection, southSide, sideColor);
@@ -238,80 +261,75 @@ void BoardRenderer::drawBoardTiles(const glm::mat4& viewProjection, const settin
     drawCube(_boardUniforms.mvp, _boardUniforms.model, _boardUniforms.color, viewProjection, westSide, sideColor);
 }
 
-void BoardRenderer::drawPieces(const glm::mat4& viewProjection, const Board& board, const settings& gameSettings, const ResourceManager& resourceManager) const
+void GLRenderer::drawSinglePiece(const glm::mat4& viewProj, const Piece* piece, int x, int y, float originX, float originZ, float topY, const ResourceManager& resourceManager) const
+{
+    if (piece == nullptr) return;
+
+    const std::size_t pieceIndex = static_cast<std::size_t>(piece->type());
+    if (pieceIndex >= PIECES_HEIGHT.size()) return;
+
+    // Gather basic piece info
+    const glm::vec3 pieceColor  = colorForPiece(piece);
+    const float     pieceHeight = PIECES_HEIGHT[pieceIndex];
+    const float     worldX      = originX + static_cast<float>(x);
+    const float     worldZ      = originZ + static_cast<float>(y);
+
+    // Try to get the 3D model
+    const ResourceManager::PieceMeshGlData* modelMesh = resourceManager.pieceMeshFor(piece->type());
+
+    if (modelMesh != nullptr && modelMesh->isValid())
+    {
+        // Path A: Draw the beautiful 3D GLB model
+        const glm::mat4 model = glm::translate(glm::mat4{1.f}, glm::vec3{worldX, topY + PIECE_LIFT_Y, worldZ})
+                              * glm::scale(glm::mat4{1.f}, glm::vec3{pieceHeight, pieceHeight, pieceHeight});
+
+        // drawIndexedMesh already binds its own VAO inside, so we are safe.
+        drawIndexedMesh(_boardUniforms.mvp, _boardUniforms.model, _boardUniforms.color, viewProj, model, pieceColor, modelMesh->vao, modelMesh->indexCount);
+    }
+    else
+    {
+        // Path B: Fallback to drawing a basic cube
+        const glm::mat4 model = glm::translate(glm::mat4{1.f}, glm::vec3{worldX, topY + PIECE_LIFT_Y + pieceHeight * 0.5f, worldZ})
+                              * glm::scale(glm::mat4{1.f}, glm::vec3{PIECE_BASE_WIDTH, pieceHeight, PIECE_BASE_WIDTH});
+
+        // FIX: Explicitly bind the cube VAO right before we draw it. 
+        // This completely eliminates the need for the ugly `cubeVaoBound` boolean tracker!
+        glBindVertexArray(_vao); 
+        drawCube(_boardUniforms.mvp, _boardUniforms.model, _boardUniforms.color, viewProj, model, pieceColor);
+    }
+}
+
+void GLRenderer::drawPieces(const glm::mat4& viewProjection, const Board& board, const settings& gameSettings, const ResourceManager& resourceManager) const
 {
     if (!_boardUniforms.isValid())
         return;
 
-    const float                            boardOriginX = -(static_cast<float>(Board::SIZE) - 1.f) * 0.5f;
-    const float                            boardOriginZ = -(static_cast<float>(Board::SIZE) - 1.f) * 0.5f;
-    const float                            boardTopY    = kBoardCenterY + gameSettings.boardThickness * 0.5f;
-    std::array<glm::mat4, kPieceTypeCount> cubePieceScales{};
-    std::array<glm::mat4, kPieceTypeCount> meshPieceScales{};
+    // Calculate the board anchors once
+    const float boardOriginX = -(static_cast<float>(Board::SIZE) - 1.f) * 0.5f;
+    const float boardOriginZ = -(static_cast<float>(Board::SIZE) - 1.f) * 0.5f;
+    const float boardTopY    = BOARD_CENTER_Y + gameSettings.boardThickness * 0.5f;
 
-    for (std::size_t i = 0u; i < kPieceTypeCount; ++i)
-    {
-        const float pieceHeight = kPieceHeights[i];
-        cubePieceScales[i]      = glm::scale(glm::mat4{1.f}, glm::vec3{kPieceBaseWidth, pieceHeight, kPieceBaseWidth});
-        meshPieceScales[i]      = glm::scale(glm::mat4{1.f}, glm::vec3{pieceHeight, pieceHeight, pieceHeight});
-    }
-
-    bool cubeVaoBound = true;
-
+    // A clean, readable loop!
     for (int y = 0; y < Board::SIZE; ++y)
     {
         for (int x = 0; x < Board::SIZE; ++x)
         {
             const Case& currentCase = board.getCase(x, y);
-            if (!currentCase.hasPiece())
-                continue;
-
-            const Piece* piece = currentCase.getPiece();
-            if (piece == nullptr)
-                continue;
-
-            const std::size_t pieceIndex = pieceTypeIndex(piece->type());
-            if (pieceIndex >= kPieceTypeCount)
-                continue;
-
-            const glm::vec3 pieceColor  = colorForPiece(piece);
-            const float     pieceHeight = kPieceHeights[pieceIndex];
-
-            const float worldX = boardOriginX + static_cast<float>(x);
-            const float worldZ = boardOriginZ + static_cast<float>(y);
-
-            const glm::mat4 cubePieceModel = glm::translate(glm::mat4{1.f}, glm::vec3{worldX, boardTopY + kPieceLiftY + pieceHeight * 0.5f, worldZ})
-                                             * cubePieceScales[pieceIndex];
-
-            const glm::mat4 meshPieceModel = glm::translate(glm::mat4{1.f}, glm::vec3{worldX, boardTopY + kPieceLiftY, worldZ})
-                                             * meshPieceScales[pieceIndex];
-
-            const ResourceManager::PieceMeshGlData* modelMesh = resourceManager.pieceMeshFor(piece->type());
-            if (modelMesh != nullptr && modelMesh->isValid())
+            if (currentCase.hasPiece())
             {
-                cubeVaoBound = false;
-                drawIndexedMesh(_boardUniforms.mvp, _boardUniforms.model, _boardUniforms.color, viewProjection, meshPieceModel, pieceColor, modelMesh->vao, modelMesh->indexCount);
-            }
-            else
-            {
-                if (!cubeVaoBound)
-                {
-                    glBindVertexArray(_vao);
-                    cubeVaoBound = true;
-                }
-                drawCube(_boardUniforms.mvp, _boardUniforms.model, _boardUniforms.color, viewProjection, cubePieceModel, pieceColor);
+                drawSinglePiece(viewProjection, currentCase.getPiece(), x, y, boardOriginX, boardOriginZ, boardTopY, resourceManager);
             }
         }
     }
 }
 
-void BoardRenderer::drawSkybox(const glm::mat4& view, const glm::mat4& projection, const settings& gameSettings) const
+void GLRenderer::drawSkybox(const glm::mat4& view, const glm::mat4& projection, const settings& gameSettings) const
 {
     if (!_skyboxReady || !_skyboxUniforms.isValid() || _vao == 0)
         return;
 
-    const glm::vec3    topColor       = gameSettings.getSkyboxTopColorVec3();
-    const glm::vec3    bottomColor    = gameSettings.getSkyboxBottomColorVec3();
+    const glm::vec3 topColor    = gameSettings.getSkyboxTopColorVec3();
+    const glm::vec3 bottomColor = gameSettings.getSkyboxBottomColorVec3();
 
     glDepthFunc(GL_LEQUAL);
     glDepthMask(GL_FALSE);

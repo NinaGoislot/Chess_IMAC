@@ -1,5 +1,6 @@
 #pragma once
 #include "Scene.hpp"
+#include "Managers/Game.hpp"
 
 class SceneManager;
 
@@ -11,4 +12,5 @@ public:
 
 private:
     SceneManager* _sceneManager = nullptr;
+    Game& _game;
 };

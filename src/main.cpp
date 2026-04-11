@@ -1,44 +1,57 @@
 #include <imgui.h>
 #include <optional>
+#include <filesystem>
+
+#include "utilities/AppConfig.hpp"
 #include "Managers/Game.hpp"
 #include "Managers/InputManager.hpp"
 #include "Managers/SceneManager.hpp"
+#include "Render/Renderer.hpp"
+#include "Render/TextureManager.hpp"
 #include "quick_imgui/quick_imgui.hpp"
 
-int main()
+int main(int argc, char** argv)
 {
-    std::optional<InputManager> inputManager;
+    // -------- CONFIGURATION --------
+    std::filesystem::path exePath = std::filesystem::absolute(argv[0]);
+    std::string baseDir = exePath.parent_path().string();
 
-    // pieecest.stCallback = [&](Piece const& piece) {
-    //     std::cout << "A piece has been eaten: " << piece._name << "\n";
-    // };
+    AppConfig config;
+    config.assetPath = baseDir + "/assets";
+    config.shaderPath = baseDir + "/shaders";
+
+    if (!std::filesystem::exists(config.assetPath) || !std::filesystem::exists(config.shaderPath)) {
+        config.assetPath = baseDir + "/../assets";
+        config.shaderPath = baseDir + "/../shaders";
+    }
+
+    // -------- MAIN LOOP --------
+    std::optional<InputManager> inputManager;
     SceneManager& sceneManager = SceneManager::instance();
 
     quick_imgui::loop(
         "Chess",
         {
-            .init                     = [&]() {
-                sceneManager.init();
+            .init = [&]() {
+                sceneManager.init(config);
                 inputManager.emplace(Game::instance().getSettings());
             },
-            .loop                     = [&]() {
-                if (inputManager.has_value())
-                    inputManager->update();
+            .loop = [&]() {
+                // No more update() call needed here!
                 sceneManager.renderCurrentScene();
             },
-            .mouse_button_callback    = [&](int button, int action, int mods) {
-                if (inputManager.has_value())
-                    inputManager->onMouseButton(button, action, mods);
-            },
+            // mouse_button_callback is entirely removed!
             .cursor_position_callback = [&](double xpos, double ypos) {
-                if (inputManager.has_value())
+                if (inputManager)
                     inputManager->onCursorPosition(xpos, ypos);
             },
-            .scroll_callback          = [&](double xoffset, double yoffset) {
-                if (inputManager.has_value())
+            .scroll_callback = [&](double xoffset, double yoffset) {
+                if (inputManager)
                     inputManager->onScroll(xoffset, yoffset);
             },
         },
         [&]() { return sceneManager.shouldQuit(); }
     );
+    
+    return 0;
 }

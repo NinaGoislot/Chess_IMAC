@@ -6,41 +6,46 @@
 class InputManager
 {
 public:
+    // Constructor
     explicit InputManager(settings& settingsRef);
 
-    void update();
-    void onMouseButton(int button, int action, int mods);
+    // Callbacks
     void onCursorPosition(double xpos, double ypos);
     void onScroll(double xoffset, double yoffset);
 
 private:
-    static constexpr float kMouseSensitivity = 0.2f;
-    static constexpr float kZoomSpeed        = 0.5f;
-    static constexpr float kMinPitch         = -89.0f;
-    static constexpr float kMaxPitch         = 89.0f;
-    static constexpr float kMinDistance      = 6.0f;
-    static constexpr float kMaxDistance      = 25.0f;
+    // Configuration constants
+    static constexpr float MOUSE_SENSITIVITY = 0.2f;
+    static constexpr float ZOOM_SPEED        = 0.5f;
+    static constexpr float MIN_PITCH         = -89.0f;
+    static constexpr float MAX_PITCH         = 89.0f;
+    static constexpr float MIN_DISTANCE      = 6.0f;
+    static constexpr float MAX_DISTANCE      = 25.0f;
 
-    static_assert(kMinPitch < kMaxPitch, "InputManager: min pitch must be < max pitch");
-    static_assert(kMinDistance < kMaxDistance, "InputManager: min distance must be < max distance");
-    static_assert(kMouseSensitivity > 0.0f, "InputManager: mouse sensitivity must be > 0");
-    static_assert(kZoomSpeed > 0.0f, "InputManager: zoom speed must be > 0");
+    // Static assertions to ensure configuration sanity
+    static_assert(MIN_PITCH < MAX_PITCH, "InputManager: min pitch must be < max pitch");
+    static_assert(MIN_DISTANCE < MAX_DISTANCE, "InputManager: min distance must be < max distance");
+    static_assert(MOUSE_SENSITIVITY > 0.0f, "InputManager: mouse sensitivity must be > 0");
+    static_assert(ZOOM_SPEED > 0.0f, "InputManager: zoom speed must be > 0");
     static_assert(std::is_floating_point_v<decltype(settings::cameraYawDegrees)>, "InputManager: camera yaw must be a float");
     static_assert(std::is_floating_point_v<decltype(settings::cameraPitchDegrees)>, "InputManager: camera pitch must be a float");
     static_assert(std::is_floating_point_v<decltype(settings::cameraDistance)>, "InputManager: camera distance must be a float");
 
+    // State variables
     settings& _settings;
     bool      _rightMouseDown = false;
     bool      _firstMouseMove = true;
     double    _lastMouseX     = 0.0;
     double    _lastMouseY     = 0.0;
 
-    float _mouseSensitivity = kMouseSensitivity;
-    float _zoomSpeed        = kZoomSpeed;
-    float _minPitch         = kMinPitch;
-    float _maxPitch         = kMaxPitch;
-    float _minDistance      = kMinDistance;
-    float _maxDistance      = kMaxDistance;
+    // Configurable parameters (initialized with defaults, but can be changed at runtime if needed)
+    float _mouseSensitivity = MOUSE_SENSITIVITY;
+    float _zoomSpeed        = ZOOM_SPEED;
+    float _minPitch         = MIN_PITCH;
+    float _maxPitch         = MAX_PITCH;
+    float _minDistance      = MIN_DISTANCE;
+    float _maxDistance      = MAX_DISTANCE;
 
+    // Helper function to apply zoom based on scroll input
     void applyZoom(float yoffset);
 };

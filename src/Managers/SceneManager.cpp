@@ -1,5 +1,6 @@
 #include "SceneManager.hpp"
-#include <iostream>
+
+#include "Managers/Game.hpp"
 #include "Scenes/GameScene.hpp"
 #include "Scenes/MenuScene.hpp"
 
@@ -9,8 +10,9 @@ SceneManager& SceneManager::instance()
     return instance;
 }
 
-void SceneManager::init()
+void SceneManager::init(const AppConfig& config)
 {
+    Game::instance().initialize(config);
     launchMenuScene();
 }
 

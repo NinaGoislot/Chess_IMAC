@@ -8,6 +8,10 @@ struct ModelMeshData;
 
 namespace Render3D {
 
+// -------- EXPLANATION --------
+// ResourceManager is responsible for managing the OpenGL resources for 3D models, such as VAOs, VBOs, and EBOs.
+
+
 class ResourceManager {
 public:
     struct PieceMeshGlData
@@ -26,7 +30,7 @@ public:
     ResourceManager(const ResourceManager&)            = delete;
     ResourceManager& operator=(const ResourceManager&) = delete;
 
-    bool initialize();
+    bool initialize(const std::string& assetBasePath);
     void destroy();
 
     const PieceMeshGlData* pieceMeshFor(PieceType type) const;
@@ -34,8 +38,8 @@ public:
 
 private:
     bool uploadPieceMesh(PieceType type, const ModelMeshData& meshData);
-    void initializePieceModels();
-    bool loadSkyboxCubemap();
+    void initializePieceModels(const std::string& assetBasePath);
+    bool loadSkyboxCubemap(const std::string& assetBasePath);
     void destroyPieceMeshes();
     void destroySkybox();
 

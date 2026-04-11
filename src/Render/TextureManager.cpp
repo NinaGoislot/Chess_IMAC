@@ -1,12 +1,29 @@
 #include "TextureManager.hpp"
-#include "TextureLoader.hpp"
 #include <array>
 #include <filesystem>
 #include <iostream>
 #include <string>
+#include <string_view>
+#include <utility>
 #include <vector>
+#include "TextureLoader.hpp"
+
 
 namespace {
+constexpr std::array<std::pair<PieceColor, std::string_view>, 2> PieceColors = {{
+    {PieceColor::White, std::string_view{"white"}},
+    {PieceColor::Black, std::string_view{"black"}},
+}};
+
+constexpr std::array<std::pair<PieceType, std::string_view>, 6> PieceTypes = {{
+    {PieceType::Pawn, std::string_view{"pawn"}},
+    {PieceType::Rook, std::string_view{"rook"}},
+    {PieceType::Knight, std::string_view{"knight"}},
+    {PieceType::Bishop, std::string_view{"bishop"}},
+    {PieceType::Queen, std::string_view{"queen"}},
+    {PieceType::King, std::string_view{"king"}},
+}};
+
 std::size_t colorIndex(PieceColor color)
 {
     return (color == PieceColor::White) ? 0U : 1U;
@@ -50,41 +67,19 @@ ImTextureID loadFirstAvailableTexture(const std::vector<std::string>& candidates
               << std::filesystem::current_path().string() << "\n";
     return nullptr;
 }
-
-std::vector<std::string> textureBaseFolders()
-{
-    std::vector<std::string> folders;
-    folders.reserve(4U);
-
-    folders.push_back("assets/textures/pieces");
-    folders.push_back("../assets/textures/pieces");
-    folders.push_back("../../assets/textures/pieces");
-    folders.push_back("textures/pieces");
-    return folders;
-}
 } // namespace
 
-void TextureManager::load()
+void TextureManager::load(const AppConfig& config)
 {
-    const std::array<std::pair<PieceColor, std::string>, ColorCount> colors = {
-        std::pair{PieceColor::White, std::string{"white"}},
-        std::pair{PieceColor::Black, std::string{"black"}},
-    };
-
-    const std::array<std::pair<PieceType, std::string>, PieceTypeCount> pieceTypes = {
-        std::pair{PieceType::Pawn, std::string{"pawn"}},
-        std::pair{PieceType::Rook, std::string{"rook"}},
-        std::pair{PieceType::Knight, std::string{"knight"}},
-        std::pair{PieceType::Bishop, std::string{"bishop"}},
-        std::pair{PieceType::Queen, std::string{"queen"}},
-        std::pair{PieceType::King, std::string{"king"}},
-    };
-
-    const std::vector<std::string> baseFolders = textureBaseFolders();
-
-    for (const auto& [color, colorName] : colors)
+    std::vector<std::string> baseFolders;
+    if (!config.assetPath.empty())
     {
-        for (const auto& [type, pieceName] : pieceTypes)
+        baseFolders.insert(baseFolders.begin(), config.assetPath + "/textures/pieces");
+    }
+
+    for (const auto& [color, colorName] : PieceColors)
+    {
+        for (const auto& [type, pieceName] : PieceTypes)
         {
             std::vector<std::string> candidates;
             candidates.reserve(baseFolders.size() * 2U);
@@ -115,11 +110,7 @@ void TextureManager::load()
                 candidates.push_back(std::move(flatStylePath));
             }
 
-            std::string label;
-            label.reserve(colorName.size() + pieceName.size() + 1U);
-            label.append(colorName);
-            label.append(" ");
-            label.append(pieceName);
+            const std::string label = std::string(colorName) + " " + std::string(pieceName);
             _pieceTextures[colorIndex(color)][pieceTypeIndex(type)] = loadFirstAvailableTexture(candidates, label);
         }
     }

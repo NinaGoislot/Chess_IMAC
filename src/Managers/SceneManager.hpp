@@ -1,7 +1,9 @@
 #pragma once
 
 #include <memory>
+
 #include "Scenes/Scene.hpp"
+#include "utilities/AppConfig.hpp"
 
 class SceneManager {
 public:
@@ -12,7 +14,7 @@ public:
     SceneManager& operator=(SceneManager&&)      = delete;
     ~SceneManager()                              = default;
 
-    void init();
+    void init(const AppConfig& config);
     void renderCurrentScene();
 
     void launchMenuScene();

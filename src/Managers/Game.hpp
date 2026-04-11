@@ -32,6 +32,7 @@ public:
     void addMoveToHistory(const std::string& move);
 
     // Functions
+    void initialize(const AppConfig& config);
     void newGame();
     void displayBoard();
 
@@ -46,7 +47,7 @@ private:
     // Parameters
     Board                    _board;
     TextureManager           _textures;
-    Renderer            _renderer;
+    Renderer                 _renderer;
     std::array<Player, 2>    _players;
     TurnManager              _turnManager;
     settings                 _settings;

@@ -1,81 +1,114 @@
 #include "Renderer.hpp"
 #include <algorithm>
 #include <imgui.h>
-#include "Managers/Game.hpp"
 
 Renderer::Renderer(TextureManager& textures)
     : _textures(textures)
 {
 }
 
-void Renderer::initialize()
+void Renderer::initialize(const AppConfig& config)
 {
-    _board3DRenderer.initialize();
+    _scene3D.initialize(config);
 }
 
-void Renderer::draw(Board& board, const settings& gameSettings, PieceColor currentTurn, float deltaTimeSeconds)
+std::optional<BoardClick> Renderer::draw(const Board& board, const settings& gameSettings, PieceColor currentTurn, float deltaTimeSeconds)
 {
     if (gameSettings.use3D)
+        return draw3DBoard(board, gameSettings, currentTurn, deltaTimeSeconds);
+
+    return draw2DBoard(board, gameSettings);
+}
+
+std::optional<BoardClick> Renderer::draw3DBoard(const Board& board, const settings& gameSettings, PieceColor currentTurn, float deltaTimeSeconds)
+{
+    ImVec2 available = ImGui::GetContentRegionAvail();
+    available.x      = std::max(available.x, 64.f);
+    available.y      = std::max(available.y, 64.f);
+
+    _scene3D.render(board, gameSettings, currentTurn, static_cast<int>(available.x), static_cast<int>(available.y), deltaTimeSeconds);
+
+    ImTextureID texture = _scene3D.colorTexture();
+    if (texture == nullptr)
     {
-        ImVec2 available = ImGui::GetContentRegionAvail();
-        available.x      = std::max(available.x, 64.f);
-        available.y      = std::max(available.y, 64.f);
+        return draw2DBoard(board, gameSettings);
+    }
 
-        _board3DRenderer.render(board, gameSettings, currentTurn, static_cast<int>(available.x), static_cast<int>(available.y), deltaTimeSeconds);
+    const ImVec2 imageStart = ImGui::GetCursorScreenPos();
+    ImGui::Image(texture, available, ImVec2(0.f, 1.f), ImVec2(1.f, 0.f));
 
-        ImTextureID texture = _board3DRenderer.colorTexture();
-        if (texture != nullptr)
+    std::optional<BoardClick> clickedCase;
+    if (ImGui::IsItemHovered() && ImGui::IsMouseClicked(ImGuiMouseButton_Left))
+    {
+        const ImVec2 mousePosition = ImGui::GetIO().MousePos;
+        const float  localX        = mousePosition.x - imageStart.x;
+        const float  localY        = mousePosition.y - imageStart.y;
+
+        int tileX = 0;
+        int tileY = 0;
+        if (_scene3D.pickBoardTile(gameSettings, localX, localY, available.x, available.y, &tileX, &tileY))
         {
-            ImGui::Image(texture, available, ImVec2(0.f, 1.f), ImVec2(1.f, 0.f));
-            return;
+            clickedCase = BoardClick{tileX, tileY};
         }
     }
 
-    if (!gameSettings.use3D)
+    return clickedCase;
+}
+
+std::optional<BoardClick> Renderer::draw2DBoard(const Board& board, const settings& gameSettings)
+{
+    std::optional<BoardClick> clickedCase;
+
+    for (int y = 0; y < Board::SIZE; y++)
     {
-        for (int y = 0; y < Board::SIZE; y++)
+        for (int x = 0; x < Board::SIZE; x++)
         {
-            for (int x = 0; x < Board::SIZE; x++)
-            {
-                ImGui::PushID(x + y * Board::SIZE);
+            if (!clickedCase.has_value() && draw2DCase(board, gameSettings, x, y))
+                clickedCase = BoardClick{x, y};
 
-                bool        white       = (x + y) % 2 == 0;
-                const Case& currentCase = board.getCase(x, y);
-
-                ImVec4 color = white ? gameSettings.getWhite() : gameSettings.getBlack();
-                if (currentCase.isActive())
-                {
-                    color = gameSettings.getHighlight();
-                }
-
-                ImGui::PushStyleColor(ImGuiCol_Button, color);
-                ImGui::PushStyleColor(ImGuiCol_ButtonHovered, color);
-                ImGui::PushStyleColor(ImGuiCol_ButtonActive, color);
-
-                ImVec2 pos = ImGui::GetCursorScreenPos();
-
-                if (ImGui::Button(" ", ImVec2{gameSettings.buttonSize, gameSettings.buttonSize}))
-                {
-                    if (board.onCaseClicked(x, y, currentTurn))
-                    {
-                        Game::instance().turnManager().nextTurn();
-                    }
-                }
-
-                if (currentCase.hasPiece())
-                {
-                    Piece* piece = currentCase.getPiece();
-
-                    ImGui::SetCursorScreenPos(pos);
-                    piece->draw(gameSettings);
-                }
-
-                ImGui::PopStyleColor(3);
-                ImGui::PopID();
-
-                if (x < Board::SIZE - 1)
-                    ImGui::SameLine();
-            }
+            if (x < Board::SIZE - 1)
+                ImGui::SameLine();
         }
     }
+
+    return clickedCase;
+}
+
+bool Renderer::draw2DCase(const Board& board, const settings& gameSettings, int x, int y)
+{
+    ImGui::PushID(x + y * Board::SIZE);
+
+    bool        white       = (x + y) % 2 == 0;
+    const Case& currentCase = board.getCase(x, y);
+
+    ImVec4 color = white ? gameSettings.getWhite() : gameSettings.getBlack();
+    if (currentCase.isActive())
+    {
+        color = gameSettings.getHighlight();
+    }
+
+    ImGui::PushStyleColor(ImGuiCol_Button, color);
+    ImGui::PushStyleColor(ImGuiCol_ButtonHovered, color);
+    ImGui::PushStyleColor(ImGuiCol_ButtonActive, color);
+
+    bool  clicked = false;
+    ImVec2 pos        = ImGui::GetCursorScreenPos();
+
+    if (ImGui::Button(" ", ImVec2{gameSettings.buttonSize, gameSettings.buttonSize}))
+    {
+        clicked = true;
+    }
+
+    if (currentCase.hasPiece())
+    {
+        Piece* piece = currentCase.getPiece();
+
+        ImGui::SetCursorScreenPos(pos);
+        piece->draw(gameSettings);
+    }
+
+    ImGui::PopStyleColor(3);
+    ImGui::PopID();
+
+    return clicked;
 }

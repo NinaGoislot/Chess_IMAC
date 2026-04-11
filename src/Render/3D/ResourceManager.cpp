@@ -9,56 +9,32 @@
 #include <string>
 #include <utility>
 #include <vector>
-#include "modelLoader.hpp"
+#include "ModelLoader.hpp"
 
 namespace {
 
-constexpr std::size_t kPieceTypeCount = 6u;
+constexpr std::size_t PIECE_TYPE_COUNT = 6u;
 
-constexpr std::array<const char*, kPieceTypeCount> kPieceModelNames = {
-    "pawn",
-    "rook",
-    "knight",
-    "bishop",
-    "queen",
-    "king",
+constexpr std::array<const char*, PIECE_TYPE_COUNT> PIECE_MODEL_NAMES = {
+    "pawn", "rook", "knight", "bishop", "queen", "king",
 };
 
-constexpr std::array<const char*, 6> kSkyboxFaceNames = {
-    "right",
-    "left",
-    "top",
-    "bottom",
-    "front",
-    "back",
+constexpr std::array<const char*, 6> SKYBOX_FACE_NAMES = {
+    "right", "left", "top", "bottom", "front", "back",
 };
-constexpr std::array<const char*, 5> kSkyboxFileExtensions = {
-    ".png",
-    ".jpg",
-    ".jpeg",
-    ".bmp",
-    ".tga",
-};
-constexpr std::array<const char*, 5> kSkyboxRoots = {
-    "assets/textures/skybox/day",
-    "../assets/textures/skybox/day",
-    "../../assets/textures/skybox/day",
-    "bin/assets/textures/skybox/day",
-    "../../../assets/textures/skybox/day",
+
+// We keep extensions so you can mix and match jpg/png easily
+constexpr std::array<const char*, 5> SKYBOX_FILE_EXTENSIONS = {
+    ".png", ".jpg", ".jpeg", ".bmp", ".tga",
 };
 
 GLenum textureFormatForChannels(int channels)
 {
-    switch (channels)
-    {
-    case 1:
-        return GL_RED;
-    case 3:
-        return GL_RGB;
-    case 4:
-        return GL_RGBA;
-    default:
-        return GL_RGB;
+    switch (channels) {
+        case 1: return GL_RED;
+        case 3: return GL_RGB;
+        case 4: return GL_RGBA;
+        default: return GL_RGB;
     }
 }
 
@@ -70,31 +46,12 @@ std::size_t pieceTypeIndex(PieceType type)
 std::string pieceModelName(PieceType type)
 {
     const std::size_t index = pieceTypeIndex(type);
-    if (index < kPieceModelNames.size())
-        return kPieceModelNames[index];
-
-    return kPieceModelNames[0];
+    if (index < PIECE_MODEL_NAMES.size())
+        return PIECE_MODEL_NAMES[index];
+    return PIECE_MODEL_NAMES[0];
 }
 
-std::vector<std::string> modelCandidates(PieceType type)
-{
-    const std::string                modelName = pieceModelName(type);
-    const std::array<std::string, 5> roots     = {
-        "assets/models",
-        "../assets/models",
-        "../../assets/models",
-        "bin/assets/models",
-        "../../../assets/models",
-    };
-
-    std::vector<std::string> candidates;
-    candidates.reserve(roots.size());
-
-    for (const std::string& root : roots)
-        candidates.push_back(root + "/" + modelName + ".glb");
-
-    return candidates;
-}
+// Notice: modelCandidates() is completely DELETED. We don't need it anymore!
 
 } // namespace
 
@@ -105,13 +62,15 @@ ResourceManager::~ResourceManager()
     destroy();
 }
 
-bool ResourceManager::initialize()
+// 1. Accept the path here
+bool ResourceManager::initialize(const std::string& assetBasePath)
 {
     if (_initialized)
         return true;
 
-    initializePieceModels();
-    const bool skyboxLoaded = loadSkyboxCubemap();
+    // 2. Pass the path down to the loaders
+    initializePieceModels(assetBasePath);
+    const bool skyboxLoaded = loadSkyboxCubemap(assetBasePath);
 
     _initialized = true;
     return skyboxLoaded;
@@ -120,20 +79,16 @@ bool ResourceManager::initialize()
 const ResourceManager::PieceMeshGlData* ResourceManager::pieceMeshFor(PieceType type) const
 {
     const std::size_t index = pieceTypeIndex(type);
-    if (index >= _pieceMeshes.size())
-        return nullptr;
-
+    if (index >= _pieceMeshes.size()) return nullptr;
     return &_pieceMeshes[index];
 }
 
 bool ResourceManager::uploadPieceMesh(PieceType type, const ModelMeshData& meshData)
 {
-    if (meshData.vertices.empty() || meshData.indices.empty())
-        return false;
-
+    // [This function remains exactly the same as your original code]
+    if (meshData.vertices.empty() || meshData.indices.empty()) return false;
     const std::size_t index = pieceTypeIndex(type);
-    if (index >= _pieceMeshes.size())
-        return false;
+    if (index >= _pieceMeshes.size()) return false;
 
     PieceMeshGlData& mesh = _pieceMeshes[index];
 
@@ -149,179 +104,113 @@ bool ResourceManager::uploadPieceMesh(PieceType type, const ModelMeshData& meshD
 
     glBindVertexArray(mesh.vao);
     glBindBuffer(GL_ARRAY_BUFFER, mesh.vbo);
-    glBufferData(
-        GL_ARRAY_BUFFER,
-        static_cast<GLsizeiptr>(meshData.vertices.size() * sizeof(Vertex)),
-        meshData.vertices.data(),
-        GL_STATIC_DRAW
-    );
+    glBufferData(GL_ARRAY_BUFFER, static_cast<GLsizeiptr>(meshData.vertices.size() * sizeof(Vertex)), meshData.vertices.data(), GL_STATIC_DRAW);
 
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh.ebo);
-    glBufferData(
-        GL_ELEMENT_ARRAY_BUFFER,
-        static_cast<GLsizeiptr>(meshData.indices.size() * sizeof(uint32_t)),
-        meshData.indices.data(),
-        GL_STATIC_DRAW
-    );
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, static_cast<GLsizeiptr>(meshData.indices.size() * sizeof(uint32_t)), meshData.indices.data(), GL_STATIC_DRAW);
 
     glEnableVertexAttribArray(0);
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), nullptr);
-
     glEnableVertexAttribArray(1);
     glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), reinterpret_cast<void*>(offsetof(Vertex, normal)));
 
     mesh.indexCount = static_cast<int>(meshData.indices.size());
-
     glBindVertexArray(0);
+    
     return mesh.isValid();
 }
 
-void ResourceManager::initializePieceModels()
+void ResourceManager::initializePieceModels(const std::string& assetBasePath)
 {
-    for (std::size_t i = 0u; i < kPieceTypeCount; ++i)
+    // We construct the definitive path directly
+    const std::string modelsDir = assetBasePath + "/models/";
+
+    for (std::size_t i = 0u; i < PIECE_TYPE_COUNT; ++i)
     {
         const PieceType type = static_cast<PieceType>(i);
+        const std::string modelPath = modelsDir + pieceModelName(type) + ".glb";
 
-        ModelMeshData meshData;
-        bool          loaded = false;
-        std::string   loadedFrom;
-        std::string   loadError;
-
-        for (const std::string& candidate : modelCandidates(type))
+        if (!std::filesystem::exists(modelPath))
         {
-            if (!std::filesystem::exists(candidate))
-                continue;
-
-            MeshLoadResult loadResult = loadGLBMesh(candidate);
-            if (loadResult.success)
-            {
-                meshData   = std::move(loadResult.mesh);
-                loaded     = true;
-                loadedFrom = candidate;
-                break;
-            }
-
-            loadError = std::move(loadResult.error);
-        }
-
-        if (!loaded)
-        {
-            std::cout << "No GLB model found for piece type '" << pieceModelName(type)
-                      << "'. Falling back to cube rendering for this piece.";
-            if (!loadError.empty())
-                std::cout << " Last loader error: " << loadError;
-            std::cout << "\n";
+            std::cout << "No GLB model found at '" << modelPath << "'. Falling back to cube.\n";
             continue;
         }
 
-        if (!uploadPieceMesh(type, meshData))
+        MeshLoadResult loadResult = loadGLBMesh(modelPath);
+        if (!loadResult.success)
         {
-            std::cout << "Failed to upload GLB mesh for piece type '" << pieceModelName(type)
-                      << "' from: " << loadedFrom << "\n";
+            std::cout << "Failed to load GLB at '" << modelPath << "'. Error: " << loadResult.error << "\n";
             continue;
         }
 
-        std::cout << "Loaded GLB model for piece type '" << pieceModelName(type)
-                  << "' from: " << loadedFrom << "\n";
+        if (!uploadPieceMesh(type, loadResult.mesh))
+        {
+            std::cout << "Failed to upload GLB mesh for '" << modelPath << "' to the GPU.\n";
+            continue;
+        }
+
+        std::cout << "Loaded GLB model from: " << modelPath << "\n";
     }
 }
 
-bool ResourceManager::loadSkyboxCubemap()
+bool ResourceManager::loadSkyboxCubemap(const std::string& assetBasePath)
 {
-    std::array<std::string, kSkyboxFaceNames.size()> selectedFacePaths{};
-    bool                                             foundValidRoot = false;
+    const std::string skyboxDir = assetBasePath + "/textures/skybox/day/";
+    std::array<std::string, SKYBOX_FACE_NAMES.size()> selectedFacePaths{};
+    bool hasAllFaces = true;
 
-    for (const char* root : kSkyboxRoots)
+    // Only loop through faces and extensions now. No more root guessing!
+    for (std::size_t i = 0; i < SKYBOX_FACE_NAMES.size(); ++i)
     {
-        std::array<std::string, kSkyboxFaceNames.size()> candidatePaths{};
-        bool                                             hasAllFaces = true;
-
-        for (std::size_t i = 0; i < kSkyboxFaceNames.size(); ++i)
+        bool faceFound = false;
+        for (const char* extension : SKYBOX_FILE_EXTENSIONS)
         {
-            bool faceFound = false;
-            for (const char* extension : kSkyboxFileExtensions)
+            const std::string candidatePath = skyboxDir + SKYBOX_FACE_NAMES[i] + extension;
+            if (std::filesystem::exists(candidatePath))
             {
-                const std::string candidatePath = std::string{root} + "/" + kSkyboxFaceNames[i] + extension;
-                if (std::filesystem::exists(candidatePath))
-                {
-                    candidatePaths[i] = candidatePath;
-                    faceFound         = true;
-                    break;
-                }
-            }
-
-            if (!faceFound)
-            {
-                hasAllFaces = false;
+                selectedFacePaths[i] = candidatePath;
+                faceFound = true;
                 break;
             }
         }
 
-        if (hasAllFaces)
+        if (!faceFound)
         {
-            selectedFacePaths = candidatePaths;
-            foundValidRoot    = true;
+            hasAllFaces = false;
             break;
         }
     }
 
-    if (!foundValidRoot)
+    if (!hasAllFaces)
     {
-        if (_skyboxCubemap != 0)
-        {
-            glDeleteTextures(1, &_skyboxCubemap);
-            _skyboxCubemap = 0;
-        }
-
-        std::cout << "Skybox textures not found. Expected right/left/top/bottom/front/back in assets/textures/skybox/day. "
-                     "Using gradient skybox colors only.\n";
-        return true;
+        // Cleanup if we had a previous skybox, then exit cleanly
+        destroySkybox();
+        std::cout << "Skybox textures not found in " << skyboxDir << ". Using gradient skybox colors only.\n";
+        return true; 
     }
 
-    if (_skyboxCubemap != 0)
-    {
-        glDeleteTextures(1, &_skyboxCubemap);
-        _skyboxCubemap = 0;
-    }
+    destroySkybox(); // clear any existing texture safely
 
     glGenTextures(1, &_skyboxCubemap);
     glBindTexture(GL_TEXTURE_CUBE_MAP, _skyboxCubemap);
 
     for (std::size_t i = 0; i < selectedFacePaths.size(); ++i)
     {
-        int            width    = 0;
-        int            height   = 0;
-        int            channels = 0;
-        unsigned char* data     = stbi_load(selectedFacePaths[i].c_str(), &width, &height, &channels, 0);
+        int width = 0, height = 0, channels = 0;
+        unsigned char* data = stbi_load(selectedFacePaths[i].c_str(), &width, &height, &channels, 0);
 
         if (data == nullptr)
         {
             std::cout << "Failed to load skybox face texture: " << selectedFacePaths[i] << "\n";
             glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
-            glDeleteTextures(1, &_skyboxCubemap);
-            _skyboxCubemap = 0;
+            destroySkybox();
             return false;
         }
 
-        const GLenum format         = textureFormatForChannels(channels);
-        GLenum       internalFormat = GL_RGB8;
-        if (format == GL_RGBA)
-            internalFormat = GL_RGBA8;
-        else if (format == GL_RED)
-            internalFormat = GL_R8;
+        const GLenum format = textureFormatForChannels(channels);
+        GLenum internalFormat = (format == GL_RGBA) ? GL_RGBA8 : ((format == GL_RED) ? GL_R8 : GL_RGB8);
 
-        glTexImage2D(
-            GL_TEXTURE_CUBE_MAP_POSITIVE_X + static_cast<GLenum>(i),
-            0,
-            static_cast<GLint>(internalFormat),
-            width,
-            height,
-            0,
-            format,
-            GL_UNSIGNED_BYTE,
-            data
-        );
-
+        glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + static_cast<GLenum>(i), 0, static_cast<GLint>(internalFormat), width, height, 0, format, GL_UNSIGNED_BYTE, data);
         stbi_image_free(data);
     }
 
@@ -335,19 +224,18 @@ bool ResourceManager::loadSkyboxCubemap()
     return true;
 }
 
+// [destroyPieceMeshes, destroySkybox, and destroy remain exactly the same]
+
 void ResourceManager::destroyPieceMeshes()
 {
     for (PieceMeshGlData& mesh : _pieceMeshes)
     {
         glDeleteBuffers(1, &mesh.ebo);
         mesh.ebo = 0;
-
         glDeleteBuffers(1, &mesh.vbo);
         mesh.vbo = 0;
-
         glDeleteVertexArrays(1, &mesh.vao);
         mesh.vao = 0;
-
         mesh.indexCount = 0;
     }
 }

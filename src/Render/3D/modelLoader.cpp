@@ -1,4 +1,4 @@
-﻿#include "modelLoader.hpp"
+﻿#include "ModelLoader.hpp"
 
 #define TINYGLTF_NO_STB_IMAGE
 #define TINYGLTF_NO_STB_IMAGE_WRITE
@@ -19,7 +19,7 @@
 
 namespace {
 
-constexpr float kEpsilon = 1e-6f;
+constexpr float EPSILON = 1e-6f;
 
 std::size_t toSize(const int value)
 {
@@ -208,7 +208,7 @@ std::vector<glm::vec3> generateAreaWeightedVertexNormals(const std::vector<glm::
         const glm::vec3 crossProduct = glm::cross(edge1, edge2);
 
         const float twiceArea = glm::length(crossProduct);
-        if (twiceArea <= kEpsilon)
+        if (twiceArea <= EPSILON)
             continue;
 
         const glm::vec3 faceNormal = crossProduct / twiceArea;
@@ -223,7 +223,7 @@ std::vector<glm::vec3> generateAreaWeightedVertexNormals(const std::vector<glm::
     for (glm::vec3& normal : normals)
     {
         const float len = glm::length(normal);
-        if (len > kEpsilon)
+        if (len > EPSILON)
             normal /= len;
         else
             normal = glm::vec3{0.f, 1.f, 0.f};
@@ -372,7 +372,7 @@ void applyTransformToNormals(std::vector<glm::vec3>& normals, const glm::mat4& t
         return;
 
     const glm::mat3 linear = glm::mat3(transform);
-    if (std::abs(glm::determinant(linear)) <= kEpsilon)
+    if (std::abs(glm::determinant(linear)) <= EPSILON)
         return;
 
     const glm::mat3 normalMatrix = glm::transpose(glm::inverse(linear));
@@ -381,7 +381,7 @@ void applyTransformToNormals(std::vector<glm::vec3>& normals, const glm::mat4& t
     {
         normal = normalMatrix * normal;
         const float len = glm::length(normal);
-        if (len > kEpsilon)
+        if (len > EPSILON)
             normal /= len;
         else
             normal = glm::vec3{0.f, 1.f, 0.f};
@@ -407,7 +407,7 @@ void normalizePositionsToGroundedUnitHeight(std::vector<glm::vec3>& positions)
     const float height  = maxP.y - minP.y;
 
     float normalizingScale = 1.f;
-    if (height > kEpsilon)
+    if (height > EPSILON)
     {
         normalizingScale = 1.f / height;
     }
@@ -416,7 +416,7 @@ void normalizePositionsToGroundedUnitHeight(std::vector<glm::vec3>& positions)
         const float extentX = maxP.x - minP.x;
         const float extentZ = maxP.z - minP.z;
         const float extent  = std::max(extentX, extentZ);
-        if (extent > kEpsilon)
+        if (extent > EPSILON)
             normalizingScale = 1.f / extent;
     }
 

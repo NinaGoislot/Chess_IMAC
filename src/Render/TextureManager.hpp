@@ -1,12 +1,14 @@
 #pragma once
 #include <imgui.h>
 #include <array>
+
 #include "Game/Pieces/Piece.hpp"
+#include "utilities/AppConfig.hpp"
 
 class TextureManager
 {
 public:
-    void load();
+    void load(const AppConfig& config = {});
     ImTextureID getPieceTexture(PieceColor color, PieceType type) const;
 
 private:

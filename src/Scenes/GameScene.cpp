@@ -2,11 +2,13 @@
 #include <imgui.h>
 #include "Managers/Game.hpp"
 #include "Managers/SceneManager.hpp"
+#include "Render/Renderer.hpp"
+#include "Scenes/SettingsPanel.hpp"
 
 GameScene::GameScene(SceneManager& sceneManager)
-    : _sceneManager(&sceneManager)
+    : _sceneManager(&sceneManager), _game(Game::instance())
 {
-    Game::instance().newGame();
+    _game.newGame();
 }
 
 void GameScene::render()
@@ -19,20 +21,20 @@ void GameScene::render()
     ImGui::SameLine();
     if (ImGui::Button("Nouvelle partie"))
     {
-        Game::instance().newGame();
+        _game.newGame();
     }
 
     ImGui::Separator();
-    Game::instance().displayBoard();
+    _game.displayBoard();
     ImGui::End();
 
-    Game::instance().getSettings().display();
+    SettingsPanel::draw(_game.getSettings());
 
     ImGui::Begin("Historique");
 
     ImGui::BeginChild("Scrolling");
 
-    const std::vector<std::string> history = Game::instance().getMoveHistory();
+    const std::vector<std::string> history = _game.getMoveHistory();
     for (const std::string& move : history)
     {
         ImGui::Text("%s", move.c_str());

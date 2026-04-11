@@ -1,9 +1,9 @@
 #include "Primitives.hpp"
 
-const std::array<float, Primitives::kCubeVertexFloatCount>& Primitives::cubeVertices()
+const std::array<float, Primitives::CUBE_VERTEX_FLOAT_COUNT>& Primitives::cubeVertices()
 {
     // Position xyz + normal xyz.
-    static constexpr std::array<float, Primitives::kCubeVertexFloatCount> vertices = {
+    static constexpr std::array<float, Primitives::CUBE_VERTEX_FLOAT_COUNT> vertices = {
         // +X
         0.5f, -0.5f, -0.5f, 1.f, 0.f, 0.f,
         0.5f, 0.5f, -0.5f, 1.f, 0.f, 0.f,

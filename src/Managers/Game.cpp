@@ -1,19 +1,17 @@
 #include "Managers/Game.hpp"
-#include <imgui.h>
 #include <array>
-#include <memory>
 #include "Game/settings.hpp"
 
 // #include "quick_imgui/quick_imgui.hpp"
 
-//-------- GET INsTANCE --------
+//-------- GET INSTANCE --------
 Game& Game::instance()
 {
     static Game instance;
     return instance;
 }
 
-//-------- CONsTRUCTOR --------
+//-------- CONSTRUCTOR --------
 Game::Game()
     : _board()
     , _textures()
@@ -21,11 +19,10 @@ Game::Game()
     , _players{}
 {
     _textures.load();
-    _renderer.initialize();
     newGame();
 }
 
-//-------- GETTERs --------
+//-------- GETTERS --------
 
 settings& Game::getSettings()
 {
@@ -44,6 +41,13 @@ const std::vector<std::string>& Game::getMoveHistory() const
 
 //-------- INIT --------
 
+void Game::initialize(const AppConfig& config)
+{
+    _textures.load(config);
+    _renderer.initialize(config);
+    newGame();
+}
+
 void Game::newGame()
 {
     _turnManager.setCurrent(PieceColor::White);
@@ -51,11 +55,17 @@ void Game::newGame()
     _players[1] = Player(PieceColor::Black, "Black", _textures);
     placePieces();
 }
-//-------- DRAw --------
+//-------- DRAW --------
 
 void Game::displayBoard()
 {
-    _renderer.draw(_board, _settings, _turnManager.getCurrent(), ImGui::GetIO().DeltaTime);
+    const PieceColor currentTurn = _turnManager.getCurrent();
+    const auto       clickedCase = _renderer.draw(_board, _settings, currentTurn, ImGui::GetIO().DeltaTime);
+
+    if (clickedCase.has_value() && _board.onCaseClicked(clickedCase->x, clickedCase->y, currentTurn))
+    {
+        _turnManager.nextTurn();
+    }
 }
 
 //-------- ADD or UPDATE --------
@@ -75,7 +85,7 @@ void Game::addMoveToHistory(const std::string& move)
     _moveHistory.push_back(move);
 }
 
-//-------- FUNCTIONs --------
+//-------- FUNCTIONS --------
 
 void Game::placePieces()
 {

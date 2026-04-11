@@ -8,6 +8,9 @@ struct settings;
 
 namespace Render3D {
 
+// -------- EXPLANATION --------
+// CameraController is the "Cameraman".
+
 class CameraController {
 public:
     CameraController() = default;

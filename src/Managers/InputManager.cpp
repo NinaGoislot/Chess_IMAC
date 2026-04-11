@@ -1,30 +1,18 @@
 #include "Managers/InputManager.hpp"
-
 #include <algorithm>
 #include <imgui.h>
-#include <GLFW/glfw3.h>
 
+// -------- CONSTRUCTOR --------
 InputManager::InputManager(settings& settingsRef)
     : _settings(settingsRef)
 {
 }
 
-void InputManager::onMouseButton(int button, int action, int mods)
-{
-    (void)mods;
-
-    if (button == GLFW_MOUSE_BUTTON_RIGHT)
-    {
-        _rightMouseDown = (action == GLFW_PRESS);
-        if (_rightMouseDown)
-            _firstMouseMove = true;
-    }
-}
-
+// -------- CALLBACKS --------
 void InputManager::onCursorPosition(double xpos, double ypos)
 {
-    _rightMouseDown = ImGui::IsMouseDown(ImGuiMouseButton_Right);
-    if (!_rightMouseDown)
+    // Read button state directly from ImGui
+    if (!ImGui::IsMouseDown(ImGuiMouseButton_Right))
     {
         _firstMouseMove = true;
         return;
@@ -53,18 +41,18 @@ void InputManager::onCursorPosition(double xpos, double ypos)
 void InputManager::onScroll(double xoffset, double yoffset)
 {
     (void)xoffset;
+
+    // Prevent camera zooming if the user is scrolling inside an ImGui window
+    if (ImGui::GetIO().WantCaptureMouse) return;
+
     applyZoom(static_cast<float>(yoffset));
 }
 
-void InputManager::update()
-{
-    const float wheel = ImGui::GetIO().MouseWheel;
-    if (wheel != 0.0f)
-        applyZoom(wheel);
-}
-
+// -------- HELPERS --------
 void InputManager::applyZoom(float yoffset)
 {
+    if (_settings.cameraPieceTarget) return;
+
     _settings.cameraDistance -= yoffset * _zoomSpeed;
     _settings.cameraDistance = std::clamp(_settings.cameraDistance, _minDistance, _maxDistance);
 }
