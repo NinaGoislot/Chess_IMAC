@@ -1,10 +1,13 @@
 #pragma once
 
-#include <string>
 #include <glm/mat4x4.hpp>
+#include <optional>
+#include <string>
+#include <utility>
 #include "Game/Pieces/Piece.hpp"
 #include "Game/settings.hpp"
 #include "Render/3D/Shader.hpp"
+
 
 class Board;
 
@@ -34,18 +37,16 @@ public:
     bool beginBoardPass(PieceColor currentTurn) const;
     void setupStaticLighting() const;
 
-
-    void drawBoard(const glm::mat4& viewProjection, const Board& board, const settings& gameSettings) const;
+    void drawBoard(const glm::mat4& viewProjection, const Board& board, const settings& gameSettings, std::optional<std::pair<int, int>> kirbyPosition) const;
     void drawBoardGaps(const glm::mat4& viewProjection, const settings& gameSettings) const;
-    void drawTiles(const glm::mat4& viewProjection, const Board& board, const settings& gameSettings) const;
+    void drawTiles(const glm::mat4& viewProjection, const Board& board, const settings& gameSettings, std::optional<std::pair<int, int>> kirbyPosition) const;
     void drawBoardEdges(const glm::mat4& viewProjection, const settings& gameSettings) const;
 
     void drawPieces(const glm::mat4& viewProjection, const Board& board, const settings& gameSettings, const ResourceManager& resourceManager) const;
     void drawSkybox(const glm::mat4& view, const glm::mat4& projection, const settings& gameSettings) const;
 
 private:
-    struct UniformLocations
-    {
+    struct UniformLocations {
         int mvp      = -1;
         int model    = -1;
         int color    = -1;
@@ -59,11 +60,10 @@ private:
         }
     };
 
-    struct SkyboxUniformLocations
-    {
-        int vp           = -1;
-        int topColor     = -1;
-        int bottomColor  = -1;
+    struct SkyboxUniformLocations {
+        int vp          = -1;
+        int topColor    = -1;
+        int bottomColor = -1;
 
         bool isValid() const
         {
@@ -78,8 +78,8 @@ private:
 
     void drawSinglePiece(const glm::mat4& viewProj, const Piece* piece, int x, int y, float originX, float originZ, float topY, const ResourceManager& resourceManager) const;
 
-    unsigned int _vao        = 0;
-    unsigned int _vbo        = 0;
+    unsigned int _vao         = 0;
+    unsigned int _vbo         = 0;
     bool         _initialized = false;
     bool         _skyboxReady = false;
 

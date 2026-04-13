@@ -1,6 +1,7 @@
 #include "Renderer.hpp"
-#include <algorithm>
 #include <imgui.h>
+#include <algorithm>
+
 
 Renderer::Renderer(TextureManager& textures)
     : _textures(textures)
@@ -12,26 +13,26 @@ void Renderer::initialize(const AppConfig& config)
     _scene3D.initialize(config);
 }
 
-std::optional<BoardClick> Renderer::draw(const Board& board, const settings& gameSettings, PieceColor currentTurn, float deltaTimeSeconds)
+std::optional<BoardClick> Renderer::draw(const Board& board, const settings& gameSettings, PieceColor currentTurn, float deltaTimeSeconds, std::optional<std::pair<int, int>> kirbyPosition)
 {
     if (gameSettings.use3D)
-        return draw3DBoard(board, gameSettings, currentTurn, deltaTimeSeconds);
+        return draw3DBoard(board, gameSettings, currentTurn, deltaTimeSeconds, kirbyPosition);
 
-    return draw2DBoard(board, gameSettings);
+    return draw2DBoard(board, gameSettings, kirbyPosition);
 }
 
-std::optional<BoardClick> Renderer::draw3DBoard(const Board& board, const settings& gameSettings, PieceColor currentTurn, float deltaTimeSeconds)
+std::optional<BoardClick> Renderer::draw3DBoard(const Board& board, const settings& gameSettings, PieceColor currentTurn, float deltaTimeSeconds, std::optional<std::pair<int, int>> kirbyPosition)
 {
     ImVec2 available = ImGui::GetContentRegionAvail();
     available.x      = std::max(available.x, 64.f);
     available.y      = std::max(available.y, 64.f);
 
-    _scene3D.render(board, gameSettings, currentTurn, static_cast<int>(available.x), static_cast<int>(available.y), deltaTimeSeconds);
+    _scene3D.render(board, gameSettings, currentTurn, static_cast<int>(available.x), static_cast<int>(available.y), deltaTimeSeconds, kirbyPosition);
 
     ImTextureID texture = _scene3D.colorTexture();
     if (texture == nullptr)
     {
-        return draw2DBoard(board, gameSettings);
+        return draw2DBoard(board, gameSettings, kirbyPosition);
     }
 
     const ImVec2 imageStart = ImGui::GetCursorScreenPos();
@@ -55,7 +56,7 @@ std::optional<BoardClick> Renderer::draw3DBoard(const Board& board, const settin
     return clickedCase;
 }
 
-std::optional<BoardClick> Renderer::draw2DBoard(const Board& board, const settings& gameSettings)
+std::optional<BoardClick> Renderer::draw2DBoard(const Board& board, const settings& gameSettings, std::optional<std::pair<int, int>> kirbyPosition)
 {
     std::optional<BoardClick> clickedCase;
 
@@ -63,7 +64,7 @@ std::optional<BoardClick> Renderer::draw2DBoard(const Board& board, const settin
     {
         for (int x = 0; x < Board::SIZE; x++)
         {
-            if (!clickedCase.has_value() && draw2DCase(board, gameSettings, x, y))
+            if (!clickedCase.has_value() && draw2DCase(board, gameSettings, x, y, kirbyPosition))
                 clickedCase = BoardClick{x, y};
 
             if (x < Board::SIZE - 1)
@@ -74,7 +75,7 @@ std::optional<BoardClick> Renderer::draw2DBoard(const Board& board, const settin
     return clickedCase;
 }
 
-bool Renderer::draw2DCase(const Board& board, const settings& gameSettings, int x, int y)
+bool Renderer::draw2DCase(const Board& board, const settings& gameSettings, int x, int y, std::optional<std::pair<int, int>> kirbyPosition)
 {
     ImGui::PushID(x + y * Board::SIZE);
 
@@ -91,15 +92,27 @@ bool Renderer::draw2DCase(const Board& board, const settings& gameSettings, int 
     ImGui::PushStyleColor(ImGuiCol_ButtonHovered, color);
     ImGui::PushStyleColor(ImGuiCol_ButtonActive, color);
 
-    bool  clicked = false;
-    ImVec2 pos        = ImGui::GetCursorScreenPos();
+    bool   clicked = false;
+    ImVec2 pos     = ImGui::GetCursorScreenPos();
 
-    if (ImGui::Button(" ", ImVec2{gameSettings.buttonSize, gameSettings.buttonSize}))
+    const bool  kirbyHere = kirbyPosition.has_value() && kirbyPosition->first == x && kirbyPosition->second == y;
+    const char* label     = " ";
+
+    if (kirbyHere)
+    {
+        const ImVec4 kirbyColor{0.96f, 0.48f, 0.82f, 1.0f};
+        ImGui::PopStyleColor(3);
+        ImGui::PushStyleColor(ImGuiCol_Button, kirbyColor);
+        ImGui::PushStyleColor(ImGuiCol_ButtonHovered, kirbyColor);
+        ImGui::PushStyleColor(ImGuiCol_ButtonActive, kirbyColor);
+    }
+
+    if (ImGui::Button(label, ImVec2{gameSettings.buttonSize, gameSettings.buttonSize}))
     {
         clicked = true;
     }
 
-    if (currentCase.hasPiece())
+    if (!kirbyHere && currentCase.hasPiece())
     {
         Piece* piece = currentCase.getPiece();
 

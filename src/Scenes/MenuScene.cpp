@@ -1,11 +1,33 @@
 #include "MenuScene.hpp"
 #include <imgui.h>
+#include <array>
+#include "Game/Chaos/ChaosMode.hpp"
 #include "Managers/Game.hpp"
 #include "Managers/SceneManager.hpp"
 
-char _whitePlayerName[64] = "";
-char _blackPlayerName[64] = "";
-bool _openPlayerModal     = false;
+
+namespace {
+std::array<char, 64> whitePlayerName{};
+std::array<char, 64> blackPlayerName{};
+
+void drawChaosRulesSection(ChaosOptions& options)
+{
+    ImGui::Separator();
+    ImGui::Text("Regles Chaos actives");
+
+    ImGui::Checkbox("1. Loi de Weibull (duree de vie)", &options.enableWeibullLifetime);
+    ImGui::TextDisabled("La piece perd de la duree de vie uniquement quand elle est jouee.");
+
+    ImGui::Checkbox("2-3. Bernoulli + uniforme discrete (setup pieces)", &options.enableBernoulliBackrowAndShuffle);
+    ImGui::TextDisabled("Chance d'avoir des pions en backrow puis melange aleatoire des lignes de depart.");
+
+    ImGui::Checkbox("4. Poisson + uniforme (Kirby)", &options.enableKirbyPoissonUniform);
+    ImGui::TextDisabled("Kirby peut apparaitre sur une case et manger une piece voisine au hasard.");
+
+    ImGui::Checkbox("7-8. Geometrique + Bernoulli (glissantes + obeissance)", &options.enableGeometricSlidingAndObedience);
+    ImGui::TextDisabled("Les pieces glissantes peuvent s'arreter avant; certaines pieces refusent d'obeir.");
+}
+} // namespace
 
 MenuScene::MenuScene(SceneManager& sceneManager)
     : _sceneManager(&sceneManager)
@@ -32,16 +54,18 @@ void MenuScene::render()
     // BTN classic mode
     if (ImGui::Button("Mode Classique", ImVec2(buttonWidth, 45.f)))
     {
-        // _sceneManager->launchGameScene();
+        _selectedMode = 0;
         ImGui::OpenPopup("Setup Partie");
     }
 
     ImGui::Spacing();
 
     // BTN chaos mode
-    ImGui::BeginDisabled();
-    ImGui::Button("Mode Chaos (A venir)", ImVec2(buttonWidth, 45.f));
-    ImGui::EndDisabled();
+    if (ImGui::Button("Mode Chaos", ImVec2(buttonWidth, 45.f)))
+    {
+        _selectedMode = 1;
+        ImGui::OpenPopup("Setup Partie");
+    }
 
     ImGui::Spacing();
 
@@ -59,31 +83,36 @@ void MenuScene::render()
     ImGui::EndGroup();
 
     /////////////////////// Player setup modal ///////////////////////
-    if (ImGui::BeginPopupModal("Setup Partie", NULL, ImGuiWindowFlags_AlwaysAutoResize))
+    if (ImGui::BeginPopupModal("Setup Partie", nullptr, ImGuiWindowFlags_AlwaysAutoResize))
     {
         ImGui::Text("Configuration de la partie");
         ImGui::Separator();
 
-        ImGui::InputText("Joueur Blanc", _whitePlayerName, IM_ARRAYSIZE(_whitePlayerName));
-        ImGui::InputText("Joueur Noir", _blackPlayerName, IM_ARRAYSIZE(_blackPlayerName));
+        ImGui::InputText("Joueur Blanc", whitePlayerName.data(), static_cast<int>(whitePlayerName.size()));
+        ImGui::InputText("Joueur Noir", blackPlayerName.data(), static_cast<int>(blackPlayerName.size()));
+
+        if (_selectedMode == 1)
+        {
+            drawChaosRulesSection(Game::instance().chaosOptionsMutable());
+        }
 
         ImGui::Spacing();
 
         if (ImGui::Button("Lancer la partie", ImVec2(200.f, 0.f)))
         {
-            // Game::instance().setPlayerNames(_whitePlayerName, _blackPlayerName);
-            Game::instance().addPlayerWhite(_whitePlayerName);
-            Game::instance().addPlayerBlack(_blackPlayerName);
+            Game::instance().addPlayerWhite(whitePlayerName.data());
+            Game::instance().addPlayerBlack(blackPlayerName.data());
 
             Game::instance().addMoveToHistory(
                 std::string("Début du match entre ")
-                + _whitePlayerName
+                + whitePlayerName.data()
                 + " et "
-                + _blackPlayerName
+                + blackPlayerName.data()
                 + " !"
             );
 
-            _sceneManager->launchGameScene();
+            const Game::Mode mode = (_selectedMode == 1) ? Game::Mode::Chaos : Game::Mode::Classic;
+            _sceneManager->launchGameScene(mode);
             ImGui::CloseCurrentPopup();
         }
 
