@@ -41,7 +41,7 @@ glm::vec3 colorForPiece(const Piece* piece)
     if (piece == nullptr)
         return glm::vec3{0.f, 0.f, 0.f};
 
-    if (piece->color() == PieceColor::White)
+    if (piece->getColor() == PieceColor::White)
         return glm::vec3{0.9f, 0.9f, 0.9f};
 
     return glm::vec3{0.15f, 0.15f, 0.2f};
@@ -233,6 +233,7 @@ void GLRenderer::drawTiles(const glm::mat4& viewProjection, const Board& board, 
 
     const glm::vec3 whiteTileColor = gameSettings.getWhiteVec3();
     const glm::vec3 blackTileColor = gameSettings.getBlackVec3();
+    const glm::vec3 kirbyColor{0.96f, 0.48f, 0.82f};
     const glm::vec3 selectedOwnPieceColor{0.20f, 0.45f, 1.f};
     const glm::vec3 availableMoveColor{0.20f, 0.75f, 0.25f};
     const glm::vec3 captureMoveColor{1.f, 0.55f, 0.f};
@@ -246,13 +247,13 @@ void GLRenderer::drawTiles(const glm::mat4& viewProjection, const Board& board, 
             const Case&     tileCase    = board.getCase(x, y);
             const bool      isWhiteTile = ((x + y) % 2) == 0;
             glm::vec3       tileColor   = isWhiteTile ? whiteTileColor : blackTileColor;
-            if (tileCase.isActive())
+            if (tileCase.getIsActive())
             {
                 if (board.isSelectedCase(x, y))
                 {
                     tileColor = selectedOwnPieceColor;
                 }
-                else if (!tileCase.hasPiece())
+                else if (!tileCase.getHasPiece())
                 {
                     tileColor = availableMoveColor;
                 }
@@ -269,14 +270,15 @@ void GLRenderer::drawTiles(const glm::mat4& viewProjection, const Board& board, 
 
             drawCube(_boardUniforms.mvp, _boardUniforms.model, _boardUniforms.color, viewProjection, model, tileColor);
 
-            const bool kirbyHere = kirbyPosition.has_value() && kirbyPosition->first == x && kirbyPosition->second == y;
-            if (kirbyHere)
+            const bool isKirbyHere = kirbyPosition.has_value() && kirbyPosition->first == x && kirbyPosition->second == y;
+            if (isKirbyHere)
             {
-                const float     kirbySize  = BOARD_TILE_SIZE * 0.55f;
-                const float     kirbyY     = BOARD_CENTER_Y + gameSettings.boardThickness * 0.5f + kirbySize * 0.5f;
-                const glm::mat4 kirbyModel = glm::translate(glm::mat4{1.f}, glm::vec3{worldX, kirbyY, worldZ})
-                                             * glm::scale(glm::mat4{1.f}, glm::vec3{kirbySize, kirbySize, kirbySize});
-                drawCube(_boardUniforms.mvp, _boardUniforms.model, _boardUniforms.color, viewProjection, kirbyModel, kirbyColor);
+                // const float     kirbySize  = BOARD_TILE_SIZE * 0.55f;
+                // const float     kirbyY     = BOARD_CENTER_Y + gameSettings.boardThickness * 0.5f + kirbySize * 0.5f;
+                // const glm::mat4 kirbyModel = glm::translate(glm::mat4{1.f}, glm::vec3{worldX, kirbyY, worldZ})
+                //                              * glm::scale(glm::mat4{1.f}, glm::vec3{kirbySize, kirbySize, kirbySize});
+                // drawCube(_boardUniforms.mvp, _boardUniforms.model, _boardUniforms.color, viewProjection, kirbyModel, kirbyColor);
+                
             }
         }
     }
@@ -316,7 +318,7 @@ void GLRenderer::drawSinglePiece(const glm::mat4& viewProj, const Piece* piece, 
     if (piece == nullptr)
         return;
 
-    const std::size_t pieceIndex = static_cast<std::size_t>(piece->type());
+    const std::size_t pieceIndex = static_cast<std::size_t>(piece->getType());
     if (pieceIndex >= PIECES_HEIGHT.size())
         return;
 
@@ -327,7 +329,7 @@ void GLRenderer::drawSinglePiece(const glm::mat4& viewProj, const Piece* piece, 
     const float     worldZ      = originZ + boardY;
 
     // Try to get the 3D model
-    const ResourceManager::PieceMeshGlData* modelMesh = resourceManager.pieceMeshFor(piece->type());
+    const ResourceManager::PieceMeshGlData* modelMesh = resourceManager.getPieceMeshFor(piece->getType());
 
     if (modelMesh != nullptr && modelMesh->isValid())
     {
@@ -357,7 +359,7 @@ void GLRenderer::drawSingleExplodingPiece(const glm::mat4& viewProj, const Piece
     if (piece == nullptr || !_pieceExplosionUniforms.isValid())
         return;
 
-    const std::size_t pieceIndex = static_cast<std::size_t>(piece->type());
+    const std::size_t pieceIndex = static_cast<std::size_t>(piece->getType());
     if (pieceIndex >= PIECES_HEIGHT.size())
         return;
 
@@ -369,7 +371,7 @@ void GLRenderer::drawSingleExplodingPiece(const glm::mat4& viewProj, const Piece
 
     glUniform1f(_pieceExplosionUniforms.progress, progress);
 
-    const ResourceManager::PieceMeshGlData* modelMesh = resourceManager.pieceMeshFor(piece->type());
+    const ResourceManager::PieceMeshGlData* modelMesh = resourceManager.getPieceMeshFor(piece->getType());
     if (modelMesh != nullptr && modelMesh->isValid())
     {
         const glm::mat4 model = glm::translate(glm::mat4{1.f}, glm::vec3{worldX, topY + PIECE_LIFT_Y + yOffset, worldZ})
@@ -405,7 +407,7 @@ void GLRenderer::drawPieces(const glm::mat4& viewProjection, const Board& board,
         for (int x = 0; x < Board::SIZE; ++x)
         {
             const Case& currentCase = board.getCase(x, y);
-            if (currentCase.hasPiece())
+            if (currentCase.getHasPiece())
             {
                 const Piece* piece = currentCase.getPiece();
 
@@ -463,7 +465,7 @@ void GLRenderer::drawSkybox(const glm::mat4& view, const glm::mat4& projection, 
 
     const glm::vec3 topColor    = gameSettings.getSkyboxTopColorVec3();
     const glm::vec3 bottomColor = gameSettings.getSkyboxBottomColorVec3();
-    const unsigned int cubemapTexture = resourceManager.skyboxCubemap();
+    const unsigned int cubemapTexture = resourceManager.getSkyboxCubemap();
     const bool hasCubemapTexture = cubemapTexture != 0;
 
     glDepthFunc(GL_LEQUAL);
@@ -501,3 +503,4 @@ void GLRenderer::drawSkybox(const glm::mat4& view, const glm::mat4& projection, 
 }
 
 } // namespace Render3D
+

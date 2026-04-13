@@ -2,6 +2,7 @@
 #include <imgui.h>
 #include <glm/vec3.hpp>
 
+// Holds editable runtime settings for board colors, camera, and 2D/3D rendering.
 struct settings {
     // 2D rendering settings
     ImVec4 whiteColor = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
@@ -29,6 +30,7 @@ struct settings {
     float cameraPitchDegrees = 32.f;
     float cameraDistance = 13.5f;
 
+    // Getters
     ImVec4 getWhite() const { return whiteColor; }
     ImVec4 getBlack() const { return blackColor; }
     ImVec4 getHighlight() const { return _highlight; }

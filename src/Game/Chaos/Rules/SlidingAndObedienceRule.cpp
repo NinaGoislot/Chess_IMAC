@@ -70,7 +70,7 @@ double SlidingAndObedienceRule::obedienceProbabilityFor(const Piece* piece) cons
     if (piece == nullptr)
         return 1.0;
 
-    switch (piece->type())
+    switch (piece->getType())
     {
     case PieceType::Pawn:
     case PieceType::King:
@@ -92,5 +92,6 @@ bool SlidingAndObedienceRule::isSlidingPiece(const Piece* piece) const
     if (piece == nullptr)
         return false;
 
-    return piece->type() == PieceType::Bishop || piece->type() == PieceType::Rook || piece->type() == PieceType::Queen;
+    return piece->getType() == PieceType::Bishop || piece->getType() == PieceType::Rook || piece->getType() == PieceType::Queen;
 }
+

@@ -16,7 +16,7 @@ int Case::getY() const
     return _y;
 };
 
-bool Case::isActive() const
+bool Case::getIsActive() const
 {
     return _isActive;
 }
@@ -26,7 +26,7 @@ void Case::setActive(bool active)
     _isActive = active;
 }
 
-bool Case::hasPiece() const
+bool Case::getHasPiece() const
 {
     return _piece != nullptr;
 }

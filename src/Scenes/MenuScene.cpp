@@ -93,7 +93,7 @@ void MenuScene::render()
 
         if (_selectedMode == 1)
         {
-            drawChaosRulesSection(Game::instance().chaosOptionsMutable());
+            drawChaosRulesSection(Game::instance().getChaosOptionsMutable());
         }
 
         ImGui::Spacing();
@@ -131,3 +131,4 @@ void MenuScene::render()
 
     // ImGui::ShowDemoWindow();
 }
+

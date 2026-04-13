@@ -21,9 +21,9 @@ PromotionFlow::PromotionFlow(Board& board, std::array<Player, 2>& players, TurnM
 {
 }
 
-bool PromotionFlow::hasPendingPromotion() const
+bool PromotionFlow::getHasPendingPromotion() const
 {
-    return _board != nullptr && _board->hasPendingPromotion();
+    return _board != nullptr && _board->getHasPendingPromotion();
 }
 
 void PromotionFlow::setOnMoveValidated(std::function<void()> callback)
@@ -36,7 +36,7 @@ void PromotionFlow::drawPopup()
     if (_board == nullptr || _textures == nullptr)
         return;
 
-    if (!hasPendingPromotion())
+    if (!getHasPendingPromotion())
         return;
 
     if (!ImGui::IsPopupOpen("Promotion du pion"))
@@ -144,3 +144,4 @@ const char* PromotionFlow::pieceLabel(PieceType type) const
         return "";
     }
 }
+

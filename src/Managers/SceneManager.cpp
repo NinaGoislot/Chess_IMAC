@@ -39,7 +39,7 @@ void SceneManager::requestQuit()
     quitRequested = true;
 }
 
-bool SceneManager::shouldQuit() const
+bool SceneManager::getShouldQuit() const
 {
     return quitRequested;
 }

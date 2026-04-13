@@ -27,7 +27,7 @@ void GameScene::render()
 
     ImGui::Separator();
     _game.displayBoard();
-    _game.promotionFlow().drawPopup();
+    _game.getPromotionFlow().drawPopup();
 
     ImGui::End();
 
@@ -53,3 +53,4 @@ void GameScene::render()
 
     ImGui::End();
 }
+

@@ -13,6 +13,7 @@
 class ChaosMode;
 struct ChaosOptions;
 
+// Central game singleton that owns board, players, rules, and rendering flow.
 class Game {
 public:
     enum class Mode {
@@ -33,21 +34,22 @@ public:
     settings&                       getSettings();
     const settings&                 getSettings() const;
     const std::vector<std::string>& getMoveHistory() const;
-    ChaosOptions&                   chaosOptionsMutable();
-    const ChaosOptions&             chaosOptions() const;
-    PromotionFlow&                  promotionFlow() { return _promotionFlow; }
-    Mode                            mode() const { return _mode; }
-    const TurnManager&              turnManager() const { return _turnManager; }
-    TurnManager&                    turnManager() { return _turnManager; }
+    ChaosOptions&                   getChaosOptionsMutable();
+    const ChaosOptions&             getChaosOptions() const;
+    PromotionFlow&                  getPromotionFlow() { return _promotionFlow; }
+    Mode                            getMode() const { return _mode; }
+    const TurnManager&              getTurnManager() const { return _turnManager; }
+    TurnManager&                    getTurnManager() { return _turnManager; }
 
-    // Setters
     void addPlayerWhite(const std::string& name);
     void addPlayerBlack(const std::string& name);
     void addMoveToHistory(const std::string& move);
 
-    // Functions
+    // Init function: loads resources and prepares systems.
     void initialize(const AppConfig& config);
+    // Starts a new game with selected mode.
     void newGame(Mode mode = Mode::Classic);
+    // Debug/helper function that prints board state.
     void displayBoard();
 
 private:
@@ -59,7 +61,7 @@ private:
     void placePiecesForPlayer(int backRankY, int pawnRankY, Player& owner);
     void onValidatedMoveAdvanced();
 
-    // Parameters
+    // Private game state and runtime dependencies.
     Board                      _board;
     TextureManager             _textures;
     Renderer                   _renderer;
@@ -72,3 +74,4 @@ private:
     settings                   _settings;
     std::vector<std::string>   _moveHistory;
 };
+

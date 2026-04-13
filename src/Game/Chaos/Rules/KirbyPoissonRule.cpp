@@ -21,7 +21,7 @@ void removePieceAt(Board& board, std::array<Player, 2>& players, int x, int y)
         return;
 
     Case& square = board.getCase(x, y);
-    if (!square.hasPiece())
+    if (!square.getHasPiece())
         return;
 
     Piece* piece = square.takePiece();
@@ -37,11 +37,11 @@ void removePieceAt(Board& board, std::array<Player, 2>& players, int x, int y)
 bool hasPawnAt(const Board& board, int x, int y)
 {
     const Case& square = board.getCase(x, y);
-    if (!square.hasPiece())
+    if (!square.getHasPiece())
         return false;
 
     const Piece* piece = square.getPiece();
-    return piece != nullptr && piece->type() == PieceType::Pawn;
+    return piece != nullptr && piece->getType() == PieceType::Pawn;
 }
 } // namespace
 
@@ -90,7 +90,7 @@ void KirbyPoissonRule::onTurnStart(ChaosRuleContext& context)
             continue;
 
         std::vector<std::pair<int, int>> targets;
-        if (context.board.getCase(x, y).hasPiece())
+        if (context.board.getCase(x, y).getHasPiece())
         {
             targets.emplace_back(x, y);
         }
@@ -107,7 +107,7 @@ void KirbyPoissonRule::onTurnStart(ChaosRuleContext& context)
                 if (!context.board.isInside(Vector2D(static_cast<float>(nx), static_cast<float>(ny))))
                     continue;
 
-                if (context.board.getCase(nx, ny).hasPiece())
+                if (context.board.getCase(nx, ny).getHasPiece())
                     targets.emplace_back(nx, ny);
             }
         }
@@ -150,3 +150,4 @@ bool KirbyPoissonRule::beforeMove(ChaosMoveContext& context)
 
     return true;
 }
+

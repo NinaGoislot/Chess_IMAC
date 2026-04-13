@@ -31,7 +31,7 @@ glm::vec3 CameraController::calculatePieceTarget(const Board& board)
     const float boardOriginZ = -(static_cast<float>(Board::SIZE) - 1.f) * 0.5f;
 
     const Case& cornerCase = board.getCase(0, 0);
-    if (cornerCase.hasPiece())
+    if (cornerCase.getHasPiece())
         return glm::vec3{boardOriginX, CAMERA_TARGET_Y, boardOriginZ};
 
     return glm::vec3{0.f, CAMERA_TARGET_Y, 0.f};
@@ -106,3 +106,4 @@ glm::mat4 CameraController::calculateViewProjection(const settings& gameSettings
 }
 
 } // namespace Render3D
+

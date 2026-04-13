@@ -2,6 +2,7 @@
 #include <array>
 #include <cstddef>
 
+// Provides static primitive geometry buffers used by the 3D renderer.
 namespace Primitives {
     inline constexpr std::size_t CUBE_VERTEX_FLOAT_COUNT = static_cast<std::size_t>(36u) * 6u;
 

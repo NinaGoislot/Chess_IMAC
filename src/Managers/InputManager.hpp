@@ -3,14 +3,16 @@
 #include <type_traits>
 #include "Game/settings.hpp"
 
+// Handles mouse input callbacks and updates camera values in settings.
 class InputManager
 {
 public:
-    // Constructor
+    // Constructors
     explicit InputManager(settings& settingsRef);
 
-    // Callbacks
+    // Callback: updates camera orbit from cursor movement.
     void onCursorPosition(double xpos, double ypos);
+    // Callback: updates camera zoom from scroll wheel.
     void onScroll(double xoffset, double yoffset);
 
 private:
@@ -31,14 +33,14 @@ private:
     static_assert(std::is_floating_point_v<decltype(settings::cameraPitchDegrees)>, "InputManager: camera pitch must be a float");
     static_assert(std::is_floating_point_v<decltype(settings::cameraDistance)>, "InputManager: camera distance must be a float");
 
-    // State variables
+    // Runtime input state.
     settings& _settings;
     bool      _rightMouseDown = false;
     bool      _firstMouseMove = true;
     double    _lastMouseX     = 0.0;
     double    _lastMouseY     = 0.0;
 
-    // Configurable parameters (initialized with defaults, but can be changed at runtime if needed)
+    // Private settings used by callback computations.
     float _mouseSensitivity = MOUSE_SENSITIVITY;
     float _zoomSpeed        = ZOOM_SPEED;
     float _minPitch         = MIN_PITCH;

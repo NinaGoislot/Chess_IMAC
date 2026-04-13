@@ -61,14 +61,14 @@ const std::vector<std::string>& Game::getMoveHistory() const
     return _moveHistory;
 }
 
-ChaosOptions& Game::chaosOptionsMutable()
+ChaosOptions& Game::getChaosOptionsMutable()
 {
-    return _chaosMode->optionsMutable();
+    return _chaosMode->getOptionsMutable();
 }
 
-const ChaosOptions& Game::chaosOptions() const
+const ChaosOptions& Game::getChaosOptions() const
 {
-    return _chaosMode->options();
+    return _chaosMode->getOptions();
 }
 
 //-------- INIT --------
@@ -104,12 +104,12 @@ void Game::newGame(Mode mode)
 void Game::displayBoard()
 {
     const PieceColor currentTurn = _turnManager.getCurrent();
-    const auto       clickedCase = _renderer.draw(_board, _settings, currentTurn, ImGui::GetIO().DeltaTime, _chaosMode->kirbyPosition());
+    const auto       clickedCase = _renderer.draw(_board, _settings, currentTurn, ImGui::GetIO().DeltaTime, _chaosMode->getKirbyPosition());
 
     if (!clickedCase.has_value())
         return;
 
-    if (_chaosMode->hasKirbyAt(clickedCase->x, clickedCase->y))
+    if (_chaosMode->getHasKirbyAt(clickedCase->x, clickedCase->y))
         return;
 
     if (_board.onCaseClicked(clickedCase->x, clickedCase->y, currentTurn))

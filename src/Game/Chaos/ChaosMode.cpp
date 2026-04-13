@@ -77,7 +77,8 @@ bool ChaosMode::consumeSkipTurnRequested()
     return requested;
 }
 
-bool ChaosMode::hasKirbyAt(int x, int y) const
+bool ChaosMode::getHasKirbyAt(int x, int y) const
 {
     return _kirbyPosition.has_value() && _kirbyPosition->first == x && _kirbyPosition->second == y;
 }
+

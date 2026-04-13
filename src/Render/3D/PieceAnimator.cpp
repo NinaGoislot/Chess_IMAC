@@ -51,7 +51,7 @@ void PieceAnimator::update(const Board& board, const settings& gameSettings, flo
         for (int x = 0; x < Board::SIZE; ++x)
         {
             const Case& tile = board.getCase(x, y);
-            if (!tile.hasPiece())
+            if (!tile.getHasPiece())
                 continue;
 
             const Piece* piece = tile.getPiece();
@@ -157,7 +157,7 @@ void PieceAnimator::update(const Board& board, const settings& gameSettings, flo
             const float easedT = easeOutCubic(t);
 
             state.current = state.start + (state.target - state.start) * easedT;
-            state.yOffset = (snapshot.piece->type() == PieceType::Knight) ? std::sin(PI * t) * DEFAULT_KNIGHT_ARC_HEIGHT : 0.f;
+            state.yOffset = (snapshot.piece->getType() == PieceType::Knight) ? std::sin(PI * t) * DEFAULT_KNIGHT_ARC_HEIGHT : 0.f;
 
             if (t >= 1.f - EPSILON)
             {
@@ -197,12 +197,12 @@ void PieceAnimator::update(const Board& board, const settings& gameSettings, flo
     _lastActivePieceCount = activePieces.size();
 }
 
-const PieceAnimator::AnimatedPiecePositions& PieceAnimator::positions() const
+const PieceAnimator::AnimatedPiecePositions& PieceAnimator::getPositions() const
 {
     return _animatedPositions;
 }
 
-const ExplodingPiecePositions& PieceAnimator::explosions() const
+const ExplodingPiecePositions& PieceAnimator::getExplosions() const
 {
     return _explodingPieces;
 }
@@ -217,3 +217,4 @@ void PieceAnimator::reset()
 }
 
 } // namespace Render3D
+

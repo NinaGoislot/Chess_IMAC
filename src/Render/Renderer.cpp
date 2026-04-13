@@ -29,7 +29,7 @@ std::optional<BoardClick> Renderer::draw3DBoard(const Board& board, const settin
 
     _scene3D.render(board, gameSettings, currentTurn, static_cast<int>(available.x), static_cast<int>(available.y), deltaTimeSeconds, kirbyPosition);
 
-    ImTextureID texture = _scene3D.colorTexture();
+    ImTextureID texture = _scene3D.getColorTexture();
     if (texture == nullptr)
     {
         return draw2DBoard(board, gameSettings, kirbyPosition);
@@ -83,7 +83,7 @@ bool Renderer::draw2DCase(const Board& board, const settings& gameSettings, int 
     const Case& currentCase = board.getCase(x, y);
 
     ImVec4 color = white ? gameSettings.getWhite() : gameSettings.getBlack();
-    if (currentCase.isActive())
+    if (currentCase.getIsActive())
     {
         const ImVec4 selectedOwnPieceColor{0.20f, 0.45f, 1.f, 1.f};
         const ImVec4 availableMoveColor{0.20f, 0.75f, 0.25f, 1.f};
@@ -93,7 +93,7 @@ bool Renderer::draw2DCase(const Board& board, const settings& gameSettings, int 
         {
             color = selectedOwnPieceColor;
         }
-        else if (!currentCase.hasPiece())
+        else if (!currentCase.getHasPiece())
         {
             color = availableMoveColor;
         }
@@ -127,7 +127,7 @@ bool Renderer::draw2DCase(const Board& board, const settings& gameSettings, int 
         clicked = true;
     }
 
-    if (!kirbyHere && currentCase.hasPiece())
+    if (!kirbyHere && currentCase.getHasPiece())
     {
         Piece* piece = currentCase.getPiece();
 

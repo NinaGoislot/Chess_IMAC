@@ -50,7 +50,7 @@ void PiecesSet::pieceEaten(const Piece* piece)
     _alivePieces.erase(piece);
 }
 
-bool PiecesSet::isAlive(const Piece* piece) const
+bool PiecesSet::getIsAlive(const Piece* piece) const
 {
     return _alivePieces.contains(piece);
 }
@@ -60,7 +60,7 @@ void PiecesSet::clear()
     buildFullSet();
 }
 
-std::size_t PiecesSet::aliveCount() const
+std::size_t PiecesSet::getAliveCount() const
 {
     return _alivePieces.size();
 }
@@ -109,3 +109,4 @@ std::unique_ptr<Piece> PiecesSet::createOnePiece(PieceType type, ImTextureID tex
         return nullptr;
     }
 }
+

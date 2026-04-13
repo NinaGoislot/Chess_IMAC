@@ -6,10 +6,10 @@
 namespace {
 bool isPawnPromotionMove(const Piece* piece, int destinationY)
 {
-    if (piece == nullptr || piece->type() != PieceType::Pawn)
+    if (piece == nullptr || piece->getType() != PieceType::Pawn)
         return false;
 
-    const int promotionRank = (piece->color() == PieceColor::White) ? (Board::SIZE - 1) : 0;
+    const int promotionRank = (piece->getColor() == PieceColor::White) ? (Board::SIZE - 1) : 0;
     return destinationY == promotionRank;
 }
 } // namespace
@@ -45,11 +45,11 @@ bool Board::onCaseClicked(int x, int y, const PieceColor& currentTurn)
 
     if (_selectedCase == nullptr)
     {
-        if (!clicked.hasPiece())
+        if (!clicked.getHasPiece())
             return false;
 
         Piece* piece = clicked.getPiece();
-        if (piece->color() != currentTurn)
+        if (piece->getColor() != currentTurn)
             return false;
 
         _selectedCase = &clicked;
@@ -77,7 +77,7 @@ bool Board::onCaseClicked(int x, int y, const PieceColor& currentTurn)
         return false;
     }
 
-    if (clicked.isActive())
+    if (clicked.getIsActive())
     {
         Piece* selectedPiece = _selectedCase->getPiece();
         if (selectedPiece == nullptr)
@@ -139,7 +139,7 @@ bool Board::onCaseClicked(int x, int y, const PieceColor& currentTurn)
             state.to          = &destination;
             state.pawn        = movingPiece;
             state.captured    = capturedPiece;
-            state.color       = movingPiece->color();
+            state.color       = movingPiece->getColor();
             _pendingPromotion = state;
 
             clearHighlights();
@@ -152,7 +152,7 @@ bool Board::onCaseClicked(int x, int y, const PieceColor& currentTurn)
         return true;
     }
 
-    if (clicked.hasPiece() && clicked.getPiece()->color() == currentTurn)
+    if (clicked.getHasPiece() && clicked.getPiece()->getColor() == currentTurn)
     {
         clearHighlights();
         _selectedCase = nullptr;
@@ -164,7 +164,7 @@ bool Board::onCaseClicked(int x, int y, const PieceColor& currentTurn)
     return false;
 }
 
-bool Board::hasPendingPromotion() const
+bool Board::getHasPendingPromotion() const
 {
     return _pendingPromotion.has_value();
 }
@@ -246,7 +246,7 @@ bool Board::isEmpty(Vector2D pos) const
     if (!isInside(pos))
         return false;
 
-    return !getCase(static_cast<int>(pos.getX()), static_cast<int>(pos.getY())).hasPiece();
+    return !getCase(static_cast<int>(pos.getX()), static_cast<int>(pos.getY())).getHasPiece();
 }
 
 bool Board::isEnemy(Vector2D pos, PieceColor color) const
@@ -255,7 +255,7 @@ bool Board::isEnemy(Vector2D pos, PieceColor color) const
         return false;
 
     const Case& caseAtPos = getCase(static_cast<int>(pos.getX()), static_cast<int>(pos.getY()));
-    return caseAtPos.hasPiece() && caseAtPos.getPiece()->color() != color;
+    return caseAtPos.getHasPiece() && caseAtPos.getPiece()->getColor() != color;
 }
 
 bool Board::isSelectedCase(int x, int y) const
@@ -265,3 +265,4 @@ bool Board::isSelectedCase(int x, int y) const
 
     return _selectedCase == &getCase(x, y);
 }
+

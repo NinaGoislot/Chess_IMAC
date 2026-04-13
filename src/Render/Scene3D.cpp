@@ -79,7 +79,7 @@ void Scene3D::render(const Board& board, const settings& gameSettings, PieceColo
     _pieceAnimator.update(board, gameSettings, deltaTimeSeconds);
 
     if (gameSettings.drawPieces3D)
-        _boardRenderer.drawPieces(viewProjection, board, gameSettings, _resourceManager, _pieceAnimator.positions(), _pieceAnimator.explosions());
+        _boardRenderer.drawPieces(viewProjection, board, gameSettings, _resourceManager, _pieceAnimator.getPositions(), _pieceAnimator.getExplosions());
 
     if (gameSettings.drawSkybox)
         _boardRenderer.drawSkybox(view, projection, gameSettings, _resourceManager);
@@ -88,7 +88,7 @@ void Scene3D::render(const Board& board, const settings& gameSettings, PieceColo
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
-ImTextureID Scene3D::colorTexture() const
+ImTextureID Scene3D::getColorTexture() const
 {
     return reinterpret_cast<ImTextureID>(static_cast<intptr_t>(_colorTexture));
 }
@@ -253,3 +253,4 @@ void Scene3D::destroyGlResources()
     _hasCameraMatrices = false;
     _initialized       = false;
 }
+

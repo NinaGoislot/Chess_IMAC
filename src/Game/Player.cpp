@@ -52,7 +52,7 @@ void Player::removePiece(const Piece& piece)
 
 bool Player::owns(const Piece& piece) const
 {
-    return _piecesSet.isAlive(&piece);
+    return _piecesSet.getIsAlive(&piece);
 }
 
 void Player::resetPieces()
@@ -60,7 +60,7 @@ void Player::resetPieces()
     _piecesSet.clear();
 }
 
-std::size_t Player::aliveCount() const
+std::size_t Player::getAliveCount() const
 {
-    return _piecesSet.aliveCount();
+    return _piecesSet.getAliveCount();
 }

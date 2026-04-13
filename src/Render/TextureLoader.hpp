@@ -4,6 +4,7 @@
 #include <stb_image/stb_image.h>
 
 
+// Loads an image file into an OpenGL texture and returns its ImGui texture id.
 inline ImTextureID LoadTexture(const char* filename, bool logFailure = true)
 {
     int            width    = 0;

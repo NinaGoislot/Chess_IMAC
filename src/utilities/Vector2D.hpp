@@ -1,5 +1,6 @@
 #pragma once
 
+// Represents a lightweight 2D vector used for board coordinates and offsets.
 class Vector2D {
 public:
     // Constructors
@@ -12,11 +13,14 @@ public:
     Vector2D operator*(float scalar) const;
     Vector2D operator/(float scalar) const;
 
+    // Getters
     float getX() const { return x; }
     float getY() const { return y; }
 
 private:
+    // Internal x coordinate value.
     float x;
+    // Internal y coordinate value.
     float y;
 
     // Utility functions

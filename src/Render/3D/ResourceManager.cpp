@@ -76,7 +76,34 @@ bool ResourceManager::initialize(const std::string& assetBasePath)
     return skyboxLoaded;
 }
 
-const ResourceManager::PieceMeshGlData* ResourceManager::pieceMeshFor(PieceType type) const
+void ResourceManager::initChaosModel(const std::string& assetBasePath, const std::string& modelName)
+{
+    const std::string modelPath = assetBasePath + "/models/" + modelName + ".glb";
+
+    if (!std::filesystem::exists(modelPath))
+    {
+        std::cout << "No GLB model found at '" << modelPath << "'. Chaos pieces will use the default cube.\n";
+        return;
+    }
+
+    MeshLoadResult loadResult = loadGLBMesh(modelPath);
+    if (!loadResult.success)
+    {
+        std::cout << "Failed to load GLB at '" << modelPath << "'. Error: " << loadResult.error << "\n";
+        return;
+    }
+
+    if (!uploadPieceMesh(PieceType::Queen, loadResult.mesh)) // Using Queen as a placeholder type for Chaos
+    {
+        std::cout << "Failed to upload GLB mesh for '" << modelPath << "' to the GPU.\n";
+        return;
+    }
+
+    std::cout << "Loaded Chaos piece GLB model from: " << modelPath << "\n";
+}
+
+
+const ResourceManager::PieceMeshGlData* ResourceManager::getPieceMeshFor(PieceType type) const
 {
     const std::size_t index = pieceTypeIndex(type);
     if (index >= _pieceMeshes.size()) return nullptr;

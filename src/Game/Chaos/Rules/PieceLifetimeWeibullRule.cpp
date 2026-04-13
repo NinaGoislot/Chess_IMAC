@@ -12,7 +12,7 @@ void removePieceAt(Board& board, std::array<Player, 2>& players, int x, int y)
         return;
 
     Case& square = board.getCase(x, y);
-    if (!square.hasPiece())
+    if (!square.getHasPiece())
         return;
 
     Piece* piece = square.takePiece();
@@ -86,7 +86,7 @@ void PieceLifetimeWeibullRule::initializeMissingPieces(ChaosRuleContext& context
         for (int y = 0; y < Board::SIZE; ++y)
         {
             const Case& square = context.board.getCase(x, y);
-            if (!square.hasPiece())
+            if (!square.getHasPiece())
                 continue;
 
             Piece* piece = square.getPiece();
@@ -97,3 +97,4 @@ void PieceLifetimeWeibullRule::initializeMissingPieces(ChaosRuleContext& context
         }
     }
 }
+

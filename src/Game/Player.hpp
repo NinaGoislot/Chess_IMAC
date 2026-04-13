@@ -22,7 +22,7 @@
 //     void removePiece(const Piece& piece);
 //     bool owns(const Piece& piece) const;
 //     void resetPieces();
-//     std::size_t aliveCount() const;
+//     std::size_t getAliveCount() const;
 
 // private:
 //     PieceColor _color;
@@ -40,6 +40,7 @@
 
 class TextureManager;
 
+// Represents one player with identity, color, and owned pieces.
 class Player {
 public:
     // Constructors
@@ -55,17 +56,24 @@ public:
     // Setters
     void setName(const std::string& name) { _name = name; }
 
-    // Functions
+    // Creates and adds one piece of the given type.
     Piece*      addPiece(PieceType type);
+    // Adds an already created piece copy to the player set.
     void        addPiece(const Piece& piece);
+    // Removes a piece from alive state after capture.
     void        removePiece(const Piece& piece);
+    // Returns true if this player owns the given piece instance.
     bool        owns(const Piece& piece) const;
+    // Resets the player's full piece set.
     void        resetPieces();
-    std::size_t aliveCount() const;
+    std::size_t getAliveCount() const;
 
 private:
-    // Parameters
+    // Player color used for move ownership and rendering.
     PieceColor  _color;
+    // Player display name shown in UI.
     std::string _name;
+    // Owned piece container and lifecycle manager.
     PiecesSet   _piecesSet;
 };
+
