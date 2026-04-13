@@ -1,5 +1,6 @@
 #pragma once
 
+#include <functional>
 #include "Game/Pieces/Piece.hpp"
 
 class TurnManager {
@@ -15,6 +16,7 @@ public:
 
     // Functions
     void nextTurn();
+    void advanceValidatedMove(const std::function<void(PieceColor)>& onTurnEnd, const std::function<void(PieceColor)>& onTurnStart);
 
 private:
     // Parameters

@@ -31,24 +31,37 @@ const std::array<PieceType, 8>& PiecesSet::backRankOrder()
     return order;
 }
 
+Piece* PiecesSet::addPiece(PieceType type)
+{
+    ImTextureID texture = _textures ? _textures->getPieceTexture(_ownerColor, type) : nullptr;
+    _pieces.push_back(createOnePiece(type, texture));
+    Piece* created = _pieces.back().get();
+    _alivePieces.insert(created);
+    return created;
+}
 
-void PiecesSet::addPiece(const Piece& piece) {
+void PiecesSet::addPiece(const Piece& piece)
+{
     _alivePieces.insert(&piece);
 }
 
-void PiecesSet::pieceEaten(const Piece* piece) {
+void PiecesSet::pieceEaten(const Piece* piece)
+{
     _alivePieces.erase(piece);
 }
 
-bool PiecesSet::isAlive(const Piece* piece) const {
+bool PiecesSet::isAlive(const Piece* piece) const
+{
     return _alivePieces.contains(piece);
 }
 
-void PiecesSet::clear() {
+void PiecesSet::clear()
+{
     buildFullSet();
 }
 
-std::size_t PiecesSet::aliveCount() const {
+std::size_t PiecesSet::aliveCount() const
+{
     return _alivePieces.size();
 }
 

@@ -2,14 +2,15 @@
 #include <glad/glad.h>
 #include <cmath>
 #include <cstdint>
-#include <iostream>
 #include <glm/geometric.hpp>
+#include <iostream>
+
 
 namespace {
 
-constexpr float BOARD_CENTER_Y = -0.05f;
+constexpr float BOARD_CENTER_Y  = -0.05f;
 constexpr float BOARD_TILE_SIZE = 0.94f;
-constexpr float EPSILON = 1e-5f;
+constexpr float EPSILON         = 1e-5f;
 
 } // namespace
 
@@ -45,7 +46,7 @@ bool Scene3D::prepareRenderState(int width, int height)
     return true;
 }
 
-void Scene3D::render(const Board& board, const settings& gameSettings, PieceColor currentTurn, int width, int height, float deltaTimeSeconds)
+void Scene3D::render(const Board& board, const settings& gameSettings, PieceColor currentTurn, int width, int height, float deltaTimeSeconds, std::optional<std::pair<int, int>> kirbyPosition)
 {
     if (!prepareRenderState(width, height))
     {
@@ -73,7 +74,7 @@ void Scene3D::render(const Board& board, const settings& gameSettings, PieceColo
     _hasCameraMatrices = true;
 
     _boardRenderer.setupStaticLighting();
-    _boardRenderer.drawBoard(viewProjection, board, gameSettings);
+    _boardRenderer.drawBoard(viewProjection, board, gameSettings, kirbyPosition);
 
     _pieceAnimator.update(board, gameSettings, deltaTimeSeconds);
 
@@ -110,8 +111,8 @@ bool Scene3D::pickBoardTile(const settings& gameSettings, float localX, float lo
     const float ndcY = 1.f - v * 2.f;
 
     const glm::mat4 inverseViewProjection = glm::inverse(_lastProjection * _lastView);
-    glm::vec4       worldNear = inverseViewProjection * glm::vec4{ndcX, ndcY, -1.f, 1.f};
-    glm::vec4       worldFar  = inverseViewProjection * glm::vec4{ndcX, ndcY, 1.f, 1.f};
+    glm::vec4       worldNear             = inverseViewProjection * glm::vec4{ndcX, ndcY, -1.f, 1.f};
+    glm::vec4       worldFar              = inverseViewProjection * glm::vec4{ndcX, ndcY, 1.f, 1.f};
 
     if (std::abs(worldNear.w) < EPSILON || std::abs(worldFar.w) < EPSILON)
         return false;
@@ -247,8 +248,8 @@ void Scene3D::destroyGlResources()
     _cameraController.reset();
     _pieceAnimator.reset();
 
-    _framebufferW          = 0;
-    _framebufferH          = 0;
-    _hasCameraMatrices     = false;
-    _initialized           = false;
+    _framebufferW      = 0;
+    _framebufferH      = 0;
+    _hasCameraMatrices = false;
+    _initialized       = false;
 }

@@ -1,9 +1,10 @@
 #pragma once
 
 #include <memory>
-
+#include "Managers/Game.hpp"
 #include "Scenes/Scene.hpp"
 #include "utilities/AppConfig.hpp"
+
 
 class SceneManager {
 public:
@@ -18,7 +19,7 @@ public:
     void renderCurrentScene();
 
     void launchMenuScene();
-    void launchGameScene();
+    void launchGameScene(Game::Mode mode = Game::Mode::Classic);
 
     // Flag pour feermeture de l'app
     void requestQuit();

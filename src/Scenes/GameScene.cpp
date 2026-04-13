@@ -2,13 +2,14 @@
 #include <imgui.h>
 #include "Managers/Game.hpp"
 #include "Managers/SceneManager.hpp"
-#include "Render/Renderer.hpp"
 #include "Scenes/SettingsPanel.hpp"
 
-GameScene::GameScene(SceneManager& sceneManager)
-    : _sceneManager(&sceneManager), _game(Game::instance())
+GameScene::GameScene(SceneManager& sceneManager, Game::Mode mode)
+    : _sceneManager(&sceneManager)
+    , _game(Game::instance())
+    , _mode(mode)
 {
-    _game.newGame();
+    _game.newGame(_mode);
 }
 
 void GameScene::render()
@@ -21,11 +22,13 @@ void GameScene::render()
     ImGui::SameLine();
     if (ImGui::Button("Nouvelle partie"))
     {
-        _game.newGame();
+        _game.newGame(_mode);
     }
 
     ImGui::Separator();
     _game.displayBoard();
+    _game.promotionFlow().drawPopup();
+
     ImGui::End();
 
     SettingsPanel::draw(_game.getSettings());

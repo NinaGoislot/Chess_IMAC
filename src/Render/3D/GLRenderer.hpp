@@ -1,13 +1,16 @@
 #pragma once
 
-#include <string>
 #include <unordered_map>
 #include <glm/mat4x4.hpp>
 #include <glm/vec3.hpp>
+#include <optional>
+#include <string>
+#include <utility>
 #include "Game/Pieces/Piece.hpp"
 #include "Game/settings.hpp"
 #include "Render/3D/PieceEffects.hpp"
 #include "Render/3D/Shader.hpp"
+
 
 class Board;
 
@@ -39,10 +42,9 @@ public:
     bool beginBoardPass(PieceColor currentTurn) const;
     void setupStaticLighting() const;
 
-
-    void drawBoard(const glm::mat4& viewProjection, const Board& board, const settings& gameSettings) const;
+    void drawBoard(const glm::mat4& viewProjection, const Board& board, const settings& gameSettings, std::optional<std::pair<int, int>> kirbyPosition) const;
     void drawBoardGaps(const glm::mat4& viewProjection, const settings& gameSettings) const;
-    void drawTiles(const glm::mat4& viewProjection, const Board& board, const settings& gameSettings) const;
+    void drawTiles(const glm::mat4& viewProjection, const Board& board, const settings& gameSettings, std::optional<std::pair<int, int>> kirbyPosition) const;
     void drawBoardEdges(const glm::mat4& viewProjection, const settings& gameSettings) const;
 
     void drawPieces(const glm::mat4& viewProjection, const Board& board, const settings& gameSettings, const ResourceManager& resourceManager,
@@ -50,8 +52,7 @@ public:
     void drawSkybox(const glm::mat4& view, const glm::mat4& projection, const settings& gameSettings, const ResourceManager& resourceManager) const;
 
 private:
-    struct UniformLocations
-    {
+    struct UniformLocations {
         int mvp      = -1;
         int model    = -1;
         int color    = -1;
@@ -65,11 +66,10 @@ private:
         }
     };
 
-    struct SkyboxUniformLocations
-    {
-        int vp           = -1;
-        int topColor     = -1;
-        int bottomColor  = -1;
+    struct SkyboxUniformLocations {
+        int vp          = -1;
+        int topColor    = -1;
+        int bottomColor = -1;
         int cubemap      = -1;
         int useCubemap   = -1;
 
@@ -107,8 +107,8 @@ private:
     void drawSingleExplodingPiece(const glm::mat4& viewProj, const Piece* piece, float boardX, float boardY, float yOffset, float originX, float originZ,
                                   float topY, float explosionProgress, const ResourceManager& resourceManager) const;
 
-    unsigned int _vao        = 0;
-    unsigned int _vbo        = 0;
+    unsigned int _vao         = 0;
+    unsigned int _vbo         = 0;
     bool         _initialized = false;
     bool         _skyboxReady = false;
 

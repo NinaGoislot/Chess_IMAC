@@ -1,8 +1,8 @@
 #include "SceneManager.hpp"
-
 #include "Managers/Game.hpp"
 #include "Scenes/GameScene.hpp"
 #include "Scenes/MenuScene.hpp"
+
 
 SceneManager& SceneManager::instance()
 {
@@ -29,9 +29,9 @@ void SceneManager::launchMenuScene()
     _currentScene = std::make_unique<MenuScene>(*this);
 }
 
-void SceneManager::launchGameScene()
+void SceneManager::launchGameScene(Game::Mode mode)
 {
-    _currentScene = std::make_unique<GameScene>(*this);
+    _currentScene = std::make_unique<GameScene>(*this, mode);
 }
 
 void SceneManager::requestQuit()
