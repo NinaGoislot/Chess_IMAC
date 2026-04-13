@@ -43,13 +43,23 @@ void draw(settings& gameSettings)
         ImGui::Separator();
         ImGui::Checkbox("Draw Pieces In 3D", &gameSettings.drawPieces3D);
         ImGui::Checkbox("Draw Skybox", &gameSettings.drawSkybox);
-
+        
         if (gameSettings.drawSkybox)
         {
             ImGui::ColorEdit3("Skybox Top Color", &gameSettings.skyboxTopColor.x);
             ImGui::ColorEdit3("Skybox Bottom Color", &gameSettings.skyboxBottomColor.x);
         }
+        
+        ImGui::Spacing();
 
+        ImGui::TextUnformatted("Scene");
+        ImGui::Separator();
+        
+        ImGui::Checkbox("Animate Piece Movement", &gameSettings.animatePieces);
+        if (gameSettings.animatePieces)
+        {
+            ImGui::SliderFloat("Move Animation Duration", &gameSettings.pieceMoveDuration, 0.05f, 0.6f, "%.2fs");
+        }
         ImGui::Spacing();
 
         ImGui::TextUnformatted("Board Geometry");

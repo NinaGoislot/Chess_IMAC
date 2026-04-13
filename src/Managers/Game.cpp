@@ -93,10 +93,10 @@ void Game::placePieces()
     _players[1].resetPieces();
 
     // Pass the Y-coordinates for White (backrank 0, pawns 1)
-    placePiecesForPlayer(0, 1, _players[0]);
+    placePiecesForPlayer(7, 6, _players[0]);
 
     // Pass the Y-coordinates for Black (backrank 7, pawns 6)
-    placePiecesForPlayer(7, 6, _players[1]);
+    placePiecesForPlayer(0, 1, _players[1]);
 }
 
 void Game::placePiecesForPlayer(int backRankY, int pawnRankY, Player& owner)

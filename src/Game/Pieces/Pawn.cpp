@@ -15,8 +15,8 @@ void Pawn::updateAllowedMoves(const Board& board, Vector2D position)
 {
     _allowedMoves.clear();
 
-    const float direction = (_color == PieceColor::White) ? 1.f : -1.f;
-    const float startRow  = (_color == PieceColor::White) ? 1.f : 6.f;
+    const float direction = (_color == PieceColor::White) ? -1.f : 1.f;
+    const float startRow  = (_color == PieceColor::White) ? 6.f : 1.f;
 
     const Vector2D oneStep(position.getX(), position.getY() + direction);
     if (board.isInside(oneStep) && board.isEmpty(oneStep))

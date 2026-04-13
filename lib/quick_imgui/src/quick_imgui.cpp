@@ -34,8 +34,7 @@ static void set_glfw_callbacks(GLFWwindow* window, Callbacks& callbacks)
 
     glfwSetScrollCallback(window, [](GLFWwindow* window, double xoffset, double yoffset) { // NOLINT(*-easily-swappable-parameters)
         ImGui_ImplGlfw_ScrollCallback(window, xoffset, yoffset);
-        if (!ImGui::GetIO().WantCaptureMouse)
-            get_callbacks(window).scroll_callback(xoffset, yoffset);
+        get_callbacks(window).scroll_callback(xoffset, yoffset);
     });
 
     glfwSetWindowSizeCallback(window, [](GLFWwindow* window, int width, int height) { // NOLINT(*-easily-swappable-parameters)

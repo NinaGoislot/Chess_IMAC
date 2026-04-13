@@ -9,6 +9,7 @@ private:
     double _mu; // Paramètre de localisation
     double _s;  // Paramètre d'échelle
     UniformDistribution _uniform; // Générateur de nombres aléatoires uniformes
+    
 public:
     LogisticDistribution(double mu, double s) : _mu(mu), _s(s), _uniform(0.00001, 0.99999) {}
 

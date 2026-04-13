@@ -16,6 +16,7 @@ public:
     bool isInside(Vector2D pos) const;
     bool isEmpty(Vector2D pos) const;
     bool isEnemy(Vector2D pos, PieceColor color) const;
+    bool isSelectedCase(int x, int y) const;
 
 private:
     Case*                                    _selectedCase = nullptr;

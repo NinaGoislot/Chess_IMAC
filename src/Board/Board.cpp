@@ -107,3 +107,11 @@ bool Board::isEnemy(Vector2D pos, PieceColor color) const
     const Case& caseAtPos = getCase(static_cast<int>(pos.getX()), static_cast<int>(pos.getY()));
     return caseAtPos.hasPiece() && caseAtPos.getPiece()->color() != color;
 }
+
+bool Board::isSelectedCase(int x, int y) const
+{
+    if (_selectedCase == nullptr)
+        return false;
+
+    return _selectedCase == &getCase(x, y);
+}

@@ -14,6 +14,8 @@ struct settings {
     bool use3D = true;
     bool drawPieces3D = true;
     bool drawSkybox = true;
+    bool animatePieces = true;
+    float pieceMoveDuration = 0.18f;
     bool cameraPieceTarget = false;
 
     ImVec4 skyboxTopColor    = ImVec4(0.20f, 0.35f, 0.62f, 1.00f);

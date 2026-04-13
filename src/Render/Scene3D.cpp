@@ -3,7 +3,6 @@
 #include <cmath>
 #include <cstdint>
 #include <iostream>
-#include <string>
 #include <glm/geometric.hpp>
 
 namespace {
@@ -76,11 +75,13 @@ void Scene3D::render(const Board& board, const settings& gameSettings, PieceColo
     _boardRenderer.setupStaticLighting();
     _boardRenderer.drawBoard(viewProjection, board, gameSettings);
 
+    _pieceAnimator.update(board, gameSettings, deltaTimeSeconds);
+
     if (gameSettings.drawPieces3D)
-        _boardRenderer.drawPieces(viewProjection, board, gameSettings, _resourceManager);
+        _boardRenderer.drawPieces(viewProjection, board, gameSettings, _resourceManager, _pieceAnimator.positions(), _pieceAnimator.explosions());
 
     if (gameSettings.drawSkybox)
-        _boardRenderer.drawSkybox(view, projection, gameSettings);
+        _boardRenderer.drawSkybox(view, projection, gameSettings, _resourceManager);
 
     glBindVertexArray(0);
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -244,6 +245,7 @@ void Scene3D::destroyGlResources()
     _boardRenderer.destroy();
     _resourceManager.destroy();
     _cameraController.reset();
+    _pieceAnimator.reset();
 
     _framebufferW          = 0;
     _framebufferH          = 0;

@@ -8,6 +8,7 @@
 #include "Game/settings.hpp"
 #include "3D/GLRenderer.hpp"
 #include "3D/CameraController.hpp"
+#include "3D/PieceAnimator.hpp"
 #include "3D/ResourceManager.hpp"
 
 // -------- EXPLANATION --------
@@ -49,6 +50,7 @@ private:
 
     Render3D::GLRenderer   _boardRenderer;
     Render3D::CameraController _cameraController;
+    Render3D::PieceAnimator _pieceAnimator;
     Render3D::ResourceManager _resourceManager;
 
     glm::mat4 _lastView{1.f};

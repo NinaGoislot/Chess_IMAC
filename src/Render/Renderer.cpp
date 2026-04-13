@@ -84,7 +84,22 @@ bool Renderer::draw2DCase(const Board& board, const settings& gameSettings, int 
     ImVec4 color = white ? gameSettings.getWhite() : gameSettings.getBlack();
     if (currentCase.isActive())
     {
-        color = gameSettings.getHighlight();
+        const ImVec4 selectedOwnPieceColor{0.20f, 0.45f, 1.f, 1.f};
+        const ImVec4 availableMoveColor{0.20f, 0.75f, 0.25f, 1.f};
+        const ImVec4 captureMoveColor{1.f, 0.55f, 0.f, 1.f};
+
+        if (board.isSelectedCase(x, y))
+        {
+            color = selectedOwnPieceColor;
+        }
+        else if (!currentCase.hasPiece())
+        {
+            color = availableMoveColor;
+        }
+        else
+        {
+            color = captureMoveColor;
+        }
     }
 
     ImGui::PushStyleColor(ImGuiCol_Button, color);

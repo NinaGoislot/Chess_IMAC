@@ -1,5 +1,6 @@
 #include "GLRenderer.hpp"
 #include <glad/glad.h>
+#include <algorithm>
 #include <array>
 #include <cstddef>
 #include <glm/geometric.hpp>
@@ -87,6 +88,18 @@ GLRenderer::UniformLocations GLRenderer::queryUniformLocations(const Shader& sha
     return locations;
 }
 
+GLRenderer::ExplosionUniformLocations GLRenderer::queryExplosionUniformLocations(const Shader& shader)
+{
+    ExplosionUniformLocations locations;
+    locations.mvp      = shader.getUniform("uMVP");
+    locations.model    = shader.getUniform("uModel");
+    locations.color    = shader.getUniform("uColor");
+    locations.lightDir = shader.getUniform("uLightDirection");
+    locations.ambient  = shader.getUniform("uAmbientStrength");
+    locations.progress = shader.getUniform("uExplosionProgress");
+    return locations;
+}
+
 void GLRenderer::initializeCubeGeometry()
 {
     const auto& vertices = Primitives::cubeVertices();
@@ -124,6 +137,13 @@ bool GLRenderer::initialize(const std::string& shaderDir)
         return false;
     }
 
+    const bool pieceExplosionLoaded = _pieceExplosionShader.load(shaderDir + "/piece_explosion.vs.glsl", shaderDir + "/piece_explosion.fs.glsl");
+    if (pieceExplosionLoaded)
+    {
+        _pieceExplosionUniforms = queryExplosionUniformLocations(_pieceExplosionShader);
+        _pieceExplosionReady    = _pieceExplosionUniforms.isValid();
+    }
+
     initializeCubeGeometry();
 
     const bool skyboxShaderLoaded = _skyboxShader.load(shaderDir + "/skybox.vs.glsl", shaderDir + "/skybox.fs.glsl");
@@ -132,6 +152,8 @@ bool GLRenderer::initialize(const std::string& shaderDir)
         _skyboxUniforms.vp          = _skyboxShader.getUniform("uVP");
         _skyboxUniforms.topColor    = _skyboxShader.getUniform("uTopColor");
         _skyboxUniforms.bottomColor = _skyboxShader.getUniform("uBottomColor");
+        _skyboxUniforms.cubemap     = _skyboxShader.getUniform("uSkybox");
+        _skyboxUniforms.useCubemap  = _skyboxShader.getUniform("uUseCubemap");
         _skyboxReady                = _skyboxUniforms.isValid();
     }
 
@@ -148,7 +170,9 @@ void GLRenderer::destroy()
     _vao = 0;
 
     _boardUniforms  = UniformLocations{};
+    _pieceExplosionUniforms = ExplosionUniformLocations{};
     _skyboxUniforms = SkyboxUniformLocations{};
+    _pieceExplosionReady = false;
     _skyboxReady    = false;
     _initialized    = false;
 }
@@ -210,8 +234,9 @@ void GLRenderer::drawTiles(const glm::mat4& viewProjection, const Board& board, 
     
     const glm::vec3 whiteTileColor = gameSettings.getWhiteVec3();
     const glm::vec3 blackTileColor = gameSettings.getBlackVec3();
-    const ImVec4    activeColorIm  = gameSettings.getHighlight();
-    const glm::vec3 activeTileColor{activeColorIm.x, activeColorIm.y, activeColorIm.z};
+    const glm::vec3 selectedOwnPieceColor{0.20f, 0.45f, 1.f};
+    const glm::vec3 availableMoveColor{0.20f, 0.75f, 0.25f};
+    const glm::vec3 captureMoveColor{1.f, 0.55f, 0.f};
     
     const glm::mat4 tileScale = glm::scale(glm::mat4{1.f}, glm::vec3{BOARD_TILE_SIZE, gameSettings.boardThickness, BOARD_TILE_SIZE});
 
@@ -221,7 +246,22 @@ void GLRenderer::drawTiles(const glm::mat4& viewProjection, const Board& board, 
         {
             const Case&     tileCase    = board.getCase(x, y);
             const bool      isWhiteTile = ((x + y) % 2) == 0;
-            const glm::vec3 tileColor   = tileCase.isActive() ? activeTileColor : (isWhiteTile ? whiteTileColor : blackTileColor);
+            glm::vec3       tileColor   = isWhiteTile ? whiteTileColor : blackTileColor;
+            if (tileCase.isActive())
+            {
+                if (board.isSelectedCase(x, y))
+                {
+                    tileColor = selectedOwnPieceColor;
+                }
+                else if (!tileCase.hasPiece())
+                {
+                    tileColor = availableMoveColor;
+                }
+                else
+                {
+                    tileColor = captureMoveColor;
+                }
+            }
 
             const float worldX = boardOriginX + static_cast<float>(x);
             const float worldZ = boardOriginZ + static_cast<float>(y);
@@ -261,7 +301,8 @@ void GLRenderer::drawBoardEdges(const glm::mat4& viewProjection, const settings&
     drawCube(_boardUniforms.mvp, _boardUniforms.model, _boardUniforms.color, viewProjection, westSide, sideColor);
 }
 
-void GLRenderer::drawSinglePiece(const glm::mat4& viewProj, const Piece* piece, int x, int y, float originX, float originZ, float topY, const ResourceManager& resourceManager) const
+void GLRenderer::drawSinglePiece(const glm::mat4& viewProj, const Piece* piece, float boardX, float boardY, float yOffset, float originX, float originZ,
+                                 float topY, const ResourceManager& resourceManager) const
 {
     if (piece == nullptr) return;
 
@@ -270,9 +311,9 @@ void GLRenderer::drawSinglePiece(const glm::mat4& viewProj, const Piece* piece, 
 
     // Gather basic piece info
     const glm::vec3 pieceColor  = colorForPiece(piece);
-    const float     pieceHeight = PIECES_HEIGHT[pieceIndex];
-    const float     worldX      = originX + static_cast<float>(x);
-    const float     worldZ      = originZ + static_cast<float>(y);
+    const float     pieceHeight = PIECES_HEIGHT[pieceIndex] * 1.35f;
+    const float     worldX      = originX + boardX;
+    const float     worldZ      = originZ + boardY;
 
     // Try to get the 3D model
     const ResourceManager::PieceMeshGlData* modelMesh = resourceManager.pieceMeshFor(piece->type());
@@ -280,7 +321,7 @@ void GLRenderer::drawSinglePiece(const glm::mat4& viewProj, const Piece* piece, 
     if (modelMesh != nullptr && modelMesh->isValid())
     {
         // Path A: Draw the beautiful 3D GLB model
-        const glm::mat4 model = glm::translate(glm::mat4{1.f}, glm::vec3{worldX, topY + PIECE_LIFT_Y, worldZ})
+        const glm::mat4 model = glm::translate(glm::mat4{1.f}, glm::vec3{worldX, topY + PIECE_LIFT_Y + yOffset, worldZ})
                               * glm::scale(glm::mat4{1.f}, glm::vec3{pieceHeight, pieceHeight, pieceHeight});
 
         // drawIndexedMesh already binds its own VAO inside, so we are safe.
@@ -289,7 +330,7 @@ void GLRenderer::drawSinglePiece(const glm::mat4& viewProj, const Piece* piece, 
     else
     {
         // Path B: Fallback to drawing a basic cube
-        const glm::mat4 model = glm::translate(glm::mat4{1.f}, glm::vec3{worldX, topY + PIECE_LIFT_Y + pieceHeight * 0.5f, worldZ})
+        const glm::mat4 model = glm::translate(glm::mat4{1.f}, glm::vec3{worldX, topY + PIECE_LIFT_Y + pieceHeight * 0.5f + yOffset, worldZ})
                               * glm::scale(glm::mat4{1.f}, glm::vec3{PIECE_BASE_WIDTH, pieceHeight, PIECE_BASE_WIDTH});
 
         // FIX: Explicitly bind the cube VAO right before we draw it. 
@@ -299,7 +340,45 @@ void GLRenderer::drawSinglePiece(const glm::mat4& viewProj, const Piece* piece, 
     }
 }
 
-void GLRenderer::drawPieces(const glm::mat4& viewProjection, const Board& board, const settings& gameSettings, const ResourceManager& resourceManager) const
+void GLRenderer::drawSingleExplodingPiece(const glm::mat4& viewProj, const Piece* piece, float boardX, float boardY, float yOffset, float originX,
+                                          float originZ, float topY, float explosionProgress, const ResourceManager& resourceManager) const
+{
+    if (piece == nullptr || !_pieceExplosionUniforms.isValid())
+        return;
+
+    const std::size_t pieceIndex = static_cast<std::size_t>(piece->type());
+    if (pieceIndex >= PIECES_HEIGHT.size())
+        return;
+
+    const glm::vec3 pieceColor  = colorForPiece(piece);
+    const float     pieceHeight = PIECES_HEIGHT[pieceIndex] * 1.35f;
+    const float     worldX      = originX + boardX;
+    const float     worldZ      = originZ + boardY;
+    const float     progress    = std::clamp(explosionProgress, 0.f, 1.f);
+
+    glUniform1f(_pieceExplosionUniforms.progress, progress);
+
+    const ResourceManager::PieceMeshGlData* modelMesh = resourceManager.pieceMeshFor(piece->type());
+    if (modelMesh != nullptr && modelMesh->isValid())
+    {
+        const glm::mat4 model = glm::translate(glm::mat4{1.f}, glm::vec3{worldX, topY + PIECE_LIFT_Y + yOffset, worldZ})
+                              * glm::scale(glm::mat4{1.f}, glm::vec3{pieceHeight, pieceHeight, pieceHeight});
+
+        drawIndexedMesh(_pieceExplosionUniforms.mvp, _pieceExplosionUniforms.model, _pieceExplosionUniforms.color,
+                        viewProj, model, pieceColor, modelMesh->vao, modelMesh->indexCount);
+    }
+    else
+    {
+        const glm::mat4 model = glm::translate(glm::mat4{1.f}, glm::vec3{worldX, topY + PIECE_LIFT_Y + pieceHeight * 0.5f + yOffset, worldZ})
+                              * glm::scale(glm::mat4{1.f}, glm::vec3{PIECE_BASE_WIDTH, pieceHeight, PIECE_BASE_WIDTH});
+
+        glBindVertexArray(_vao);
+        drawCube(_pieceExplosionUniforms.mvp, _pieceExplosionUniforms.model, _pieceExplosionUniforms.color, viewProj, model, pieceColor);
+    }
+}
+
+void GLRenderer::drawPieces(const glm::mat4& viewProjection, const Board& board, const settings& gameSettings, const ResourceManager& resourceManager,
+                            const AnimatedPiecePositions& animatedPiecePositions, const ExplodingPiecePositions& explodingPiecePositions) const
 {
     if (!_boardUniforms.isValid())
         return;
@@ -317,19 +396,64 @@ void GLRenderer::drawPieces(const glm::mat4& viewProjection, const Board& board,
             const Case& currentCase = board.getCase(x, y);
             if (currentCase.hasPiece())
             {
-                drawSinglePiece(viewProjection, currentCase.getPiece(), x, y, boardOriginX, boardOriginZ, boardTopY, resourceManager);
+                const Piece* piece = currentCase.getPiece();
+
+                float boardX = static_cast<float>(x);
+                float boardY = static_cast<float>(y);
+                float yOffset = 0.f;
+
+                const auto animatedPosition = animatedPiecePositions.find(piece);
+                if (animatedPosition != animatedPiecePositions.end())
+                {
+                    boardX   = animatedPosition->second.x;
+                    boardY   = animatedPosition->second.y;
+                    yOffset  = animatedPosition->second.z;
+                }
+
+                drawSinglePiece(viewProjection, piece, boardX, boardY, yOffset, boardOriginX, boardOriginZ, boardTopY, resourceManager);
             }
         }
     }
+
+    if (!_pieceExplosionReady || explodingPiecePositions.empty())
+        return;
+
+    _pieceExplosionShader.use();
+    glUniform3f(_pieceExplosionUniforms.lightDir, -0.35f, 1.f, 0.25f);
+    glUniform1f(_pieceExplosionUniforms.ambient, 0.25f);
+
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glDisable(GL_CULL_FACE);
+
+    for (const auto& [piece, explosion] : explodingPiecePositions)
+    {
+        drawSingleExplodingPiece(viewProjection,
+                                 piece,
+                                 explosion.position.x,
+                                 explosion.position.y,
+                                 explosion.position.z,
+                                 boardOriginX,
+                                 boardOriginZ,
+                                 boardTopY,
+                                 explosion.progress,
+                                 resourceManager);
+    }
+
+    glDisable(GL_BLEND);
+    glEnable(GL_CULL_FACE);
+    glCullFace(GL_BACK);
 }
 
-void GLRenderer::drawSkybox(const glm::mat4& view, const glm::mat4& projection, const settings& gameSettings) const
+void GLRenderer::drawSkybox(const glm::mat4& view, const glm::mat4& projection, const settings& gameSettings, const ResourceManager& resourceManager) const
 {
     if (!_skyboxReady || !_skyboxUniforms.isValid() || _vao == 0)
         return;
 
     const glm::vec3 topColor    = gameSettings.getSkyboxTopColorVec3();
     const glm::vec3 bottomColor = gameSettings.getSkyboxBottomColorVec3();
+    const unsigned int cubemapTexture = resourceManager.skyboxCubemap();
+    const bool hasCubemapTexture = cubemapTexture != 0;
 
     glDepthFunc(GL_LEQUAL);
     glDepthMask(GL_FALSE);
@@ -342,11 +466,22 @@ void GLRenderer::drawSkybox(const glm::mat4& view, const glm::mat4& projection, 
     glUniformMatrix4fv(_skyboxUniforms.vp, 1, GL_FALSE, glm::value_ptr(skyboxVp));
     glUniform3f(_skyboxUniforms.topColor, topColor.x, topColor.y, topColor.z);
     glUniform3f(_skyboxUniforms.bottomColor, bottomColor.x, bottomColor.y, bottomColor.z);
+    glUniform1i(_skyboxUniforms.cubemap, 0);
+    glUniform1i(_skyboxUniforms.useCubemap, hasCubemapTexture ? 1 : 0);
+
+    if (hasCubemapTexture)
+    {
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_CUBE_MAP, cubemapTexture);
+    }
 
     glBindVertexArray(_vao);
     glDrawArrays(GL_TRIANGLES, 0, 36);
 
     glBindVertexArray(0);
+
+    if (hasCubemapTexture)
+        glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
 
     glDepthMask(GL_TRUE);
     glDepthFunc(GL_LESS);

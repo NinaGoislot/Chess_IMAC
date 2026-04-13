@@ -1,6 +1,5 @@
 #include "Managers/InputManager.hpp"
 #include <algorithm>
-#include <imgui.h>
 
 // -------- CONSTRUCTOR --------
 InputManager::InputManager(settings& settingsRef)
@@ -41,9 +40,6 @@ void InputManager::onCursorPosition(double xpos, double ypos)
 void InputManager::onScroll(double xoffset, double yoffset)
 {
     (void)xoffset;
-
-    // Prevent camera zooming if the user is scrolling inside an ImGui window
-    if (ImGui::GetIO().WantCaptureMouse) return;
 
     applyZoom(static_cast<float>(yoffset));
 }
