@@ -30,8 +30,8 @@ void MatchState::newMatch(Mode mode)
 
     placePieces();
 
-    _chaosMode->onGameSetup(_board, _players, _moveHistory, _turnManager.getCurrent());
-    _chaosMode->onTurnStart(_board, _players, _moveHistory, _turnManager.getCurrent());
+    _chaosMode->onGameSetup(_board, _players, _moveHistory.entries(), _turnManager.getCurrent());
+    _chaosMode->onTurnStart(_board, _players, _moveHistory.entries(), _turnManager.getCurrent());
 }
 
 bool MatchState::tryMove(Vector2D from, Vector2D to)
@@ -116,7 +116,7 @@ const TurnManager& MatchState::getTurnManager() const
 
 const std::vector<std::string>& MatchState::getMoveHistory() const
 {
-    return _moveHistory;
+    return _moveHistory.entries();
 }
 
 std::optional<std::pair<int, int>> MatchState::getKirbyPosition() const
@@ -166,17 +166,17 @@ void MatchState::addPlayerBlack(const std::string& name)
 
 void MatchState::addMoveToHistory(const std::string& move)
 {
-    _moveHistory.push_back(move);
+    _moveHistory.add(move);
 }
 
 bool MatchState::applyChaosPreMove(MoveAttempt& attempt)
 {
-    if (_chaosMode->beforeMove(attempt, _board, _players, _moveHistory))
+    if (_chaosMode->beforeMove(attempt, _board, _players, _moveHistory.entries()))
         return true;
 
     if (_chaosMode->consumeSkipTurnRequested())
     {
-        _moveHistory.push_back("Chaos: tour saute apres refus d'obeissance.");
+        _moveHistory.add("Chaos: tour saute apres refus d'obeissance.");
         applyTurnProgression();
     }
 
@@ -219,10 +219,10 @@ void MatchState::applyTurnProgression()
 {
     _turnManager.advanceValidatedMove(
         [this](PieceColor turn) {
-            _chaosMode->onTurnEnd(_board, _players, _moveHistory, turn);
+            _chaosMode->onTurnEnd(_board, _players, _moveHistory.entries(), turn);
         },
         [this](PieceColor turn) {
-            _chaosMode->onTurnStart(_board, _players, _moveHistory, turn);
+            _chaosMode->onTurnStart(_board, _players, _moveHistory.entries(), turn);
         }
     );
 }

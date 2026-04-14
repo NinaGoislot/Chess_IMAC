@@ -4,7 +4,6 @@
 #include "Game/Promotion/PromotionFlow.hpp"
 #include "Game/State/MatchState.hpp"
 #include "Game/settings.hpp"
-#include "Managers/InputManager.hpp"
 #include "Render/Renderer.hpp"
 #include "Render/TextureManager.hpp"
 #include "Systems/MoveSystem.hpp"
@@ -27,18 +26,14 @@ public:
     // Render/update entry point
     void displayBoard(float deltaTimeSeconds);
 
-    // Input callbacks
-    void onCursorPosition(double xpos, double ypos);
-    void onScroll(double xoffset, double yoffset);
-
     // Getters
-    settings&                     getSettings();
-    const settings&               getSettings() const;
+    settings&                       getSettings();
+    const settings&                 getSettings() const;
     const std::vector<std::string>& getMoveHistory() const;
-    ChaosOptions&                 getChaosOptionsMutable();
-    const ChaosOptions&           getChaosOptions() const;
-    PromotionFlow&                getPromotionFlow();
-    Mode                          getMode() const;
+    ChaosOptions&                   getChaosOptionsMutable();
+    const ChaosOptions&             getChaosOptions() const;
+    PromotionFlow&                  getPromotionFlow();
+    Mode                            getMode() const;
 
     // Mutators used by menu and UI widgets
     void addPlayerWhite(const std::string& name);
@@ -56,7 +51,6 @@ private:
     MatchState     _match;
     PromotionFlow  _promotionFlow;
     MoveSystem     _moveSystem;
-    InputManager   _inputManager;
 
     // Current session mode.
     Mode _mode = Mode::Classic;
