@@ -1,12 +1,11 @@
 #include "GameScene.hpp"
 #include <imgui.h>
-#include "Managers/Game.hpp"
 #include "Managers/SceneManager.hpp"
 #include "Scenes/SettingsPanel.hpp"
 
-GameScene::GameScene(SceneManager& sceneManager, Game::Mode mode)
+GameScene::GameScene(SceneManager& sceneManager, GameManager::Mode mode)
     : _sceneManager(&sceneManager)
-    , _game(Game::instance())
+    , _game(sceneManager.getGame())
     , _mode(mode)
 {
     _game.newGame(_mode);
@@ -26,7 +25,7 @@ void GameScene::render()
     }
 
     ImGui::Separator();
-    _game.displayBoard();
+    _game.displayBoard(ImGui::GetIO().DeltaTime);
     _game.getPromotionFlow().drawPopup();
 
     ImGui::End();
@@ -37,7 +36,7 @@ void GameScene::render()
 
     ImGui::BeginChild("Scrolling");
 
-    const std::vector<std::string> history = _game.getMoveHistory();
+    const std::vector<std::string>& history = _game.getMoveHistory();
     for (const std::string& move : history)
     {
         ImGui::Text("%s", move.c_str());

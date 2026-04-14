@@ -1,4 +1,5 @@
 #pragma once
+#include <array>
 #include "Scene.hpp"
 
 class SceneManager;
@@ -17,4 +18,7 @@ private:
     SceneManager* _sceneManager = nullptr;
     // Selected mode index from menu controls.
     int           _selectedMode = 0;
+    // Player names are explicit scene state, not hidden globals.
+    std::array<char, 64> _whitePlayerName{};
+    std::array<char, 64> _blackPlayerName{};
 };

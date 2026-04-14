@@ -46,7 +46,8 @@ bool Scene3D::prepareRenderState(int width, int height)
     return true;
 }
 
-void Scene3D::render(const Board& board, const settings& gameSettings, PieceColor currentTurn, int width, int height, float deltaTimeSeconds, std::optional<std::pair<int, int>> kirbyPosition)
+void Scene3D::render(const Board& board, const settings& gameSettings, PieceColor currentTurn, int width, int height, float deltaTimeSeconds,
+                     std::optional<std::pair<int, int>> kirbyPosition, const SelectionState& selection)
 {
     if (!prepareRenderState(width, height))
     {
@@ -74,7 +75,7 @@ void Scene3D::render(const Board& board, const settings& gameSettings, PieceColo
     _hasCameraMatrices = true;
 
     _boardRenderer.setupStaticLighting();
-    _boardRenderer.drawBoard(viewProjection, board, gameSettings, kirbyPosition);
+    _boardRenderer.drawBoard(viewProjection, board, gameSettings, kirbyPosition, selection);
 
     _pieceAnimator.update(board, gameSettings, deltaTimeSeconds);
 

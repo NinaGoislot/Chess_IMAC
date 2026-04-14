@@ -35,7 +35,6 @@ private:
 
     // Runtime input state.
     settings& _settings;
-    bool      _rightMouseDown = false;
     bool      _firstMouseMove = true;
     double    _lastMouseX     = 0.0;
     double    _lastMouseY     = 0.0;

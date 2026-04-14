@@ -12,6 +12,8 @@ public:
     Vector2D operator-(const Vector2D& other) const;
     Vector2D operator*(float scalar) const;
     Vector2D operator/(float scalar) const;
+    bool operator==(const Vector2D& other) const;
+    bool operator!=(const Vector2D& other) const;
 
     // Getters
     float getX() const { return x; }
@@ -27,8 +29,4 @@ private:
     float    length() const;
     float    dotProduct(const Vector2D& other) const;
     Vector2D normalized() const;
-
-    // Comparison operators
-    bool operator==(const Vector2D& other) const;
-    bool operator!=(const Vector2D& other) const;
 };

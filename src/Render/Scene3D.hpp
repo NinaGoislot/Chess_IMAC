@@ -9,6 +9,7 @@
 #include "3D/PieceAnimator.hpp"
 #include "3D/ResourceManager.hpp"
 #include "Board/Board.hpp"
+#include "Game/State/SelectionState.hpp"
 #include "Game/settings.hpp"
 #include "utilities/AppConfig.hpp"
 
@@ -27,7 +28,8 @@ public:
     // Init function: loads shaders/models and prepares renderer subsystems.
     bool        initialize(const AppConfig& config);
     // Render function: draws one 3D frame of the board and pieces.
-    void        render(const Board& board, const settings& gameSettings, PieceColor currentTurn, int width, int height, float deltaTimeSeconds, std::optional<std::pair<int, int>> kirbyPosition);
+    void        render(const Board& board, const settings& gameSettings, PieceColor currentTurn, int width, int height, float deltaTimeSeconds,
+                       std::optional<std::pair<int, int>> kirbyPosition, const SelectionState& selection);
     // Performs board tile picking from viewport coordinates.
     bool        pickBoardTile(const settings& gameSettings, float localX, float localY, float viewportWidth, float viewportHeight, int* outX, int* outY) const;
     ImTextureID getColorTexture() const;

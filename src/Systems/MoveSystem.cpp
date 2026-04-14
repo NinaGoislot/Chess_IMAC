@@ -1,0 +1,61 @@
+#include "Systems/MoveSystem.hpp"
+#include "Game/State/MatchState.hpp"
+
+bool MoveSystem::onTileClicked(Vector2D clickedTile, MatchState& matchState)
+{
+    if (!_selection.selected.has_value())
+    {
+        if (matchState.canSelect(clickedTile))
+        {
+            _selection.selected = clickedTile;
+            updateHighlights(matchState);
+        }
+        return false;
+    }
+
+    if (_selection.selected.value() == clickedTile)
+    {
+        clearSelection();
+        return false;
+    }
+
+    const Vector2D from = _selection.selected.value();
+    if (matchState.tryMove(from, clickedTile))
+    {
+        clearSelection();
+        return true;
+    }
+
+    if (matchState.canSelect(clickedTile))
+    {
+        _selection.selected = clickedTile;
+        updateHighlights(matchState);
+        return false;
+    }
+
+    clearSelection();
+    return false;
+}
+
+void MoveSystem::clearSelection()
+{
+    _selection.clear();
+}
+
+void MoveSystem::updateHighlights(const MatchState& matchState)
+{
+    _selection.highlighted.clear();
+
+    if (!_selection.selected.has_value())
+        return;
+
+    const Vector2D origin = _selection.selected.value();
+
+    if (!matchState.canSelect(origin))
+    {
+        _selection.selected.reset();
+        return;
+    }
+
+    _selection.highlighted = matchState.getLegalMovesFrom(origin);
+}

@@ -47,6 +47,17 @@ glm::vec3 colorForPiece(const Piece* piece)
     return glm::vec3{0.15f, 0.15f, 0.2f};
 }
 
+bool hasTile(const std::vector<Vector2D>& tiles, int x, int y)
+{
+    return std::any_of(
+        tiles.begin(),
+        tiles.end(),
+        [&](const Vector2D& tile) {
+            return static_cast<int>(tile.getX()) == x && static_cast<int>(tile.getY()) == y;
+        }
+    );
+}
+
 void drawCube(int mvpLocation, int modelLocation, int colorLocation, const glm::mat4& viewProjection, const glm::mat4& model, const glm::vec3& color)
 {
     const glm::mat4 mvp = viewProjection * model;
@@ -199,14 +210,15 @@ void GLRenderer::setupStaticLighting() const
     glUniform1f(_boardUniforms.ambient, 0.30f);
 }
 
-void GLRenderer::drawBoard(const glm::mat4& viewProjection, const Board& board, const settings& gameSettings, std::optional<std::pair<int, int>> kirbyPosition) const
+void GLRenderer::drawBoard(const glm::mat4& viewProjection, const Board& board, const settings& gameSettings, std::optional<std::pair<int, int>> kirbyPosition,
+                           const SelectionState& selection) const
 {
     if (!_boardUniforms.isValid())
         return;
 
     // The main function is now just a clean orchestrator.
     drawBoardGaps(viewProjection, gameSettings);
-    drawTiles(viewProjection, board, gameSettings, kirbyPosition);
+    drawTiles(viewProjection, board, gameSettings, kirbyPosition, selection);
     drawBoardEdges(viewProjection, gameSettings);
 }
 
@@ -225,7 +237,8 @@ void GLRenderer::drawBoardGaps(const glm::mat4& viewProjection, const settings& 
     drawCube(_boardUniforms.mvp, _boardUniforms.model, _boardUniforms.color, viewProjection, gapLayerModel, boardGapColor);
 }
 
-void GLRenderer::drawTiles(const glm::mat4& viewProjection, const Board& board, const settings& gameSettings, std::optional<std::pair<int, int>> kirbyPosition) const
+void GLRenderer::drawTiles(const glm::mat4& viewProjection, const Board& board, const settings& gameSettings, std::optional<std::pair<int, int>> kirbyPosition,
+                           const SelectionState& selection) const
 {
     // Math specific to the tiles lives here now
     const float boardOriginX = -(static_cast<float>(Board::SIZE) - 1.f) * 0.5f;
@@ -247,9 +260,15 @@ void GLRenderer::drawTiles(const glm::mat4& viewProjection, const Board& board, 
             const Case&     tileCase    = board.getCase(x, y);
             const bool      isWhiteTile = ((x + y) % 2) == 0;
             glm::vec3       tileColor   = isWhiteTile ? whiteTileColor : blackTileColor;
-            if (tileCase.getIsActive())
+
+            const bool isHighlighted = hasTile(selection.highlighted, x, y);
+            const bool isSelected = selection.selected.has_value()
+                                    && static_cast<int>(selection.selected->getX()) == x
+                                    && static_cast<int>(selection.selected->getY()) == y;
+
+            if (isHighlighted || isSelected)
             {
-                if (board.isSelectedCase(x, y))
+                if (isSelected)
                 {
                     tileColor = selectedOwnPieceColor;
                 }

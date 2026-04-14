@@ -1,37 +1,3 @@
-// #pragma once
-
-// #include <array>
-// #include <memory>
-// #include <vector>
-// #include <unordered_set>
-// #include "Pieces/Piece.hpp"
-
-// class TextureManager;
-
-// class PiecesSet {
-// public:
-//     explicit PiecesSet(PieceColor ownerColor = PieceColor::White, const TextureManager* textures = nullptr);
-//     static const std::array<PieceType, 8>& backRankOrder();
-
-//     PieceColor getOwnerColor() const { return _ownerColor; }
-
-//     std::unique_ptr<Piece> takePiece(const PieceType& type);
-//     void addPiece(const Piece& piece);
-//     bool getIsAlive(const Piece& piece) const;
-//     void pieceEaten(const Piece& piece);
-//     void clear();
-//     std::size_t getAliveCount() const;
-
-// private:
-//     void buildFullSet();
-//     std::unique_ptr<Piece> createOnePiece(PieceType type, ImTextureID texture) const;
-
-//     PieceColor _ownerColor;
-//     const TextureManager* _textures;
-//     std::vector<std::unique_ptr<Piece>> _piecePool;
-//     std::unordered_set<const Piece*> _alivePieces;
-// };
-
 #pragma once
 
 #include <array>
@@ -61,8 +27,6 @@ public:
 
     // Adds one piece of given type and returns raw pointer.
     Piece*      addPiece(PieceType type);
-    // Adds a copy of an existing piece object.
-    void        addPiece(const Piece& piece);
     // Marks a piece as captured/dead.
     void        pieceEaten(const Piece* piece);
     bool        getIsAlive(const Piece* piece) const;

@@ -40,11 +40,6 @@ Piece* PiecesSet::addPiece(PieceType type)
     return created;
 }
 
-void PiecesSet::addPiece(const Piece& piece)
-{
-    _alivePieces.insert(&piece);
-}
-
 void PiecesSet::pieceEaten(const Piece* piece)
 {
     _alivePieces.erase(piece);

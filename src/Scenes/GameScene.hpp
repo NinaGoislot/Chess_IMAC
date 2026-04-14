@@ -1,5 +1,5 @@
 #pragma once
-#include "Managers/Game.hpp"
+#include "Managers/GameManager.hpp"
 #include "Scene.hpp"
 
 
@@ -9,7 +9,7 @@ class SceneManager;
 class GameScene : public Scene {
 public:
     // Constructors
-    explicit GameScene(SceneManager& sceneManager, Game::Mode mode);
+    explicit GameScene(SceneManager& sceneManager, GameManager::Mode mode);
 
     // Render function: draws game UI, board, and interactions.
     void render() override;
@@ -17,8 +17,8 @@ public:
 private:
     // Non-owning scene manager used for scene transitions.
     SceneManager* _sceneManager = nullptr;
-    // Reference to the singleton game state.
-    Game&         _game;
+    // Reference to the app controller.
+    GameManager&  _game;
     // Mode used for current match instance.
-    Game::Mode    _mode = Game::Mode::Classic;
+    GameManager::Mode _mode = GameManager::Mode::Classic;
 };

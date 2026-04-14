@@ -1,15 +1,10 @@
 #include "MenuScene.hpp"
 #include <imgui.h>
-#include <array>
 #include "Game/Chaos/ChaosMode.hpp"
-#include "Managers/Game.hpp"
 #include "Managers/SceneManager.hpp"
 
 
 namespace {
-std::array<char, 64> whitePlayerName{};
-std::array<char, 64> blackPlayerName{};
-
 void drawChaosRulesSection(ChaosOptions& options)
 {
     ImGui::Separator();
@@ -35,7 +30,8 @@ MenuScene::MenuScene(SceneManager& sceneManager)
 
 void MenuScene::render()
 {
-    settings& gameSettings = Game::instance().getSettings();
+    GameManager& game = _sceneManager->getGame();
+    settings& gameSettings = game.getSettings();
 
     ImGui::Begin("Menu principal");
     ImGui::Text("Bienvenue dans le super jeu d'echecs de Paul et Nina");
@@ -88,30 +84,30 @@ void MenuScene::render()
         ImGui::Text("Configuration de la partie");
         ImGui::Separator();
 
-        ImGui::InputText("Joueur Blanc", whitePlayerName.data(), static_cast<int>(whitePlayerName.size()));
-        ImGui::InputText("Joueur Noir", blackPlayerName.data(), static_cast<int>(blackPlayerName.size()));
+        ImGui::InputText("Joueur Blanc", _whitePlayerName.data(), static_cast<int>(_whitePlayerName.size()));
+        ImGui::InputText("Joueur Noir", _blackPlayerName.data(), static_cast<int>(_blackPlayerName.size()));
 
         if (_selectedMode == 1)
         {
-            drawChaosRulesSection(Game::instance().getChaosOptionsMutable());
+            drawChaosRulesSection(game.getChaosOptionsMutable());
         }
 
         ImGui::Spacing();
 
         if (ImGui::Button("Lancer la partie", ImVec2(200.f, 0.f)))
         {
-            Game::instance().addPlayerWhite(whitePlayerName.data());
-            Game::instance().addPlayerBlack(blackPlayerName.data());
+            game.addPlayerWhite(_whitePlayerName.data());
+            game.addPlayerBlack(_blackPlayerName.data());
 
-            Game::instance().addMoveToHistory(
+            game.addMoveToHistory(
                 std::string("Début du match entre ")
-                + whitePlayerName.data()
+                + _whitePlayerName.data()
                 + " et "
-                + blackPlayerName.data()
+                + _blackPlayerName.data()
                 + " !"
             );
 
-            const Game::Mode mode = (_selectedMode == 1) ? Game::Mode::Chaos : Game::Mode::Classic;
+            const GameManager::Mode mode = (_selectedMode == 1) ? GameManager::Mode::Chaos : GameManager::Mode::Classic;
             _sceneManager->launchGameScene(mode);
             ImGui::CloseCurrentPopup();
         }

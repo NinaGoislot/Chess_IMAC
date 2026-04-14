@@ -2,6 +2,19 @@
 #include <imgui.h>
 #include <algorithm>
 
+namespace {
+bool hasTile(const std::vector<Vector2D>& tiles, int x, int y)
+{
+    return std::any_of(
+        tiles.begin(),
+        tiles.end(),
+        [&](const Vector2D& tile) {
+            return static_cast<int>(tile.getX()) == x && static_cast<int>(tile.getY()) == y;
+        }
+    );
+}
+} // namespace
+
 
 Renderer::Renderer(TextureManager& textures)
     : _textures(textures)
@@ -13,26 +26,28 @@ void Renderer::initialize(const AppConfig& config)
     _scene3D.initialize(config);
 }
 
-std::optional<BoardClick> Renderer::draw(const Board& board, const settings& gameSettings, PieceColor currentTurn, float deltaTimeSeconds, std::optional<std::pair<int, int>> kirbyPosition)
+std::optional<BoardClick> Renderer::draw(const Board& board, const settings& gameSettings, PieceColor currentTurn, float deltaTimeSeconds,
+                                         std::optional<std::pair<int, int>> kirbyPosition, const SelectionState& selection)
 {
     if (gameSettings.use3D)
-        return draw3DBoard(board, gameSettings, currentTurn, deltaTimeSeconds, kirbyPosition);
+        return draw3DBoard(board, gameSettings, currentTurn, deltaTimeSeconds, kirbyPosition, selection);
 
-    return draw2DBoard(board, gameSettings, kirbyPosition);
+    return draw2DBoard(board, gameSettings, kirbyPosition, selection);
 }
 
-std::optional<BoardClick> Renderer::draw3DBoard(const Board& board, const settings& gameSettings, PieceColor currentTurn, float deltaTimeSeconds, std::optional<std::pair<int, int>> kirbyPosition)
+std::optional<BoardClick> Renderer::draw3DBoard(const Board& board, const settings& gameSettings, PieceColor currentTurn, float deltaTimeSeconds,
+                                                std::optional<std::pair<int, int>> kirbyPosition, const SelectionState& selection)
 {
     ImVec2 available = ImGui::GetContentRegionAvail();
     available.x      = std::max(available.x, 64.f);
     available.y      = std::max(available.y, 64.f);
 
-    _scene3D.render(board, gameSettings, currentTurn, static_cast<int>(available.x), static_cast<int>(available.y), deltaTimeSeconds, kirbyPosition);
+    _scene3D.render(board, gameSettings, currentTurn, static_cast<int>(available.x), static_cast<int>(available.y), deltaTimeSeconds, kirbyPosition, selection);
 
     ImTextureID texture = _scene3D.getColorTexture();
     if (texture == nullptr)
     {
-        return draw2DBoard(board, gameSettings, kirbyPosition);
+        return draw2DBoard(board, gameSettings, kirbyPosition, selection);
     }
 
     const ImVec2 imageStart = ImGui::GetCursorScreenPos();
@@ -56,7 +71,8 @@ std::optional<BoardClick> Renderer::draw3DBoard(const Board& board, const settin
     return clickedCase;
 }
 
-std::optional<BoardClick> Renderer::draw2DBoard(const Board& board, const settings& gameSettings, std::optional<std::pair<int, int>> kirbyPosition)
+std::optional<BoardClick> Renderer::draw2DBoard(const Board& board, const settings& gameSettings, std::optional<std::pair<int, int>> kirbyPosition,
+                                                const SelectionState& selection)
 {
     std::optional<BoardClick> clickedCase;
 
@@ -64,7 +80,7 @@ std::optional<BoardClick> Renderer::draw2DBoard(const Board& board, const settin
     {
         for (int x = 0; x < Board::SIZE; x++)
         {
-            if (!clickedCase.has_value() && draw2DCase(board, gameSettings, x, y, kirbyPosition))
+            if (!clickedCase.has_value() && draw2DCase(board, gameSettings, x, y, kirbyPosition, selection))
                 clickedCase = BoardClick{x, y};
 
             if (x < Board::SIZE - 1)
@@ -75,7 +91,8 @@ std::optional<BoardClick> Renderer::draw2DBoard(const Board& board, const settin
     return clickedCase;
 }
 
-bool Renderer::draw2DCase(const Board& board, const settings& gameSettings, int x, int y, std::optional<std::pair<int, int>> kirbyPosition)
+bool Renderer::draw2DCase(const Board& board, const settings& gameSettings, int x, int y, std::optional<std::pair<int, int>> kirbyPosition,
+                          const SelectionState& selection)
 {
     ImGui::PushID(x + y * Board::SIZE);
 
@@ -83,13 +100,18 @@ bool Renderer::draw2DCase(const Board& board, const settings& gameSettings, int 
     const Case& currentCase = board.getCase(x, y);
 
     ImVec4 color = white ? gameSettings.getWhite() : gameSettings.getBlack();
-    if (currentCase.getIsActive())
+    const bool isHighlighted = hasTile(selection.highlighted, x, y);
+    const bool isSelected = selection.selected.has_value()
+                            && static_cast<int>(selection.selected->getX()) == x
+                            && static_cast<int>(selection.selected->getY()) == y;
+
+    if (isHighlighted || isSelected)
     {
         const ImVec4 selectedOwnPieceColor{0.20f, 0.45f, 1.f, 1.f};
         const ImVec4 availableMoveColor{0.20f, 0.75f, 0.25f, 1.f};
         const ImVec4 captureMoveColor{1.f, 0.55f, 0.f, 1.f};
 
-        if (board.isSelectedCase(x, y))
+        if (isSelected)
         {
             color = selectedOwnPieceColor;
         }

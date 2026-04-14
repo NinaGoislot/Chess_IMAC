@@ -7,6 +7,7 @@
 #include <string>
 #include <utility>
 #include "Game/Pieces/Piece.hpp"
+#include "Game/State/SelectionState.hpp"
 #include "Game/settings.hpp"
 #include "Render/3D/PieceEffects.hpp"
 #include "Render/3D/Shader.hpp"
@@ -43,11 +44,13 @@ public:
     void setupStaticLighting() const;
 
     // Render function: draws board body and tiles.
-    void drawBoard(const glm::mat4& viewProjection, const Board& board, const settings& gameSettings, std::optional<std::pair<int, int>> kirbyPosition) const;
+    void drawBoard(const glm::mat4& viewProjection, const Board& board, const settings& gameSettings, std::optional<std::pair<int, int>> kirbyPosition,
+                   const SelectionState& selection) const;
     // Render function: draws gaps between board tiles.
     void drawBoardGaps(const glm::mat4& viewProjection, const settings& gameSettings) const;
     // Render function: draws top board tile quads.
-    void drawTiles(const glm::mat4& viewProjection, const Board& board, const settings& gameSettings, std::optional<std::pair<int, int>> kirbyPosition) const;
+    void drawTiles(const glm::mat4& viewProjection, const Board& board, const settings& gameSettings, std::optional<std::pair<int, int>> kirbyPosition,
+                   const SelectionState& selection) const;
     // Render function: draws board side geometry.
     void drawBoardEdges(const glm::mat4& viewProjection, const settings& gameSettings) const;
 

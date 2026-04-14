@@ -1,7 +1,5 @@
 #include "Board.hpp"
 #include <algorithm>
-#include <utility>
-#include "Case.hpp"
 
 namespace {
 bool isPawnPromotionMove(const Piece* piece, int destinationY)
@@ -9,7 +7,7 @@ bool isPawnPromotionMove(const Piece* piece, int destinationY)
     if (piece == nullptr || piece->getType() != PieceType::Pawn)
         return false;
 
-    const int promotionRank = (piece->getColor() == PieceColor::White) ? (Board::SIZE - 1) : 0;
+    const int promotionRank = (piece->getColor() == PieceColor::White) ? 0 : (Board::SIZE - 1);
     return destinationY == promotionRank;
 }
 } // namespace
@@ -34,185 +32,86 @@ const Case& Board::getCase(int x, int y) const
     return _cases[x][y];
 }
 
-bool Board::onCaseClicked(int x, int y, const PieceColor& currentTurn)
+std::vector<Vector2D> Board::getLegalMovesFrom(Vector2D from, PieceColor currentTurn) const
 {
-    if (_pendingPromotion.has_value())
+    if (!isInside(from))
+        return {};
+
+    const int fromX = static_cast<int>(from.getX());
+    const int fromY = static_cast<int>(from.getY());
+
+    const Case& fromCase = getCase(fromX, fromY);
+    if (!fromCase.getHasPiece())
+        return {};
+
+    Piece* movingPiece = fromCase.getPiece();
+    if (movingPiece == nullptr || movingPiece->getColor() != currentTurn)
+        return {};
+
+    movingPiece->updateAllowedMoves(*this, from);
+
+    std::vector<Vector2D> insideBoardMoves;
+    for (const Vector2D& move : movingPiece->getAllowedMoves())
     {
-        return false;
+        if (isInside(move))
+            insideBoardMoves.push_back(move);
     }
 
-    Case& clicked = getCase(x, y);
-
-    if (_selectedCase == nullptr)
-    {
-        if (!clicked.getHasPiece())
-            return false;
-
-        Piece* piece = clicked.getPiece();
-        if (piece->getColor() != currentTurn)
-            return false;
-
-        _selectedCase = &clicked;
-        piece->updateAllowedMoves(*this, Vector2D(static_cast<float>(x), static_cast<float>(y)));
-        auto moves = piece->getAllowedMoves();
-
-        clearHighlights();
-        clicked.setActive(true);
-
-        for (auto& move : moves)
-        {
-            if (!isInside(move))
-                continue;
-
-            getCase(static_cast<int>(move.getX()), static_cast<int>(move.getY())).setActive(true);
-        }
-
-        return false;
-    }
-
-    if (&clicked == _selectedCase)
-    {
-        clearHighlights();
-        _selectedCase = nullptr;
-        return false;
-    }
-
-    if (clicked.getIsActive())
-    {
-        Piece* selectedPiece = _selectedCase->getPiece();
-        if (selectedPiece == nullptr)
-            return false;
-
-        MoveAttempt attempt;
-        attempt.fromX       = _selectedCase->getX();
-        attempt.fromY       = _selectedCase->getY();
-        attempt.toX         = x;
-        attempt.toY         = y;
-        attempt.piece       = selectedPiece;
-        attempt.currentTurn = currentTurn;
-
-        if (_beforeMoveHook)
-        {
-            if (!_beforeMoveHook(attempt))
-            {
-                clearHighlights();
-                _selectedCase = nullptr;
-                return false;
-            }
-        }
-
-        if (!isInside(Vector2D(static_cast<float>(attempt.toX), static_cast<float>(attempt.toY))))
-        {
-            clearHighlights();
-            _selectedCase = nullptr;
-            return false;
-        }
-
-        selectedPiece->updateAllowedMoves(*this, Vector2D(static_cast<float>(attempt.fromX), static_cast<float>(attempt.fromY)));
-        const auto allowedMoves = selectedPiece->getAllowedMoves();
-
-        const bool moveStillAllowed = std::any_of(
-            allowedMoves.begin(),
-            allowedMoves.end(),
-            [&](const Vector2D& move) {
-                return static_cast<int>(move.getX()) == attempt.toX && static_cast<int>(move.getY()) == attempt.toY;
-            }
-        );
-
-        if (!moveStillAllowed)
-        {
-            clearHighlights();
-            _selectedCase = nullptr;
-            return false;
-        }
-
-        Case&  destination   = getCase(attempt.toX, attempt.toY);
-        Piece* movingPiece   = _selectedCase->takePiece();
-        Piece* capturedPiece = destination.takePiece();
-
-        destination.setPiece(movingPiece);
-
-        if (isPawnPromotionMove(movingPiece, attempt.toY))
-        {
-            PendingPromotionState state;
-            state.from        = _selectedCase;
-            state.to          = &destination;
-            state.pawn        = movingPiece;
-            state.captured    = capturedPiece;
-            state.color       = movingPiece->getColor();
-            _pendingPromotion = state;
-
-            clearHighlights();
-            _selectedCase = nullptr;
-            return false;
-        }
-
-        clearHighlights();
-        _selectedCase = nullptr;
-        return true;
-    }
-
-    if (clicked.getHasPiece() && clicked.getPiece()->getColor() == currentTurn)
-    {
-        clearHighlights();
-        _selectedCase = nullptr;
-        return onCaseClicked(x, y, currentTurn);
-    }
-
-    clearHighlights();
-    _selectedCase = nullptr;
-    return false;
+    return insideBoardMoves;
 }
 
-bool Board::getHasPendingPromotion() const
+bool Board::canMove(Vector2D from, Vector2D to, PieceColor currentTurn) const
 {
-    return _pendingPromotion.has_value();
-}
-
-std::optional<Board::PendingPromotionInfo> Board::getPendingPromotion() const
-{
-    if (!_pendingPromotion.has_value() || _pendingPromotion->to == nullptr)
-        return std::nullopt;
-
-    PendingPromotionInfo info;
-    info.x     = _pendingPromotion->to->getX();
-    info.y     = _pendingPromotion->to->getY();
-    info.color = _pendingPromotion->color;
-    return info;
-}
-
-bool Board::confirmPromotion(Piece* promotedPiece)
-{
-    if (!_pendingPromotion.has_value() || _pendingPromotion->to == nullptr || promotedPiece == nullptr)
+    if (!isInside(from) || !isInside(to))
         return false;
 
-    _pendingPromotion->to->setPiece(promotedPiece);
-    _pendingPromotion.reset();
-    return true;
+    const int fromX = static_cast<int>(from.getX());
+    const int fromY = static_cast<int>(from.getY());
+    const int toX   = static_cast<int>(to.getX());
+    const int toY   = static_cast<int>(to.getY());
+
+    if (fromX == toX && fromY == toY)
+        return false;
+
+    const auto legalMoves = getLegalMovesFrom(from, currentTurn);
+
+    return std::any_of(
+        legalMoves.begin(),
+        legalMoves.end(),
+        [&](const Vector2D& move) {
+            return static_cast<int>(move.getX()) == toX && static_cast<int>(move.getY()) == toY;
+        }
+    );
 }
 
-void Board::cancelPendingPromotion()
+Board::MoveResult Board::tryMove(Vector2D from, Vector2D to, PieceColor currentTurn)
 {
-    if (!_pendingPromotion.has_value())
-        return;
+    MoveResult result;
 
-    if (_pendingPromotion->from != nullptr)
-        _pendingPromotion->from->setPiece(_pendingPromotion->pawn);
+    if (!canMove(from, to, currentTurn))
+        return result;
 
-    if (_pendingPromotion->to != nullptr)
-        _pendingPromotion->to->setPiece(_pendingPromotion->captured);
+    const int fromX = static_cast<int>(from.getX());
+    const int fromY = static_cast<int>(from.getY());
+    const int toX   = static_cast<int>(to.getX());
+    const int toY   = static_cast<int>(to.getY());
 
-    _pendingPromotion.reset();
-}
+    Case& fromCase = getCase(fromX, fromY);
+    Case& toCase   = getCase(toX, toY);
 
-void Board::setBeforeMoveHook(BeforeMoveHook hook)
-{
-    _beforeMoveHook = std::move(hook);
-}
+    Piece* movingPiece      = fromCase.takePiece();
+    Piece* previouslyAtDest = toCase.takePiece();
 
-void Board::clearBeforeMoveHook()
-{
-    _beforeMoveHook = nullptr;
+    toCase.setPiece(movingPiece);
+
+    result.moved         = true;
+    result.isPromotion   = isPawnPromotionMove(movingPiece, toY);
+    result.from          = from;
+    result.to            = to;
+    result.movedPiece    = movingPiece;
+    result.capturedPiece = previouslyAtDest;
+
+    return result;
 }
 
 void Board::clear()
@@ -222,20 +121,10 @@ void Board::clear()
         for (int y = 0; y < SIZE; y++)
         {
             _cases[x][y].removePiece();
-            _cases[x][y].setActive(false);
         }
     }
-
-    _selectedCase = nullptr;
-    _pendingPromotion.reset();
 }
 
-void Board::clearHighlights()
-{
-    for (int x = 0; x < SIZE; x++)
-        for (int y = 0; y < SIZE; y++)
-            _cases[x][y].setActive(false);
-}
 bool Board::isInside(Vector2D pos) const
 {
     return pos.getX() >= 0 && pos.getX() < SIZE && pos.getY() >= 0 && pos.getY() < SIZE;
@@ -256,13 +145,5 @@ bool Board::isEnemy(Vector2D pos, PieceColor color) const
 
     const Case& caseAtPos = getCase(static_cast<int>(pos.getX()), static_cast<int>(pos.getY()));
     return caseAtPos.getHasPiece() && caseAtPos.getPiece()->getColor() != color;
-}
-
-bool Board::isSelectedCase(int x, int y) const
-{
-    if (_selectedCase == nullptr)
-        return false;
-
-    return _selectedCase == &getCase(x, y);
 }
 

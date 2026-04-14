@@ -1,13 +1,8 @@
 #include <imgui.h>
-#include <optional>
 #include <filesystem>
 
 #include "utilities/AppConfig.hpp"
-#include "Managers/Game.hpp"
-#include "Managers/InputManager.hpp"
 #include "Managers/SceneManager.hpp"
-#include "Render/Renderer.hpp"
-#include "Render/TextureManager.hpp"
 #include "quick_imgui/quick_imgui.hpp"
 
 // Application entry point: resolves runtime paths, initializes scenes, and runs UI loop.
@@ -27,8 +22,8 @@ int main(int argc, char** argv)
     }
 
     // -------- MAIN LOOP --------
-    std::optional<InputManager> inputManager;
     SceneManager& sceneManager = SceneManager::instance();
+    bool          initialized  = false;
 
     quick_imgui::loop(
         "Chess",
@@ -36,7 +31,7 @@ int main(int argc, char** argv)
             // Init callback: builds initial scene and input manager.
             .init = [&]() {
                 sceneManager.init(config);
-                inputManager.emplace(Game::instance().getSettings());
+                initialized = true;
             },
             // Render callback: draws current active scene each frame.
             .loop = [&]() {
@@ -46,13 +41,17 @@ int main(int argc, char** argv)
             // mouse_button_callback is entirely removed!
             // Cursor callback: updates camera orbit through input manager.
             .cursor_position_callback = [&](double xpos, double ypos) {
-                if (inputManager)
-                    inputManager->onCursorPosition(xpos, ypos);
+                if (!initialized)
+                    return;
+
+                sceneManager.getGame().onCursorPosition(xpos, ypos);
             },
             // Scroll callback: updates camera zoom through input manager.
             .scroll_callback = [&](double xoffset, double yoffset) {
-                if (inputManager)
-                    inputManager->onScroll(xoffset, yoffset);
+                if (!initialized)
+                    return;
+
+                sceneManager.getGame().onScroll(xoffset, yoffset);
             },
         },
         [&]() { return sceneManager.getShouldQuit(); }

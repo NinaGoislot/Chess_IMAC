@@ -38,11 +38,6 @@ Piece* Player::addPiece(PieceType type)
     return _piecesSet.addPiece(type);
 }
 
-void Player::addPiece(const Piece& piece)
-{
-    _piecesSet.addPiece(piece);
-}
-
 void Player::removePiece(const Piece& piece)
 {
     _piecesSet.pieceEaten(&piece);

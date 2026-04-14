@@ -2,7 +2,6 @@
 #include <imgui.h>
 #include <array>
 #include <string>
-#include <utility>
 
 namespace {
 constexpr std::array<PieceType, 4> PromotionChoices = {
@@ -13,27 +12,20 @@ constexpr std::array<PieceType, 4> PromotionChoices = {
 };
 } // namespace
 
-PromotionFlow::PromotionFlow(Board& board, std::array<Player, 2>& players, TurnManager& turnManager, const TextureManager& textures)
-    : _board(&board)
-    , _players(&players)
-    , _turnManager(&turnManager)
+PromotionFlow::PromotionFlow(MatchState& matchState, const TextureManager& textures)
+    : _match(&matchState)
     , _textures(&textures)
 {
 }
 
 bool PromotionFlow::getHasPendingPromotion() const
 {
-    return _board != nullptr && _board->getHasPendingPromotion();
-}
-
-void PromotionFlow::setOnMoveValidated(std::function<void()> callback)
-{
-    _onMoveValidated = std::move(callback);
+    return _match != nullptr && _match->getHasPendingPromotion();
 }
 
 void PromotionFlow::drawPopup()
 {
-    if (_board == nullptr || _textures == nullptr)
+    if (_match == nullptr || _textures == nullptr)
         return;
 
     if (!getHasPendingPromotion())
@@ -47,7 +39,7 @@ void PromotionFlow::drawPopup()
     if (!ImGui::BeginPopupModal("Promotion du pion", nullptr, ImGuiWindowFlags_AlwaysAutoResize))
         return;
 
-    const std::optional<Board::PendingPromotionInfo> pending = _board->getPendingPromotion();
+    const std::optional<MatchState::PendingPromotionInfo> pending = _match->getPendingPromotion();
     if (!pending.has_value())
     {
         ImGui::CloseCurrentPopup();
@@ -94,38 +86,18 @@ void PromotionFlow::drawPopup()
 
 bool PromotionFlow::confirmChoice(PieceType type)
 {
-    if (_board == nullptr || _players == nullptr || _turnManager == nullptr)
+    if (_match == nullptr)
         return false;
 
-    const std::optional<Board::PendingPromotionInfo> pending = _board->getPendingPromotion();
-    if (!pending.has_value())
-        return false;
-
-    Player& owner         = (pending->color == PieceColor::White) ? (*_players)[0] : (*_players)[1];
-    Piece*  promotedPiece = owner.addPiece(type);
-    if (promotedPiece == nullptr)
-        return false;
-
-    if (!_board->confirmPromotion(promotedPiece))
-    {
-        owner.removePiece(*promotedPiece);
-        return false;
-    }
-
-    if (_onMoveValidated)
-        _onMoveValidated();
-    else
-        _turnManager->nextTurn();
-
-    return true;
+    return _match->choosePromotion(type);
 }
 
 void PromotionFlow::cancelChoice()
 {
-    if (_board == nullptr)
+    if (_match == nullptr)
         return;
 
-    _board->cancelPendingPromotion();
+    _match->cancelPendingPromotion();
 }
 
 const char* PromotionFlow::pieceLabel(PieceType type) const
