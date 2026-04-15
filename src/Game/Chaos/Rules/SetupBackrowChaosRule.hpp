@@ -4,16 +4,16 @@
 
 struct ChaosOptions;
 
-// Randomizes initial back-row setup according to chaos options.
+// Randomizes initial back-row setup
 class SetupBackrowChaosRule : public IChaosRule {
 public:
     // Constructors
     explicit SetupBackrowChaosRule(const ChaosOptions* options);
 
-    // Callback: mutates board setup during game initialization.
+    // Callback
     void onGameSetup(ChaosRuleContext& context) override;
 
 private:
-    // Shared options pointer (not owned).
+    // Parameters
     const ChaosOptions* _options = nullptr;
 };

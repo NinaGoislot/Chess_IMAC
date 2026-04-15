@@ -2,13 +2,13 @@
 #include <imgui.h>
 #include <glm/vec3.hpp>
 
-// Holds editable runtime settings for board colors, camera, and 2D/3D rendering.
+// Runtime settings
 struct settings {
     // 2D rendering settings
     ImVec4 whiteColor = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
     ImVec4 blackColor = ImVec4(0.10f, 0.15f, 0.20f, 1.00f);
     ImVec4 _highlight{0.2f, 0.8f, 0.2f, 1.f};
-    
+
     float buttonSize = 50.f;
 
     // 3D rendering settings
@@ -21,14 +21,14 @@ struct settings {
 
     ImVec4 skyboxTopColor    = ImVec4(0.20f, 0.35f, 0.62f, 1.00f);
     ImVec4 skyboxBottomColor = ImVec4(0.85f, 0.90f, 0.98f, 1.00f);
-    
-    float boardThickness = 0.18f;
-    ImVec4 boardSideColor = ImVec4(0.28f, 0.18f, 0.10f, 1.00f);
-    float boardSideThickness = 0.30f;
-    float boardSideDrop = 0.14f;
-    float cameraYawDegrees = 45.f;
-    float cameraPitchDegrees = 32.f;
-    float cameraDistance = 13.5f;
+
+    float  boardThickness     = 0.18f;
+    ImVec4 boardSideColor     = ImVec4(0.28f, 0.18f, 0.10f, 1.00f);
+    float  boardSideThickness = 0.30f;
+    float  boardSideDrop      = 0.14f;
+    float  cameraYawDegrees   = 45.f;
+    float  cameraPitchDegrees = 32.f;
+    float  cameraDistance     = 13.5f;
 
     // Getters
     ImVec4 getWhite() const { return whiteColor; }

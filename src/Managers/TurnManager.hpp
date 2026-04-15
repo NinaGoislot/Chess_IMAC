@@ -3,7 +3,6 @@
 #include <functional>
 #include "Game/Pieces/Piece.hpp"
 
-// Tracks and advances the active player turn.
 class TurnManager {
 public:
     // Constructors
@@ -15,12 +14,11 @@ public:
     // Setters
     void setCurrent(PieceColor start) { _current = start; }
 
-    // Advances to the opposite player's turn.
+    // Functions
     void nextTurn();
-    // Applies validated move turn transition and triggers turn callbacks.
     void advanceValidatedMove(const std::function<void(PieceColor)>& onTurnEnd, const std::function<void(PieceColor)>& onTurnStart);
 
 private:
-    // Current side to play.
+    // Parameters
     PieceColor _current = PieceColor::White;
 };

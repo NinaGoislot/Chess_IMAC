@@ -18,6 +18,8 @@ private:
     SceneManager* _sceneManager = nullptr;
     // Selected mode index from menu controls.
     int           _selectedMode = 0;
+    int           _requestedMode = 0;
+    bool          _openSetupPopupNextFrame = false;
     // Player names are explicit scene state, not hidden globals.
     std::array<char, 64> _whitePlayerName{};
     std::array<char, 64> _blackPlayerName{};

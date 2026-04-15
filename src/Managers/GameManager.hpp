@@ -9,7 +9,7 @@
 #include "Systems/MoveSystem.hpp"
 #include "utilities/AppConfig.hpp"
 
-// High-level app game controller used by scenes and UI.
+// High-level app game controller
 class GameManager {
 public:
     enum class Mode {
@@ -34,17 +34,21 @@ public:
     const ChaosOptions&             getChaosOptions() const;
     PromotionFlow&                  getPromotionFlow();
     Mode                            getMode() const;
+    const std::string&              getWhitePlayerName() const;
+    const std::string&              getBlackPlayerName() const;
+    int                             getFullTurnCount() const;
+    bool                            getHasWinner() const;
+    const Player*                   getWinner() const;
 
-    // Mutators used by menu and UI widgets
+    // Adders
     void addPlayerWhite(const std::string& name);
     void addPlayerBlack(const std::string& name);
     void addMoveToHistory(const std::string& move);
 
 private:
-    // Applies one tile click intent to the move/selection system.
     void handleBoardClick(Vector2D clickedTile);
 
-    // Runtime dependencies and owned game subsystems.
+    // Parameters
     settings       _settings;
     TextureManager _textures;
     Renderer       _renderer;
@@ -52,6 +56,6 @@ private:
     PromotionFlow  _promotionFlow;
     MoveSystem     _moveSystem;
 
-    // Current session mode.
+    // Current session mode
     Mode _mode = Mode::Classic;
 };

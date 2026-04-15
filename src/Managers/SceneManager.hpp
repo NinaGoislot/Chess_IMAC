@@ -6,11 +6,12 @@
 #include "utilities/AppConfig.hpp"
 
 
-// Singleton that owns scene switching and application quit state.
+// Scene switching state
 class SceneManager {
 public:
     // Getters
     static SceneManager& instance();
+
     // Constructors
     SceneManager(const SceneManager&)            = delete;
     SceneManager(SceneManager&&)                 = delete;
@@ -18,30 +19,47 @@ public:
     SceneManager& operator=(SceneManager&&)      = delete;
     ~SceneManager()                              = default;
 
-    // Init function: prepares startup scene and shared configuration.
+    // Init
     void init(const AppConfig& config);
-    // Render function: draws currently active scene.
+
+    // Render
     void renderCurrentScene();
 
-    // Launches the main menu scene.
+    // Launchers
     void launchMenuScene();
-    // Launches a game scene in selected mode.
-    void launchGameScene(GameManager::Mode mode = GameManager::Mode::Classic);
+    void launchGameScene(GameManager::Mode mode = GameManager::Mode::Classic, bool startNew = true);
 
-    // Accessors for the unique app controller instance.
+    // Interrupted match flow
+    void saveInterruptedMatch();
+    void clearInterruptedMatch();
+    bool hasInterruptedMatch() const;
+    void resumeInterruptedMatch();
+
+    // Getters
     GameManager&       getGame();
     const GameManager& getGame() const;
 
-    // Requests application shutdown at end of frame.
+    // Requests application shutdown
     void requestQuit();
     bool getShouldQuit() const;
 
 private:
+    enum class PendingSceneAction {
+        None,
+        LaunchMenu,
+        LaunchGame,
+    };
+
     SceneManager() = default;
-    // Currently active scene object.
+    void applyPendingSceneAction();
+
+    // Parameters
     std::unique_ptr<Scene> _currentScene;
-    // Main app controller shared by scenes.
     std::unique_ptr<GameManager> _game;
-    // Global app-quit flag shared with main loop.
-    bool                   quitRequested = false;
+    bool quitRequested = false;
+    bool _isRenderingScene = false;
+    bool _hasInterruptedMatch = false;
+    PendingSceneAction _pendingSceneAction = PendingSceneAction::None;
+    GameManager::Mode _pendingGameMode = GameManager::Mode::Classic;
+    bool _pendingStartNewGame = true;
 };

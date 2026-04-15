@@ -3,7 +3,6 @@
 #include "Game/Chaos/ChaosMode.hpp"
 #include "Managers/SceneManager.hpp"
 
-
 namespace {
 void drawChaosRulesSection(ChaosOptions& options)
 {
@@ -30,8 +29,14 @@ MenuScene::MenuScene(SceneManager& sceneManager)
 
 void MenuScene::render()
 {
-    GameManager& game = _sceneManager->getGame();
-    settings& gameSettings = game.getSettings();
+    GameManager& game         = _sceneManager->getGame();
+    settings&    gameSettings = game.getSettings();
+
+    if (_openSetupPopupNextFrame)
+    {
+        ImGui::OpenPopup("Setup Partie");
+        _openSetupPopupNextFrame = false;
+    }
 
     ImGui::Begin("Menu principal");
     ImGui::Text("Bienvenue dans le super jeu d'echecs de Paul et Nina");
@@ -47,20 +52,32 @@ void MenuScene::render()
     ImGui::SetCursorPosX((ImGui::GetWindowWidth() - buttonWidth) * 0.5f);
     ImGui::BeginGroup();
 
-    // BTN classic mode
+    // BTN classic
     if (ImGui::Button("Mode Classique", ImVec2(buttonWidth, 45.f)))
     {
-        _selectedMode = 0;
-        ImGui::OpenPopup("Setup Partie");
+        _requestedMode = 0;
+        if (_sceneManager->hasInterruptedMatch())
+            ImGui::OpenPopup("Confirmer ecrasement");
+        else
+        {
+            _selectedMode = _requestedMode;
+            ImGui::OpenPopup("Setup Partie");
+        }
     }
 
     ImGui::Spacing();
 
-    // BTN chaos mode
+    // BTN chaos
     if (ImGui::Button("Mode Chaos", ImVec2(buttonWidth, 45.f)))
     {
-        _selectedMode = 1;
-        ImGui::OpenPopup("Setup Partie");
+        _requestedMode = 1;
+        if (_sceneManager->hasInterruptedMatch())
+            ImGui::OpenPopup("Confirmer ecrasement");
+        else
+        {
+            _selectedMode = _requestedMode;
+            ImGui::OpenPopup("Setup Partie");
+        }
     }
 
     ImGui::Spacing();
@@ -78,7 +95,54 @@ void MenuScene::render()
     ImGui::PopStyleColor(3);
     ImGui::EndGroup();
 
-    /////////////////////// Player setup modal ///////////////////////
+    if (_sceneManager->hasInterruptedMatch())
+    {
+        ImGui::Spacing();
+        ImGui::Separator();
+        ImGui::Spacing();
+
+        ImGui::BeginChild("InterruptedMatchCard", ImVec2(buttonWidth, 130.f), true);
+        ImGui::TextUnformatted("Partie interrompue");
+
+        ImGui::Text("Joueur blanc: %s", game.getWhitePlayerName().c_str());
+        ImGui::Text("Joueur noir: %s", game.getBlackPlayerName().c_str());
+        ImGui::Text("Mode: %s", game.getMode() == GameManager::Mode::Chaos ? "Chaos" : "Classique");
+        ImGui::Text("Tours joues: %d", game.getFullTurnCount());
+
+        if (ImGui::Button("Reprendre", ImVec2(160.f, 0.f)))
+        {
+            _sceneManager->resumeInterruptedMatch();
+        }
+
+        ImGui::EndChild();
+    }
+
+    // Modal : confirm new game if interrupted match exists
+    if (ImGui::BeginPopupModal("Confirmer ecrasement", nullptr, ImGuiWindowFlags_AlwaysAutoResize))
+    {
+        ImGui::TextUnformatted("Une partie interrompue existe deja.");
+        ImGui::TextUnformatted("Creer une nouvelle partie ecrasera cette sauvegarde.");
+        ImGui::Separator();
+
+        if (ImGui::Button("Ecraser et continuer", ImVec2(220.f, 0.f)))
+        {
+            _sceneManager->clearInterruptedMatch();
+            _selectedMode            = _requestedMode;
+            _openSetupPopupNextFrame = true;
+            ImGui::CloseCurrentPopup();
+        }
+
+        ImGui::SameLine();
+
+        if (ImGui::Button("Annuler", ImVec2(120.f, 0.f)))
+        {
+            ImGui::CloseCurrentPopup();
+        }
+
+        ImGui::EndPopup();
+    }
+
+    // Modal : new game setup
     if (ImGui::BeginPopupModal("Setup Partie", nullptr, ImGuiWindowFlags_AlwaysAutoResize))
     {
         ImGui::Text("Configuration de la partie");
@@ -108,7 +172,7 @@ void MenuScene::render()
             );
 
             const GameManager::Mode mode = (_selectedMode == 1) ? GameManager::Mode::Chaos : GameManager::Mode::Classic;
-            _sceneManager->launchGameScene(mode);
+            _sceneManager->launchGameScene(mode, true);
             ImGui::CloseCurrentPopup();
         }
 
@@ -121,10 +185,8 @@ void MenuScene::render()
 
         ImGui::EndPopup();
     }
-    /////////////////////// END ///////////////////////
 
     ImGui::End();
 
     // ImGui::ShowDemoWindow();
 }
-

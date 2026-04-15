@@ -26,8 +26,6 @@ bool PromotionService::start(const Board::MoveResult& result, PieceColor current
 {
     if (!result.isPromotion)
         return false;
-
-    // Snapshot board state so the promotion can be resolved or canceled later.
     PendingPromotionState pending;
     pending.from          = result.from;
     pending.to            = result.to;
@@ -43,10 +41,10 @@ bool PromotionService::resolve(Board& board, std::array<Player, 2>& players, Pie
     if (!_pending.has_value())
         return false;
 
-    // Create promoted piece from the owner pool and place it on destination tile.
+    // Create promoted piece from the owner pool and place it on destination tile
     const PendingPromotionState pending = _pending.value();
 
-    Player& owner = (pending.color == PieceColor::White) ? players[0] : players[1];
+    Player& owner         = (pending.color == PieceColor::White) ? players[0] : players[1];
     Piece*  promotedPiece = owner.addPiece(type);
     if (promotedPiece == nullptr)
         return false;
@@ -65,7 +63,7 @@ void PromotionService::cancel(Board& board)
     if (!_pending.has_value())
         return;
 
-    // Restore board exactly as it was before entering promotion state.
+    // Restore board exactly as it was before entering promotion state
     const PendingPromotionState pending = _pending.value();
 
     const int fromX = static_cast<int>(pending.from.getX());
