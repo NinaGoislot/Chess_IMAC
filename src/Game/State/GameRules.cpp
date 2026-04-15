@@ -2,7 +2,7 @@
 
 bool GameRules::isMoveValid(const Board& board, Vector2D from, Vector2D to, PieceColor currentTurn, bool hasPendingPromotion) const
 {
-    // Promotion must be resolved before any new move can start.
+    // Promotion must be resolved before any new move can start
     if (hasPendingPromotion)
         return false;
 

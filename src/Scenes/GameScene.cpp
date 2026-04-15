@@ -8,7 +8,6 @@ GameScene::GameScene(SceneManager& sceneManager, GameManager::Mode mode)
     , _game(sceneManager.getGame())
     , _mode(mode)
 {
-    _game.newGame(_mode);
 }
 
 void GameScene::render()
@@ -16,7 +15,10 @@ void GameScene::render()
     ImGui::Begin("Partie");
     if (ImGui::Button("Retour au menu"))
     {
+        _sceneManager->saveInterruptedMatch();
         _sceneManager->launchMenuScene();
+        ImGui::End();
+        return;
     }
     ImGui::SameLine();
     if (ImGui::Button("Nouvelle partie"))

@@ -75,6 +75,21 @@ GameManager::Mode GameManager::getMode() const
     return _mode;
 }
 
+const std::string& GameManager::getWhitePlayerName() const
+{
+    return _match.getWhitePlayerName();
+}
+
+const std::string& GameManager::getBlackPlayerName() const
+{
+    return _match.getBlackPlayerName();
+}
+
+int GameManager::getFullTurnCount() const
+{
+    return _match.getFullTurnCount();
+}
+
 void GameManager::addPlayerWhite(const std::string& name)
 {
     _match.addPlayerWhite(name);

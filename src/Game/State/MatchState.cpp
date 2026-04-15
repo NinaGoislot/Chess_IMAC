@@ -24,6 +24,7 @@ void MatchState::newMatch(Mode mode)
     _turnManager.setCurrent(PieceColor::White);
     _promotion.clear();
     _moveHistory.clear();
+    _validatedMoveCount = 0;
 
     _players[0] = Player(PieceColor::White, whiteName.empty() ? "White" : whiteName, *_textures);
     _players[1] = Player(PieceColor::Black, blackName.empty() ? "Black" : blackName, *_textures);
@@ -117,6 +118,21 @@ const TurnManager& MatchState::getTurnManager() const
 const std::vector<std::string>& MatchState::getMoveHistory() const
 {
     return _moveHistory.entries();
+}
+
+const std::string& MatchState::getWhitePlayerName() const
+{
+    return _players[0].getName();
+}
+
+const std::string& MatchState::getBlackPlayerName() const
+{
+    return _players[1].getName();
+}
+
+int MatchState::getFullTurnCount() const
+{
+    return _validatedMoveCount / 2;
 }
 
 std::optional<std::pair<int, int>> MatchState::getKirbyPosition() const
@@ -217,6 +233,8 @@ void MatchState::placePiecesForPlayer(int backRankY, int pawnRankY, Player& owne
 
 void MatchState::applyTurnProgression()
 {
+    ++_validatedMoveCount;
+
     _turnManager.advanceValidatedMove(
         [this](PieceColor turn) {
             _chaosMode->onTurnEnd(_board, _players, _moveHistory.entries(), turn);

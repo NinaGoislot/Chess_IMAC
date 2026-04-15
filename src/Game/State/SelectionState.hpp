@@ -3,14 +3,11 @@
 #include <vector>
 #include "utilities/Vector2D.hpp"
 
-// UI-facing selection snapshot: selected tile and highlighted legal moves.
+// UI-facing selection snapshot
 struct SelectionState {
-    // Currently selected tile, if any.
     std::optional<Vector2D> selected;
-    // Tiles highlighted as legal destinations.
     std::vector<Vector2D>   highlighted;
 
-    // Clears both selection and highlighted tiles.
     void clear()
     {
         selected.reset();

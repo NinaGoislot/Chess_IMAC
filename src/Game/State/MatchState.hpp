@@ -16,7 +16,7 @@
 #include "utilities/MoveAttempt.hpp"
 
 
-// Owns a complete chess match state and orchestrates rules, move execution, and chaos.
+// Owns a complete chess match state and orchestrates rules, move execution, and chaos
 class MatchState {
 public:
     enum class Mode {
@@ -30,16 +30,16 @@ public:
     // Lifecycle
     void newMatch(Mode mode = Mode::Classic);
 
-    // Rules pipeline
+    // Rules
     bool tryMove(Vector2D from, Vector2D to);
     bool choosePromotion(PieceType type);
     void cancelPendingPromotion();
 
-    // Selection/rules helpers for UI systems.
+    // UI helpers
     bool                  canSelect(Vector2D tile) const;
     std::vector<Vector2D> getLegalMovesFrom(Vector2D from) const;
 
-    using PendingPromotionInfo = PromotionService::PendingPromotionInfo;
+    using PendingPromotionInfo = PromotionService::PendingPromotionInfo; // set an alias
 
     // Getters
     const Board&                        getBoard() const;
@@ -48,6 +48,9 @@ public:
     TurnManager&                        getTurnManager();
     const TurnManager&                  getTurnManager() const;
     const std::vector<std::string>&     getMoveHistory() const;
+    const std::string&                  getWhitePlayerName() const;
+    const std::string&                  getBlackPlayerName() const;
+    int                                 getFullTurnCount() const;
     std::optional<std::pair<int, int>>  getKirbyPosition() const;
     bool                                getHasKirbyAt(int x, int y) const;
     bool                                getHasPendingPromotion() const;
@@ -56,38 +59,37 @@ public:
     ChaosOptions&                       getChaosOptionsMutable();
     const ChaosOptions&                 getChaosOptions() const;
 
-    // Simple mutators used by menus/UI.
+    // ADD functions
     void addPlayerWhite(const std::string& name);
     void addPlayerBlack(const std::string& name);
     void addMoveToHistory(const std::string& move);
 
 private:
-    // Pre-move chaos hook; may alter or cancel attempt.
-    bool applyChaosPreMove(MoveAttempt& attempt);
-    // Removes captured piece from owning player set.
+    bool applyChaosPreMove(MoveAttempt& attempt); // Pre-move chaos hook. Can alter or cancel attempt
     void consumeCapturedPiece(Piece* capturedPiece);
 
-    // Initial board setup helpers.
+    // Initial board setup
     void placePieces();
     void placePiecesForPlayer(int backRankY, int pawnRankY, Player& owner);
-    // Advances turn and triggers chaos turn callbacks.
+    
     void applyTurnProgression();
 
-    // Core match state.
+    // Parameters : Core match state
     Board                 _board;
     TurnManager           _turnManager;
     std::array<Player, 2> _players;
     MoveHistory           _moveHistory;
 
-    // Stateless services used to process one move.
+    // Parameters : Stateless services
     GameRules        _rules;
     MoveExecutor     _executor;
     PromotionService _promotion;
 
-    // Optional chaos subsystem and texture dependency.
+    // Parameters : chaos and texture dependency
     std::unique_ptr<ChaosMode> _chaosMode;
     const TextureManager*      _textures = nullptr;
 
-    // Current match mode.
+    // Parameters : Current match mode
     Mode _mode = Mode::Classic;
+    int  _validatedMoveCount = 0;
 };
