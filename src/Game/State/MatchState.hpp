@@ -8,7 +8,6 @@
 #include "Game/Chaos/ChaosMode.hpp"
 #include "Game/Player.hpp"
 #include "Game/State/GameRules.hpp"
-#include "Game/State/MoveExecutor.hpp"
 #include "Game/State/MoveHistory.hpp"
 #include "Game/State/PromotionService.hpp"
 #include "Managers/TurnManager.hpp"
@@ -83,7 +82,6 @@ private:
 
     // Parameters : Stateless services
     GameRules        _rules;
-    MoveExecutor     _executor;
     PromotionService _promotion;
 
     // Parameters : chaos and texture dependency

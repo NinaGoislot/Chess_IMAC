@@ -55,7 +55,7 @@ bool MatchState::tryMove(Vector2D from, Vector2D to)
     if (!applyChaosPreMove(attempt))
         return false;
 
-    const Board::MoveResult result = _executor.execute(_board, attempt);
+    const Board::MoveResult result = _board.tryMove(attempt);
     if (!result.moved)
         return false;
 

@@ -72,9 +72,9 @@ ImTextureID loadFirstAvailableTexture(const std::vector<std::string>& candidates
 void TextureManager::load(const AppConfig& config)
 {
     std::vector<std::string> baseFolders;
-    if (!config.assetPath.empty())
+    if (!config.assetRoot.empty())
     {
-        baseFolders.insert(baseFolders.begin(), config.assetPath + "/textures/pieces");
+        baseFolders.insert(baseFolders.begin(), config.texture("pieces"));
     }
 
     for (const auto& [color, colorName] : PieceColors)

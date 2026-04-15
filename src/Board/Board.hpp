@@ -4,6 +4,8 @@
 #include <vector>
 #include "Case.hpp"
 
+struct MoveAttempt;
+
 // Owns board state only. Pieces are owned by Player and referenced here by raw pointers.
 class Board {
 public:
@@ -31,6 +33,8 @@ public:
     bool                                canMove(Vector2D from, Vector2D to, PieceColor currentTurn) const;
     // Applies one legal move and returns what happened on board.
     MoveResult                          tryMove(Vector2D from, Vector2D to, PieceColor currentTurn);
+    // Applies one move attempt with pre-filled context.
+    MoveResult                          tryMove(const MoveAttempt& attempt);
     // Resets board content and transient state.
     void                                clear();
 

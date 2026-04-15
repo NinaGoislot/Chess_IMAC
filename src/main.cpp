@@ -12,12 +12,12 @@ int main(int argc, char** argv)
     std::string           baseDir = exePath.parent_path().string();
 
     AppConfig config;
-    config.assetPath  = baseDir + "/assets";
+    config.assetRoot  = baseDir + "/assets";
     config.shaderPath = baseDir + "/shaders";
 
-    if (!std::filesystem::exists(config.assetPath) || !std::filesystem::exists(config.shaderPath))
+    if (!std::filesystem::exists(config.assetRoot) || !std::filesystem::exists(config.shaderPath))
     {
-        config.assetPath  = baseDir + "/../assets";
+        config.assetRoot  = baseDir + "/../assets";
         config.shaderPath = baseDir + "/../shaders";
     }
 

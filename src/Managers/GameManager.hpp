@@ -6,7 +6,7 @@
 #include "Game/settings.hpp"
 #include "Render/Renderer.hpp"
 #include "Render/TextureManager.hpp"
-#include "Systems/MoveSystem.hpp"
+#include "Systems/MoveSelectionController.hpp"
 #include "utilities/AppConfig.hpp"
 
 // High-level app game controller
@@ -54,7 +54,7 @@ private:
     Renderer       _renderer;
     MatchState     _match;
     PromotionFlow  _promotionFlow;
-    MoveSystem     _moveSystem;
+    MoveSelectionController     _moveSelectionController;
 
     // Current session mode
     Mode _mode = Mode::Classic;

@@ -28,6 +28,12 @@ constexpr std::array<const char*, 5> SKYBOX_FILE_EXTENSIONS = {
     ".png", ".jpg", ".jpeg", ".bmp", ".tga",
 };
 
+constexpr std::array<const char*, 5> BOARD_TEXTURE_FILE_EXTENSIONS = {
+    ".png", ".jpg", ".jpeg", ".bmp", ".tga",
+};
+
+constexpr const char* BOARD_EDGE_TEXTURE_BASENAME = "rosewood_veneer1_diff_2k";
+
 GLenum textureFormatForChannels(int channels)
 {
     switch (channels) {
@@ -51,6 +57,11 @@ std::string pieceModelName(PieceType type)
     return PIECE_MODEL_NAMES[0];
 }
 
+std::string joinPath(const std::string& directory, const std::string& filename)
+{
+    return (std::filesystem::path(directory) / filename).string();
+}
+
 // Notice: modelCandidates() is completely DELETED. We don't need it anymore!
 
 } // namespace
@@ -62,23 +73,22 @@ ResourceManager::~ResourceManager()
     destroy();
 }
 
-// 1. Accept the path here
-bool ResourceManager::initialize(const std::string& assetBasePath)
+bool ResourceManager::initialize(const AssetPaths& assetPaths)
 {
     if (_initialized)
         return true;
 
-    // 2. Pass the path down to the loaders
-    initializePieceModels(assetBasePath);
-    const bool skyboxLoaded = loadSkyboxCubemap(assetBasePath);
+    initializePieceModels(assetPaths.models);
+    const bool skyboxLoaded = loadSkyboxCubemap(assetPaths.skybox);
+    initializeBoardTextures(assetPaths.board);
 
     _initialized = true;
     return skyboxLoaded;
 }
 
-void ResourceManager::initChaosModel(const std::string& assetBasePath, const std::string& modelName)
+void ResourceManager::initChaosModel(const std::string& modelsDirectory, const std::string& modelName)
 {
-    const std::string modelPath = assetBasePath + "/models/" + modelName + ".glb";
+    const std::string modelPath = joinPath(modelsDirectory, modelName + ".glb");
 
     if (!std::filesystem::exists(modelPath))
     {
@@ -108,6 +118,76 @@ const ResourceManager::PieceMeshGlData* ResourceManager::getPieceMeshFor(PieceTy
     const std::size_t index = pieceTypeIndex(type);
     if (index >= _pieceMeshes.size()) return nullptr;
     return &_pieceMeshes[index];
+}
+
+unsigned int ResourceManager::getTexture2D(const std::string& textureId) const
+{
+    const auto textureIt = _textures2D.find(textureId);
+    if (textureIt == _textures2D.end())
+        return 0;
+
+    return textureIt->second;
+}
+
+bool ResourceManager::loadTexture2D(const std::string& textureId, const std::vector<std::string>& candidatePaths, bool optional)
+{
+    destroyTexture2D(textureId);
+
+    for (const std::string& candidatePath : candidatePaths)
+    {
+        if (!std::filesystem::exists(candidatePath))
+            continue;
+
+        int width = 0;
+        int height = 0;
+        int channels = 0;
+        unsigned char* data = stbi_load(candidatePath.c_str(), &width, &height, &channels, 4);
+        if (data == nullptr)
+            continue;
+
+        unsigned int textureIdGl = 0;
+        glGenTextures(1, &textureIdGl);
+        glBindTexture(GL_TEXTURE_2D, textureIdGl);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+        glGenerateMipmap(GL_TEXTURE_2D);
+
+        glBindTexture(GL_TEXTURE_2D, 0);
+        stbi_image_free(data);
+
+        _textures2D[textureId] = textureIdGl;
+        std::cout << "Loaded texture '" << textureId << "' from: " << candidatePath << "\n";
+        return true;
+    }
+
+    if (!optional)
+    {
+        std::cout << "Failed to load required texture '" << textureId << "'.\n";
+        return false;
+    }
+
+    std::cout << "Texture '" << textureId << "' not found. Continuing without it.\n";
+    return true;
+}
+
+void ResourceManager::initializeBoardTextures(const std::string& boardTexturesDirectory)
+{
+    std::vector<std::string> boardEdgeCandidates;
+    boardEdgeCandidates.reserve(BOARD_TEXTURE_FILE_EXTENSIONS.size());
+
+    for (const char* extension : BOARD_TEXTURE_FILE_EXTENSIONS)
+    {
+        boardEdgeCandidates.push_back(joinPath(boardTexturesDirectory, std::string(BOARD_EDGE_TEXTURE_BASENAME) + extension));
+    }
+
+    if (!loadTexture2D(std::string(BoardEdgeTextureId), boardEdgeCandidates, true))
+    {
+        std::cout << "Board edge texture setup failed. Board edge will use flat color only.\n";
+    }
 }
 
 bool ResourceManager::uploadPieceMesh(PieceType type, const ModelMeshData& meshData)
@@ -147,15 +227,12 @@ bool ResourceManager::uploadPieceMesh(PieceType type, const ModelMeshData& meshD
     return mesh.isValid();
 }
 
-void ResourceManager::initializePieceModels(const std::string& assetBasePath)
+void ResourceManager::initializePieceModels(const std::string& modelsDirectory)
 {
-    // We construct the definitive path directly
-    const std::string modelsDir = assetBasePath + "/models/";
-
     for (std::size_t i = 0u; i < PIECE_TYPE_COUNT; ++i)
     {
         const PieceType type = static_cast<PieceType>(i);
-        const std::string modelPath = modelsDir + pieceModelName(type) + ".glb";
+        const std::string modelPath = joinPath(modelsDirectory, pieceModelName(type) + ".glb");
 
         if (!std::filesystem::exists(modelPath))
         {
@@ -180,9 +257,8 @@ void ResourceManager::initializePieceModels(const std::string& assetBasePath)
     }
 }
 
-bool ResourceManager::loadSkyboxCubemap(const std::string& assetBasePath)
+bool ResourceManager::loadSkyboxCubemap(const std::string& skyboxDirectory)
 {
-    const std::string skyboxDir = assetBasePath + "/textures/skybox/day/";
     std::array<std::string, SKYBOX_FACE_NAMES.size()> selectedFacePaths{};
     bool hasAllFaces = true;
 
@@ -192,7 +268,7 @@ bool ResourceManager::loadSkyboxCubemap(const std::string& assetBasePath)
         bool faceFound = false;
         for (const char* extension : SKYBOX_FILE_EXTENSIONS)
         {
-            const std::string candidatePath = skyboxDir + SKYBOX_FACE_NAMES[i] + extension;
+            const std::string candidatePath = joinPath(skyboxDirectory, std::string(SKYBOX_FACE_NAMES[i]) + extension);
             if (std::filesystem::exists(candidatePath))
             {
                 selectedFacePaths[i] = candidatePath;
@@ -212,7 +288,7 @@ bool ResourceManager::loadSkyboxCubemap(const std::string& assetBasePath)
     {
         // Cleanup if we had a previous skybox, then exit cleanly
         destroySkybox();
-        std::cout << "Skybox textures not found in " << skyboxDir << ". Using gradient skybox colors only.\n";
+        std::cout << "Skybox textures not found in " << skyboxDirectory << ". Using gradient skybox colors only.\n";
         return true; 
     }
 
@@ -276,10 +352,37 @@ void ResourceManager::destroySkybox()
     }
 }
 
+void ResourceManager::destroyTexture2D(const std::string& textureId)
+{
+    const auto textureIt = _textures2D.find(textureId);
+    if (textureIt == _textures2D.end())
+        return;
+
+    if (textureIt->second != 0)
+    {
+        glDeleteTextures(1, &textureIt->second);
+    }
+
+    _textures2D.erase(textureIt);
+}
+
+void ResourceManager::destroyAllTextures2D()
+{
+    for (auto& [textureId, textureGlId] : _textures2D)
+    {
+        (void)textureId;
+        if (textureGlId != 0)
+            glDeleteTextures(1, &textureGlId);
+    }
+
+    _textures2D.clear();
+}
+
 void ResourceManager::destroy()
 {
     destroyPieceMeshes();
     destroySkybox();
+    destroyAllTextures2D();
     _initialized = false;
 }
 

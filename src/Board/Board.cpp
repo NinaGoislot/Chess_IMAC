@@ -1,5 +1,6 @@
 #include "Board.hpp"
 #include <algorithm>
+#include "utilities/MoveAttempt.hpp"
 
 namespace {
 bool isPawnPromotionMove(const Piece* piece, int destinationY)
@@ -112,6 +113,13 @@ Board::MoveResult Board::tryMove(Vector2D from, Vector2D to, PieceColor currentT
     result.capturedPiece = previouslyAtDest;
 
     return result;
+}
+
+Board::MoveResult Board::tryMove(const MoveAttempt& attempt)
+{
+    const Vector2D from(static_cast<float>(attempt.fromX), static_cast<float>(attempt.fromY));
+    const Vector2D to(static_cast<float>(attempt.toX), static_cast<float>(attempt.toY));
+    return tryMove(from, to, attempt.currentTurn);
 }
 
 void Board::clear()

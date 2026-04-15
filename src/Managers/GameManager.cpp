@@ -6,7 +6,7 @@ GameManager::GameManager(const AppConfig& config)
     , _renderer(_textures)
     , _match(_textures)
     , _promotionFlow(_match, _textures)
-    , _moveSystem()
+    , _moveSelectionController()
 {
     _textures.load(config);
     _renderer.initialize(config);
@@ -17,7 +17,7 @@ GameManager::GameManager(const AppConfig& config)
 void GameManager::newGame(Mode mode)
 {
     _mode = mode;
-    _moveSystem.clearSelection();
+    _moveSelectionController.clearSelection();
 
     const MatchState::Mode matchMode = (_mode == Mode::Chaos) ? MatchState::Mode::Chaos : MatchState::Mode::Classic;
     _match.newMatch(matchMode);
@@ -31,7 +31,7 @@ void GameManager::displayBoard(float deltaTimeSeconds)
         _match.getCurrentTurn(),
         deltaTimeSeconds,
         _match.getKirbyPosition(),
-        _moveSystem.getSelectionState()
+        _moveSelectionController.getSelectionState()
     );
 
     if (!clickedCase.has_value())
@@ -123,5 +123,5 @@ void GameManager::handleBoardClick(Vector2D clickedTile)
     if (_match.getHasKirbyAt(x, y))
         return;
 
-    _moveSystem.onTileClicked(clickedTile, _match);
+    _moveSelectionController.onTileClicked(clickedTile, _match);
 }

@@ -1,6 +1,8 @@
 #include "CameraController.hpp"
 #include <algorithm>
 #include <cmath>
+#include <glm/geometric.hpp>
+#include <glm/gtc/matrix_inverse.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/trigonometric.hpp>
 #include "Board/Board.hpp"
@@ -19,6 +21,9 @@ constexpr float ORBIT_MIN_PITCH_DEGREES = 10.f;
 constexpr float ORBIT_MAX_PITCH_DEGREES = 80.f;
 constexpr float POV_MIN_PITCH_DEGREES   = -75.f;
 constexpr float POV_MAX_PITCH_DEGREES   = 75.f;
+constexpr float BOARD_CENTER_Y          = -0.05f;
+constexpr float BOARD_TILE_SIZE         = 0.94f;
+constexpr float EPSILON                 = 1e-5f;
 
 glm::vec3 boardCenterTarget()
 {
@@ -45,6 +50,9 @@ void CameraController::reset()
     _cameraTarget            = boardCenterTarget();
     _cameraTargetInitialized = false;
     _trackedPiece            = nullptr;
+    _lastView                 = glm::mat4{1.f};
+    _lastProjection           = glm::mat4{1.f};
+    _hasCameraMatrices        = false;
 }
 
 void CameraController::updateTrackedPieceFromSelection(const Board& board, const SelectionState& selection)
@@ -164,6 +172,86 @@ glm::mat4 CameraController::calculateViewProjection(const settings& gameSettings
         *outProjection = projection;
 
     return projection * view;
+}
+
+void CameraController::storeMatrices(const glm::mat4& view, const glm::mat4& projection)
+{
+    _lastView          = view;
+    _lastProjection    = projection;
+    _hasCameraMatrices = true;
+}
+
+void CameraController::clearMatrices()
+{
+    _hasCameraMatrices = false;
+}
+
+bool CameraController::pickBoardTile(const settings& gameSettings, float localX, float localY, float viewportWidth, float viewportHeight, int* outX, int* outY) const
+{
+    if (outX == nullptr || outY == nullptr)
+        return false;
+    if (!_hasCameraMatrices)
+        return false;
+    if (viewportWidth <= 0.f || viewportHeight <= 0.f)
+        return false;
+
+    const float u = localX / viewportWidth;
+    const float v = localY / viewportHeight;
+    if (u < 0.f || u > 1.f || v < 0.f || v > 1.f)
+        return false;
+
+    const float ndcX = u * 2.f - 1.f;
+    const float ndcY = 1.f - v * 2.f;
+
+    const glm::mat4 inverseViewProjection = glm::inverse(_lastProjection * _lastView);
+    glm::vec4       worldNear             = inverseViewProjection * glm::vec4{ndcX, ndcY, -1.f, 1.f};
+    glm::vec4       worldFar              = inverseViewProjection * glm::vec4{ndcX, ndcY, 1.f, 1.f};
+
+    if (std::abs(worldNear.w) < EPSILON || std::abs(worldFar.w) < EPSILON)
+        return false;
+
+    worldNear /= worldNear.w;
+    worldFar /= worldFar.w;
+
+    const glm::vec3 rayOrigin{worldNear.x, worldNear.y, worldNear.z};
+    const glm::vec3 rayVector{worldFar.x - worldNear.x, worldFar.y - worldNear.y, worldFar.z - worldNear.z};
+    const float     rayLength = glm::length(rayVector);
+    if (rayLength < EPSILON)
+        return false;
+
+    const glm::vec3 rayDirection = rayVector / rayLength;
+    if (std::abs(rayDirection.y) < EPSILON)
+        return false;
+
+    const float boardTopY = BOARD_CENTER_Y + gameSettings.boardThickness * 0.5f;
+    const float t         = (boardTopY - rayOrigin.y) / rayDirection.y;
+    if (t < 0.f)
+        return false;
+
+    const glm::vec3 hitPoint = rayOrigin + rayDirection * t;
+
+    const float boardOriginX = -(static_cast<float>(Board::SIZE) - 1.f) * 0.5f;
+    const float boardOriginZ = -(static_cast<float>(Board::SIZE) - 1.f) * 0.5f;
+
+    const float boardX = hitPoint.x - boardOriginX;
+    const float boardY = hitPoint.z - boardOriginZ;
+
+    const int tileX = static_cast<int>(std::floor(boardX + 0.5f));
+    const int tileY = static_cast<int>(std::floor(boardY + 0.5f));
+
+    if (tileX < 0 || tileX >= Board::SIZE || tileY < 0 || tileY >= Board::SIZE)
+        return false;
+
+    const float tileCenterX = boardOriginX + static_cast<float>(tileX);
+    const float tileCenterZ = boardOriginZ + static_cast<float>(tileY);
+    const float tileHalf    = BOARD_TILE_SIZE * 0.5f;
+
+    if (std::abs(hitPoint.x - tileCenterX) > tileHalf || std::abs(hitPoint.z - tileCenterZ) > tileHalf)
+        return false;
+
+    *outX = tileX;
+    *outY = tileY;
+    return true;
 }
 
 } // namespace Render3D

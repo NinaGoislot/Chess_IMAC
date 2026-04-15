@@ -1,16 +1,34 @@
 #include "Scene3D.hpp"
-#include <glad/glad.h>
-#include <cmath>
 #include <cstdint>
-#include <glm/geometric.hpp>
 #include <iostream>
-
 
 namespace {
 
-constexpr float BOARD_CENTER_Y  = -0.05f;
-constexpr float BOARD_TILE_SIZE = 0.94f;
-constexpr float EPSILON         = 1e-5f;
+constexpr glm::vec3 TOP_LIGHT_DIRECTION{-0.22f, 1.f, 0.18f};
+constexpr glm::vec3 TOP_LIGHT_COLOR{1.00f, 0.98f, 0.95f};
+
+// About 65 degrees from board normal (about 25 degrees above board plane)
+// to emphasize the active side.
+constexpr glm::vec3 WHITE_SIDE_LIGHT_DIRECTION{0.f, 0.42f, 0.91f};
+constexpr glm::vec3 BLACK_SIDE_LIGHT_DIRECTION{0.f, 0.42f, -0.91f};
+
+constexpr glm::vec3 WHITE_SIDE_TINT{0.74f, 0.52f, 1.00f};
+constexpr glm::vec3 BLACK_SIDE_TINT{1.00f, 0.86f, 0.36f};
+
+Render3D::BoardLighting makeBoardLighting(PieceColor currentTurn)
+{
+    Render3D::BoardLighting lighting;
+    lighting.topLightDirection = TOP_LIGHT_DIRECTION;
+    lighting.topLightColor = TOP_LIGHT_COLOR;
+    lighting.topLightStrength = 0.72f;
+    lighting.ambientStrength = 0.23f;
+
+    const bool useWhiteSideLight = (currentTurn == PieceColor::White);
+    lighting.sideLightDirection = useWhiteSideLight ? WHITE_SIDE_LIGHT_DIRECTION : BLACK_SIDE_LIGHT_DIRECTION;
+    lighting.sideLightColor = useWhiteSideLight ? WHITE_SIDE_TINT : BLACK_SIDE_TINT;
+    lighting.sideLightStrength = 0.62f;
+    return lighting;
+}
 
 } // namespace
 
@@ -32,18 +50,7 @@ bool Scene3D::prepareRenderState(int width, int height)
     if (!_initialized)
         return false;
 
-    ensureFramebufferSize(width, height);
-
-    glBindFramebuffer(GL_FRAMEBUFFER, _fbo);
-    glViewport(0, 0, _framebufferW, _framebufferH);
-    glEnable(GL_DEPTH_TEST);
-    glEnable(GL_CULL_FACE);
-    glCullFace(GL_BACK);
-
-    glClearColor(0.08f, 0.08f, 0.10f, 1.f);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-    return true;
+    return _glRenderer.beginFrame(width, height);
 }
 
 void Scene3D::render(const Board& board, const settings& gameSettings, PieceColor currentTurn, int width, int height, float deltaTimeSeconds,
@@ -51,18 +58,11 @@ void Scene3D::render(const Board& board, const settings& gameSettings, PieceColo
 {
     if (!prepareRenderState(width, height))
     {
-        _hasCameraMatrices = false;
+        _cameraController.clearMatrices();
         return;
     }
 
-    if (!_boardRenderer.beginBoardPass(currentTurn))
-    {
-        _hasCameraMatrices = false;
-        glBindFramebuffer(GL_FRAMEBUFFER, 0);
-        return;
-    }
-
-    const float aspect = static_cast<float>(_framebufferW) / static_cast<float>(_framebufferH);
+    const float aspect = static_cast<float>(_glRenderer.framebufferWidth()) / static_cast<float>(_glRenderer.framebufferHeight());
 
     _cameraController.updateTarget(board, gameSettings, selection, deltaTimeSeconds);
 
@@ -70,96 +70,34 @@ void Scene3D::render(const Board& board, const settings& gameSettings, PieceColo
     glm::mat4       projection{1.f};
     const glm::mat4 viewProjection = _cameraController.calculateViewProjection(gameSettings, aspect, &view, &projection);
 
-    _lastView          = view;
-    _lastProjection    = projection;
-    _hasCameraMatrices = true;
+    _cameraController.storeMatrices(view, projection);
 
-    _boardRenderer.setupStaticLighting();
-    _boardRenderer.drawBoard(viewProjection, board, gameSettings, kirbyPosition, selection);
+    const bool boardPassReady = _glRenderer.beginBoardPass();
+    if (boardPassReady)
+    {
+        _glRenderer.setBoardLighting(makeBoardLighting(currentTurn));
+        _chessSceneRenderer.drawBoard(_glRenderer, viewProjection, board, gameSettings, _resourceManager, currentTurn, kirbyPosition, selection);
+    }
 
     _pieceAnimator.update(board, gameSettings, deltaTimeSeconds);
 
-    if (gameSettings.drawPieces3D)
-        _boardRenderer.drawPieces(viewProjection, board, gameSettings, _resourceManager, _pieceAnimator.getPositions(), _pieceAnimator.getExplosions());
+    if (gameSettings.drawPieces3D && boardPassReady)
+        _chessSceneRenderer.drawPieces(_glRenderer, viewProjection, board, gameSettings, _resourceManager, currentTurn, _pieceAnimator.getPositions(), _pieceAnimator.getExplosions());
 
     if (gameSettings.drawSkybox)
-        _boardRenderer.drawSkybox(view, projection, gameSettings, _resourceManager);
+        _glRenderer.drawSkybox(view, projection, gameSettings, _resourceManager);
 
-    glBindVertexArray(0);
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    _glRenderer.endFrame();
 }
 
 ImTextureID Scene3D::getColorTexture() const
 {
-    return reinterpret_cast<ImTextureID>(static_cast<intptr_t>(_colorTexture));
+    return reinterpret_cast<ImTextureID>(static_cast<intptr_t>(_glRenderer.colorTextureId()));
 }
 
 bool Scene3D::pickBoardTile(const settings& gameSettings, float localX, float localY, float viewportWidth, float viewportHeight, int* outX, int* outY) const
 {
-    if (outX == nullptr || outY == nullptr)
-        return false;
-    if (!_hasCameraMatrices)
-        return false;
-    if (viewportWidth <= 0.f || viewportHeight <= 0.f)
-        return false;
-
-    const float u = localX / viewportWidth;
-    const float v = localY / viewportHeight;
-    if (u < 0.f || u > 1.f || v < 0.f || v > 1.f)
-        return false;
-
-    const float ndcX = u * 2.f - 1.f;
-    const float ndcY = 1.f - v * 2.f;
-
-    const glm::mat4 inverseViewProjection = glm::inverse(_lastProjection * _lastView);
-    glm::vec4       worldNear             = inverseViewProjection * glm::vec4{ndcX, ndcY, -1.f, 1.f};
-    glm::vec4       worldFar              = inverseViewProjection * glm::vec4{ndcX, ndcY, 1.f, 1.f};
-
-    if (std::abs(worldNear.w) < EPSILON || std::abs(worldFar.w) < EPSILON)
-        return false;
-
-    worldNear /= worldNear.w;
-    worldFar /= worldFar.w;
-
-    const glm::vec3 rayOrigin{worldNear.x, worldNear.y, worldNear.z};
-    const glm::vec3 rayVector{worldFar.x - worldNear.x, worldFar.y - worldNear.y, worldFar.z - worldNear.z};
-    const float     rayLength = glm::length(rayVector);
-    if (rayLength < EPSILON)
-        return false;
-
-    const glm::vec3 rayDirection = rayVector / rayLength;
-    if (std::abs(rayDirection.y) < EPSILON)
-        return false;
-
-    const float boardTopY = BOARD_CENTER_Y + gameSettings.boardThickness * 0.5f;
-    const float t         = (boardTopY - rayOrigin.y) / rayDirection.y;
-    if (t < 0.f)
-        return false;
-
-    const glm::vec3 hitPoint = rayOrigin + rayDirection * t;
-
-    const float boardOriginX = -(static_cast<float>(Board::SIZE) - 1.f) * 0.5f;
-    const float boardOriginZ = -(static_cast<float>(Board::SIZE) - 1.f) * 0.5f;
-
-    const float boardX = hitPoint.x - boardOriginX;
-    const float boardY = hitPoint.z - boardOriginZ;
-
-    const int tileX = static_cast<int>(std::floor(boardX + 0.5f));
-    const int tileY = static_cast<int>(std::floor(boardY + 0.5f));
-
-    if (tileX < 0 || tileX >= Board::SIZE || tileY < 0 || tileY >= Board::SIZE)
-        return false;
-
-    const float tileCenterX = boardOriginX + static_cast<float>(tileX);
-    const float tileCenterZ = boardOriginZ + static_cast<float>(tileY);
-    const float tileHalf    = BOARD_TILE_SIZE * 0.5f;
-
-    if (std::abs(hitPoint.x - tileCenterX) > tileHalf || std::abs(hitPoint.z - tileCenterZ) > tileHalf)
-        return false;
-
-    *outX = tileX;
-    *outY = tileY;
-    return true;
+    return _cameraController.pickBoardTile(gameSettings, localX, localY, viewportWidth, viewportHeight, outX, outY);
 }
 
 void Scene3D::initializeIfNeeded(const AppConfig& config)
@@ -167,15 +105,21 @@ void Scene3D::initializeIfNeeded(const AppConfig& config)
     if (_initialized)
         return;
 
-    // 1. Give the Resource Manager its assets path! (Fixes the compile error)
-    if (!_resourceManager.initialize(config.assetPath))
+    AssetPaths assetPaths;
+    assetPaths.models   = config.models();
+    assetPaths.textures = config.textures();
+    assetPaths.skybox   = config.skybox();
+    assetPaths.board    = config.texture("board");
+
+    // 1. Give the Resource Manager explicit asset directories.
+    if (!_resourceManager.initialize(assetPaths))
     {
-        std::cout << "Failed to initialize resources from: " << config.assetPath << "\n";
+        std::cout << "Failed to initialize resources from configured asset paths.\n";
         return;
     }
 
-    // 2. Give the Geometry Drawer (BoardRenderer) its shaders path! (Removes the macro hack)
-    if (!_boardRenderer.initialize(config.shaderPath))
+    // 2. Initialize low-level OpenGL renderer resources.
+    if (!_glRenderer.initialize(config.shaderPath))
     {
         std::cout << "Failed to initialize 3D board shaders from: " << config.shaderPath << "\n";
         _resourceManager.destroy();
@@ -185,73 +129,12 @@ void Scene3D::initializeIfNeeded(const AppConfig& config)
     _initialized = true;
 }
 
-void Scene3D::ensureFramebufferSize(int width, int height)
-{
-    if (_fbo != 0 && _framebufferW == width && _framebufferH == height)
-        return;
-
-    destroyFramebuffer();
-    _framebufferW = width;
-    _framebufferH = height;
-
-    glGenFramebuffers(1, &_fbo);
-    glBindFramebuffer(GL_FRAMEBUFFER, _fbo);
-
-    glGenTextures(1, &_colorTexture);
-    glBindTexture(GL_TEXTURE_2D, _colorTexture);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, _framebufferW, _framebufferH, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, _colorTexture, 0);
-
-    glGenRenderbuffers(1, &_depthStencil);
-    glBindRenderbuffer(GL_RENDERBUFFER, _depthStencil);
-    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, _framebufferW, _framebufferH);
-    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, _depthStencil);
-
-    if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
-    {
-        std::cout << "3D board framebuffer is not complete.\n";
-    }
-
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
-}
-
-void Scene3D::destroyFramebuffer()
-{
-    if (_depthStencil != 0)
-    {
-        glDeleteRenderbuffers(1, &_depthStencil);
-        _depthStencil = 0;
-    }
-
-    if (_colorTexture != 0)
-    {
-        glDeleteTextures(1, &_colorTexture);
-        _colorTexture = 0;
-    }
-
-    if (_fbo != 0)
-    {
-        glDeleteFramebuffers(1, &_fbo);
-        _fbo = 0;
-    }
-}
-
 void Scene3D::destroyGlResources()
 {
-    destroyFramebuffer();
-
-    _boardRenderer.destroy();
+    _glRenderer.destroy();
     _resourceManager.destroy();
     _cameraController.reset();
     _pieceAnimator.reset();
-
-    _framebufferW      = 0;
-    _framebufferH      = 0;
-    _hasCameraMatrices = false;
     _initialized       = false;
 }
 
