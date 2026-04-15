@@ -29,6 +29,8 @@ void Renderer::initialize(const AppConfig& config)
 std::optional<BoardClick> Renderer::draw(const Board& board, const settings& gameSettings, PieceColor currentTurn, float deltaTimeSeconds,
                                          std::optional<std::pair<int, int>> kirbyPosition, const SelectionState& selection)
 {
+    _hoveredTile.reset();
+
     if (gameSettings.use3D)
         return draw3DBoard(board, gameSettings, currentTurn, deltaTimeSeconds, kirbyPosition, selection);
 
@@ -54,7 +56,8 @@ std::optional<BoardClick> Renderer::draw3DBoard(const Board& board, const settin
     ImGui::Image(texture, available, ImVec2(0.f, 1.f), ImVec2(1.f, 0.f));
 
     std::optional<BoardClick> clickedCase;
-    if (ImGui::IsItemHovered() && ImGui::IsMouseClicked(ImGuiMouseButton_Left))
+    const bool isHovered = ImGui::IsItemHovered();
+    if (isHovered)
     {
         const ImVec2 mousePosition = ImGui::GetIO().MousePos;
         const float  localX        = mousePosition.x - imageStart.x;
@@ -64,7 +67,10 @@ std::optional<BoardClick> Renderer::draw3DBoard(const Board& board, const settin
         int tileY = 0;
         if (_scene3D.pickBoardTile(gameSettings, localX, localY, available.x, available.y, &tileX, &tileY))
         {
-            clickedCase = BoardClick{tileX, tileY};
+            _hoveredTile = BoardClick{tileX, tileY};
+
+            if (ImGui::IsMouseClicked(ImGuiMouseButton_Left))
+                clickedCase = BoardClick{tileX, tileY};
         }
     }
 

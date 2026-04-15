@@ -98,6 +98,8 @@ void ChessSceneRenderer::drawTiles(GLRenderer& glRenderer, const glm::mat4& view
     const glm::vec3 selectedOwnPieceColor{0.20f, 0.45f, 1.f};
     const glm::vec3 availableMoveColor{0.20f, 0.75f, 0.25f};
     const glm::vec3 captureMoveColor{1.f, 0.55f, 0.f};
+    const ImVec4 hoverColorRaw = gameSettings.getHighlight();
+    const glm::vec3 hoverSelectableColor{hoverColorRaw.x, hoverColorRaw.y, hoverColorRaw.z};
 
     const glm::mat4 tileScale = glm::scale(glm::mat4{1.f}, glm::vec3{BOARD_TILE_SIZE, gameSettings.boardThickness, BOARD_TILE_SIZE});
 
@@ -113,6 +115,9 @@ void ChessSceneRenderer::drawTiles(GLRenderer& glRenderer, const glm::mat4& view
             const bool isSelected = selection.selected.has_value()
                                     && static_cast<int>(selection.selected->getX()) == x
                                     && static_cast<int>(selection.selected->getY()) == y;
+            const bool isHovered = selection.hoveredSelectable.has_value()
+                                   && static_cast<int>(selection.hoveredSelectable->getX()) == x
+                                   && static_cast<int>(selection.hoveredSelectable->getY()) == y;
 
             if (isHighlighted || isSelected)
             {
@@ -128,6 +133,10 @@ void ChessSceneRenderer::drawTiles(GLRenderer& glRenderer, const glm::mat4& view
                 {
                     tileColor = captureMoveColor;
                 }
+            }
+            else if (isHovered)
+            {
+                tileColor = hoverSelectableColor;
             }
 
             Material tileMaterial;
@@ -182,7 +191,7 @@ void ChessSceneRenderer::drawBoardEdges(GLRenderer& glRenderer, const glm::mat4&
 }
 
 void ChessSceneRenderer::drawSinglePiece(GLRenderer& glRenderer, const glm::mat4& viewProjection, const Piece* piece, float boardX, float boardY, float yOffset,
-                                    float originX, float originZ, float topY, const ResourceManager& resourceManager) const
+                                    float originX, float originZ, float topY, const ResourceManager& resourceManager, bool isHovered, const glm::vec3& hoverColor) const
 {
     if (piece == nullptr)
         return;
@@ -192,7 +201,13 @@ void ChessSceneRenderer::drawSinglePiece(GLRenderer& glRenderer, const glm::mat4
         return;
 
     Material pieceMaterial;
-    pieceMaterial.color = colorForPiece(piece);
+    glm::vec3 pieceColor = colorForPiece(piece);
+    if (isHovered)
+    {
+        constexpr float hoverBlend = 0.55f;
+        pieceColor = pieceColor * (1.f - hoverBlend) + hoverColor * hoverBlend;
+    }
+    pieceMaterial.color = pieceColor;
 
     const float pieceHeight = PIECES_HEIGHT[pieceIndex] * 1.35f;
     const float worldX      = originX + boardX;
@@ -252,7 +267,7 @@ void ChessSceneRenderer::drawSingleExplodingPiece(GLRenderer& glRenderer, const 
 }
 
 void ChessSceneRenderer::drawPieces(GLRenderer& glRenderer, const glm::mat4& viewProjection, const Board& board, const settings& gameSettings,
-                               const ResourceManager& resourceManager, PieceColor currentTurn,
+                               const ResourceManager& resourceManager, PieceColor currentTurn, const SelectionState& selection,
                                const PieceAnimator::AnimatedPiecePositions& animatedPiecePositions,
                                const ExplodingPiecePositions& explodingPiecePositions) const
 {
@@ -262,6 +277,9 @@ void ChessSceneRenderer::drawPieces(GLRenderer& glRenderer, const glm::mat4& vie
     const float boardOriginZ = -(static_cast<float>(Board::SIZE) - 1.f) * 0.5f;
     const float boardTopY    = BOARD_CENTER_Y + gameSettings.boardThickness * 0.5f;
 
+    const ImVec4 hoverColorRaw = gameSettings.getHighlight();
+    const glm::vec3 hoverColor{hoverColorRaw.x, hoverColorRaw.y, hoverColorRaw.z};
+
     for (int y = 0; y < Board::SIZE; ++y)
     {
         for (int x = 0; x < Board::SIZE; ++x)
@@ -270,6 +288,10 @@ void ChessSceneRenderer::drawPieces(GLRenderer& glRenderer, const glm::mat4& vie
             if (currentCase.getHasPiece())
             {
                 const Piece* piece = currentCase.getPiece();
+
+                const bool isHovered = selection.hoveredSelectable.has_value()
+                                       && static_cast<int>(selection.hoveredSelectable->getX()) == x
+                                       && static_cast<int>(selection.hoveredSelectable->getY()) == y;
 
                 float boardX = static_cast<float>(x);
                 float boardY = static_cast<float>(y);
@@ -283,7 +305,7 @@ void ChessSceneRenderer::drawPieces(GLRenderer& glRenderer, const glm::mat4& vie
                     yOffset  = animatedPosition->second.z;
                 }
 
-                drawSinglePiece(glRenderer, viewProjection, piece, boardX, boardY, yOffset, boardOriginX, boardOriginZ, boardTopY, resourceManager);
+                drawSinglePiece(glRenderer, viewProjection, piece, boardX, boardY, yOffset, boardOriginX, boardOriginZ, boardTopY, resourceManager, isHovered, hoverColor);
             }
         }
     }

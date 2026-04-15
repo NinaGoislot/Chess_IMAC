@@ -26,6 +26,8 @@ public:
     // Render function: draws current board and returns optional clicked tile.
     std::optional<BoardClick> draw(const Board& board, const settings& gameSettings, PieceColor currentTurn, float deltaTimeSeconds,
                                    std::optional<std::pair<int, int>> kirbyPosition, const SelectionState& selection);
+    // Hover helper: returns the hovered tile from the latest draw, when available.
+    std::optional<BoardClick> getHoveredTile() const { return _hoveredTile; }
 
 private:
     // Render function: draws the board through the 3D pipeline.
@@ -42,4 +44,6 @@ private:
     TextureManager& _textures;
     // 3D scene subsystem used when 3D mode is enabled.
     Scene3D         _scene3D;
+    // Latest hovered board tile from the last draw pass.
+    std::optional<BoardClick> _hoveredTile;
 };

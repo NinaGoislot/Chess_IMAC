@@ -1,5 +1,6 @@
 #pragma once
 
+#include <optional>
 #include "Game/State/SelectionState.hpp"
 #include "utilities/Vector2D.hpp"
 
@@ -9,6 +10,7 @@ class MatchState;
 class MoveSelectionController {
 public:
     bool onTileClicked(Vector2D clickedTile, MatchState& matchState);
+    void updateHover(std::optional<Vector2D> hoveredTile, const MatchState& matchState);
 
     const SelectionState& getSelectionState() const { return _selection; }
     void                  clearSelection();

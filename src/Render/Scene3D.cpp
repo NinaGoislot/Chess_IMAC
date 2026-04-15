@@ -82,7 +82,7 @@ void Scene3D::render(const Board& board, const settings& gameSettings, PieceColo
     _pieceAnimator.update(board, gameSettings, deltaTimeSeconds);
 
     if (gameSettings.drawPieces3D && boardPassReady)
-        _chessSceneRenderer.drawPieces(_glRenderer, viewProjection, board, gameSettings, _resourceManager, currentTurn, _pieceAnimator.getPositions(), _pieceAnimator.getExplosions());
+        _chessSceneRenderer.drawPieces(_glRenderer, viewProjection, board, gameSettings, _resourceManager, currentTurn, selection, _pieceAnimator.getPositions(), _pieceAnimator.getExplosions());
 
     if (gameSettings.drawSkybox)
         _glRenderer.drawSkybox(view, projection, gameSettings, _resourceManager);

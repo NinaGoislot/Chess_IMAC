@@ -1,4 +1,5 @@
 #include "Managers/GameManager.hpp"
+#include <optional>
 
 GameManager::GameManager(const AppConfig& config)
     : _settings()
@@ -34,10 +35,18 @@ void GameManager::displayBoard(float deltaTimeSeconds)
         _moveSelectionController.getSelectionState()
     );
 
-    if (!clickedCase.has_value())
-        return;
+    if (clickedCase.has_value())
+        handleBoardClick(Vector2D(static_cast<float>(clickedCase->x), static_cast<float>(clickedCase->y)));
 
-    handleBoardClick(Vector2D(static_cast<float>(clickedCase->x), static_cast<float>(clickedCase->y)));
+    const std::optional<BoardClick> hoveredCase = _renderer.getHoveredTile();
+    if (hoveredCase.has_value())
+    {
+        _moveSelectionController.updateHover(Vector2D(static_cast<float>(hoveredCase->x), static_cast<float>(hoveredCase->y)), _match);
+    }
+    else
+    {
+        _moveSelectionController.updateHover(std::optional<Vector2D>{}, _match);
+    }
 }
 
 settings& GameManager::getSettings()

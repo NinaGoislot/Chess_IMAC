@@ -1,6 +1,7 @@
 #pragma once
 
 #include <glm/mat4x4.hpp>
+#include <glm/vec3.hpp>
 #include <optional>
 #include <utility>
 
@@ -22,7 +23,7 @@ public:
     void drawBoard(GLRenderer& glRenderer, const glm::mat4& viewProjection, const Board& board, const settings& gameSettings, const ResourceManager& resourceManager,
                    PieceColor currentTurn, std::optional<std::pair<int, int>> kirbyPosition, const SelectionState& selection) const;
     void drawPieces(GLRenderer& glRenderer, const glm::mat4& viewProjection, const Board& board, const settings& gameSettings, const ResourceManager& resourceManager,
-                    PieceColor currentTurn, const PieceAnimator::AnimatedPiecePositions& animatedPiecePositions,
+                    PieceColor currentTurn, const SelectionState& selection, const PieceAnimator::AnimatedPiecePositions& animatedPiecePositions,
                     const ExplodingPiecePositions& explodingPiecePositions) const;
 
 private:
@@ -32,7 +33,7 @@ private:
     void drawBoardEdges(GLRenderer& glRenderer, const glm::mat4& viewProjection, const settings& gameSettings, const ResourceManager& resourceManager) const;
 
     void drawSinglePiece(GLRenderer& glRenderer, const glm::mat4& viewProjection, const Piece* piece, float boardX, float boardY, float yOffset,
-                         float originX, float originZ, float topY, const ResourceManager& resourceManager) const;
+                         float originX, float originZ, float topY, const ResourceManager& resourceManager, bool isHovered, const glm::vec3& hoverColor) const;
     void drawSingleExplodingPiece(GLRenderer& glRenderer, const glm::mat4& viewProjection, const Piece* piece, float boardX, float boardY, float yOffset,
                                   float originX, float originZ, float topY, float explosionProgress,
                                   const ResourceManager& resourceManager) const;

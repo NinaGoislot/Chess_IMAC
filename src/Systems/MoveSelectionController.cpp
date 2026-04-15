@@ -42,6 +42,17 @@ void MoveSelectionController::clearSelection()
     _selection.clear();
 }
 
+void MoveSelectionController::updateHover(std::optional<Vector2D> hoveredTile, const MatchState& matchState)
+{
+    _selection.hoveredSelectable.reset();
+
+    if (!hoveredTile.has_value())
+        return;
+
+    if (matchState.canSelect(hoveredTile.value()))
+        _selection.hoveredSelectable = hoveredTile.value();
+}
+
 void MoveSelectionController::updateHighlights(const MatchState& matchState)
 {
     _selection.highlighted.clear();
