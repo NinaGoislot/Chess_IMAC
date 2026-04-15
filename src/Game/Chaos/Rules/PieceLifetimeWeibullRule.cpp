@@ -46,6 +46,13 @@ bool PieceLifetimeWeibullRule::beforeMove(ChaosMoveContext& context)
     if (piece == nullptr)
         return true;
 
+    // Kings are exempt from chaos lifetime decay.
+    if (piece->getType() == PieceType::King)
+    {
+        _remainingTurns.erase(piece);
+        return true;
+    }
+
     if (!_remainingTurns.contains(piece))
     {
         _remainingTurns[piece] = sampleLifetime(context.rng);
@@ -90,6 +97,12 @@ void PieceLifetimeWeibullRule::initializeMissingPieces(ChaosRuleContext& context
                 continue;
 
             Piece* piece = square.getPiece();
+            if (piece != nullptr && piece->getType() == PieceType::King)
+            {
+                _remainingTurns.erase(piece);
+                continue;
+            }
+
             if (!_remainingTurns.contains(piece))
             {
                 _remainingTurns[piece] = sampleLifetime(context.rng);

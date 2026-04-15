@@ -64,7 +64,7 @@ void Scene3D::render(const Board& board, const settings& gameSettings, PieceColo
 
     const float aspect = static_cast<float>(_framebufferW) / static_cast<float>(_framebufferH);
 
-    _cameraController.updateTarget(board, gameSettings, deltaTimeSeconds);
+    _cameraController.updateTarget(board, gameSettings, selection, deltaTimeSeconds);
 
     glm::mat4       view{1.f};
     glm::mat4       projection{1.f};
