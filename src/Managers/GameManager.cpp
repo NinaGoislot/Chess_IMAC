@@ -7,7 +7,6 @@ GameManager::GameManager(const AppConfig& config)
     , _match(_textures)
     , _promotionFlow(_match, _textures)
     , _moveSystem()
-    , _inputManager(_settings)
 {
     _textures.load(config);
     _renderer.initialize(config);
@@ -39,16 +38,6 @@ void GameManager::displayBoard(float deltaTimeSeconds)
         return;
 
     handleBoardClick(Vector2D(static_cast<float>(clickedCase->x), static_cast<float>(clickedCase->y)));
-}
-
-void GameManager::onCursorPosition(double xpos, double ypos)
-{
-    _inputManager.onCursorPosition(xpos, ypos);
-}
-
-void GameManager::onScroll(double xoffset, double yoffset)
-{
-    _inputManager.onScroll(xoffset, yoffset);
 }
 
 settings& GameManager::getSettings()

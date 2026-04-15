@@ -10,14 +10,14 @@ struct SelectionState;
 
 namespace Render3D {
 
-// Computes camera target, view, and projection matrices for 3D board rendering.
+// Computes camera target, view, and projection for 3D rendering.
 
 class CameraController {
 public:
     // Constructors
     CameraController() = default;
 
-    // Resets camera target interpolation state.
+    // Lifecycle
     void reset();
     // Updates camera target from board/game state and returns current target.
     glm::vec3 updateTarget(const Board& board, const settings& gameSettings, const SelectionState& selection, float deltaTimeSeconds);
@@ -30,6 +30,7 @@ private:
     // Finds world-space target for a tracked piece. Returns false if piece is no longer on board.
     static bool tryGetPieceTarget(const Board& board, const Piece* trackedPiece, glm::vec3& outTarget);
 
+    // Parameters
     // Smoothed camera target in world space.
     glm::vec3 _cameraTarget{0.f, 0.2f, 0.f};
     // Indicates whether target interpolation was initialized.

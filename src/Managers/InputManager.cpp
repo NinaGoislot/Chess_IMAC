@@ -1,16 +1,21 @@
 #include "Managers/InputManager.hpp"
 #include <algorithm>
+#include <stdexcept>
 
-// -------- CONSTRUCTOR --------
-InputManager::InputManager(settings& settingsRef)
-    : _settings(settingsRef)
+InputManager& InputManager::instance()
 {
+    static InputManager manager;
+    return manager;
 }
 
-// -------- CALLBACKS --------
+void InputManager::bindSettings(settings& settingsRef)
+{
+    _settings       = &settingsRef;
+    _firstMouseMove = true;
+}
+
 void InputManager::onCursorPosition(double xpos, double ypos)
 {
-    // Read button state directly from ImGui
     if (!ImGui::IsMouseDown(ImGuiMouseButton_Right))
     {
         _firstMouseMove = true;
@@ -19,8 +24,8 @@ void InputManager::onCursorPosition(double xpos, double ypos)
 
     if (_firstMouseMove)
     {
-        _lastMouseX = xpos;
-        _lastMouseY = ypos;
+        _lastMouseX     = xpos;
+        _lastMouseY     = ypos;
         _firstMouseMove = false;
         return;
     }
@@ -31,10 +36,11 @@ void InputManager::onCursorPosition(double xpos, double ypos)
     _lastMouseX = xpos;
     _lastMouseY = ypos;
 
-    _settings.cameraYawDegrees   += static_cast<float>(deltaX) * _mouseSensitivity;
-    _settings.cameraPitchDegrees -= static_cast<float>(deltaY) * _mouseSensitivity;
+    settings& settings = settingsRef();
+    settings.cameraYawDegrees += static_cast<float>(deltaX) * _mouseSensitivity;
+    settings.cameraPitchDegrees -= static_cast<float>(deltaY) * _mouseSensitivity;
 
-    _settings.cameraPitchDegrees = std::clamp(_settings.cameraPitchDegrees, _minPitch, _maxPitch);
+    settings.cameraPitchDegrees = std::clamp(settings.cameraPitchDegrees, _minPitch, _maxPitch);
 }
 
 void InputManager::onScroll(double xoffset, double yoffset)
@@ -44,11 +50,21 @@ void InputManager::onScroll(double xoffset, double yoffset)
     applyZoom(static_cast<float>(yoffset));
 }
 
-// -------- HELPERS --------
+settings& InputManager::settingsRef()
+{
+    if (_settings == nullptr)
+        throw std::logic_error("InputManager used before bindSettings().");
+
+    return *_settings;
+}
+
 void InputManager::applyZoom(float yoffset)
 {
-    if (_settings.cameraPieceTarget) return;
+    settings& settings = settingsRef();
 
-    _settings.cameraDistance -= yoffset * _zoomSpeed;
-    _settings.cameraDistance = std::clamp(_settings.cameraDistance, _minDistance, _maxDistance);
+    if (settings.cameraPieceTarget)
+        return;
+
+    settings.cameraDistance -= yoffset * _zoomSpeed;
+    settings.cameraDistance = std::clamp(settings.cameraDistance, _minDistance, _maxDistance);
 }
