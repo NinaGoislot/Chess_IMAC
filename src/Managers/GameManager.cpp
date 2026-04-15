@@ -90,6 +90,16 @@ int GameManager::getFullTurnCount() const
     return _match.getFullTurnCount();
 }
 
+bool GameManager::getHasWinner() const
+{
+    return _match.getHasWinner();
+}
+
+const Player* GameManager::getWinner() const
+{
+    return _match.getWinner();
+}
+
 void GameManager::addPlayerWhite(const std::string& name)
 {
     _match.addPlayerWhite(name);

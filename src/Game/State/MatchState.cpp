@@ -25,6 +25,7 @@ void MatchState::newMatch(Mode mode)
     _promotion.clear();
     _moveHistory.clear();
     _validatedMoveCount = 0;
+    _winner = nullptr;
 
     _players[0] = Player(PieceColor::White, whiteName.empty() ? "White" : whiteName, *_textures);
     _players[1] = Player(PieceColor::Black, blackName.empty() ? "Black" : blackName, *_textures);
@@ -37,6 +38,9 @@ void MatchState::newMatch(Mode mode)
 
 bool MatchState::tryMove(Vector2D from, Vector2D to)
 {
+    if (_winner != nullptr)
+        return false;
+
     if (!_rules.isMoveValid(_board, from, to, _turnManager.getCurrent(), _promotion.getHasPending()))
         return false;
 
@@ -55,6 +59,16 @@ bool MatchState::tryMove(Vector2D from, Vector2D to)
     if (!result.moved)
         return false;
 
+    if (result.capturedPiece != nullptr && result.capturedPiece->getType() == PieceType::King)
+    {
+        const int winnerIndex = (result.movedPiece != nullptr && result.movedPiece->getColor() == PieceColor::White) ? 0 : 1;
+        _winner = &_players[winnerIndex];
+
+        consumeCapturedPiece(result.capturedPiece);
+        _moveHistory.add("Victoire de " + _winner->getName() + " : roi adverse capture.");
+        return true;
+    }
+
     if (_rules.isPromotion(result))
     {
         _promotion.start(result, _turnManager.getCurrent());
@@ -68,6 +82,9 @@ bool MatchState::tryMove(Vector2D from, Vector2D to)
 
 bool MatchState::choosePromotion(PieceType type)
 {
+    if (_winner != nullptr)
+        return false;
+
     if (!_promotion.resolve(_board, _players, type))
         return false;
 
@@ -82,11 +99,17 @@ void MatchState::cancelPendingPromotion()
 
 bool MatchState::canSelect(Vector2D tile) const
 {
+    if (_winner != nullptr)
+        return false;
+
     return _rules.canSelect(_board, tile, _turnManager.getCurrent(), _promotion.getHasPending());
 }
 
 std::vector<Vector2D> MatchState::getLegalMovesFrom(Vector2D from) const
 {
+    if (_winner != nullptr)
+        return {};
+
     return _rules.getLegalMovesFrom(_board, from, _turnManager.getCurrent(), _promotion.getHasPending());
 }
 
@@ -133,6 +156,16 @@ const std::string& MatchState::getBlackPlayerName() const
 int MatchState::getFullTurnCount() const
 {
     return _validatedMoveCount / 2;
+}
+
+bool MatchState::getHasWinner() const
+{
+    return _winner != nullptr;
+}
+
+const Player* MatchState::getWinner() const
+{
+    return _winner;
 }
 
 std::optional<std::pair<int, int>> MatchState::getKirbyPosition() const

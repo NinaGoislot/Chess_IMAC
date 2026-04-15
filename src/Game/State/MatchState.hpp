@@ -15,7 +15,6 @@
 #include "Render/TextureManager.hpp"
 #include "utilities/MoveAttempt.hpp"
 
-
 // Owns a complete chess match state and orchestrates rules, move execution, and chaos
 class MatchState {
 public:
@@ -51,6 +50,8 @@ public:
     const std::string&                  getWhitePlayerName() const;
     const std::string&                  getBlackPlayerName() const;
     int                                 getFullTurnCount() const;
+    bool                                getHasWinner() const;
+    const Player*                       getWinner() const;
     std::optional<std::pair<int, int>>  getKirbyPosition() const;
     bool                                getHasKirbyAt(int x, int y) const;
     bool                                getHasPendingPromotion() const;
@@ -71,7 +72,7 @@ private:
     // Initial board setup
     void placePieces();
     void placePiecesForPlayer(int backRankY, int pawnRankY, Player& owner);
-    
+
     void applyTurnProgression();
 
     // Parameters : Core match state
@@ -90,6 +91,7 @@ private:
     const TextureManager*      _textures = nullptr;
 
     // Parameters : Current match mode
-    Mode _mode = Mode::Classic;
-    int  _validatedMoveCount = 0;
+    Mode   _mode               = Mode::Classic;
+    int    _validatedMoveCount = 0;
+    Player* _winner            = nullptr;
 };

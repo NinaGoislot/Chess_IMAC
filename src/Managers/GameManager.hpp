@@ -37,6 +37,8 @@ public:
     const std::string&              getWhitePlayerName() const;
     const std::string&              getBlackPlayerName() const;
     int                             getFullTurnCount() const;
+    bool                            getHasWinner() const;
+    const Player*                   getWinner() const;
 
     // Adders
     void addPlayerWhite(const std::string& name);

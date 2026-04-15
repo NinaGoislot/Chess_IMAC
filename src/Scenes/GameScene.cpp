@@ -27,6 +27,18 @@ void GameScene::render()
     }
 
     ImGui::Separator();
+
+    if (_game.getHasWinner())
+    {
+        const Player* winner = _game.getWinner();
+        ImGui::TextColored(
+            ImVec4(0.2f, 0.85f, 0.3f, 1.0f),
+            "Partie terminee - Victoire %s",
+            winner != nullptr ? winner->getName().c_str() : "d'un nullos qui a pas mis de nom"
+        );
+        ImGui::Separator();
+    }
+
     _game.displayBoard(ImGui::GetIO().DeltaTime);
     _game.getPromotionFlow().drawPopup();
 
@@ -54,4 +66,3 @@ void GameScene::render()
 
     ImGui::End();
 }
-
