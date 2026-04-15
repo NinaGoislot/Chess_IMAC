@@ -1,10 +1,10 @@
 #pragma once
 
-#include <unordered_map>
 #include <glm/mat4x4.hpp>
 #include <glm/vec3.hpp>
 #include <optional>
 #include <string>
+#include <unordered_map>
 #include <utility>
 #include "Game/Pieces/Piece.hpp"
 #include "Game/State/SelectionState.hpp"
@@ -12,14 +12,13 @@
 #include "Render/3D/PieceEffects.hpp"
 #include "Render/3D/Shader.hpp"
 
-
 class Board;
 
 namespace Render3D {
 
 class ResourceManager;
 
-// Owns low-level OpenGL draw pipeline for board, pieces, skybox, and effects.
+// Owns low-level OpenGL rendering for board, pieces, and skybox.
 
 class GLRenderer {
 public:
@@ -33,34 +32,25 @@ public:
     GLRenderer(const GLRenderer&)            = delete;
     GLRenderer& operator=(const GLRenderer&) = delete;
 
-    // Init function: loads shaders and creates shared geometry.
+    // Lifecycle
     bool initialize(const std::string& shaderDir);
-    // Cleanup function: destroys allocated OpenGL resources.
     void destroy();
 
-    // Starts board pass with selected turn tint shader.
+    // Render pipeline helpers
     bool beginBoardPass(PieceColor currentTurn) const;
-    // Applies static lighting uniforms for board/piece shading.
     void setupStaticLighting() const;
 
-    // Render function: draws board body and tiles.
-    void drawBoard(const glm::mat4& viewProjection, const Board& board, const settings& gameSettings, std::optional<std::pair<int, int>> kirbyPosition,
-                   const SelectionState& selection) const;
-    // Render function: draws gaps between board tiles.
+    // Draw functions
+    void drawBoard(const glm::mat4& viewProjection, const Board& board, const settings& gameSettings, std::optional<std::pair<int, int>> kirbyPosition, const SelectionState& selection) const;
     void drawBoardGaps(const glm::mat4& viewProjection, const settings& gameSettings) const;
-    // Render function: draws top board tile quads.
-    void drawTiles(const glm::mat4& viewProjection, const Board& board, const settings& gameSettings, std::optional<std::pair<int, int>> kirbyPosition,
-                   const SelectionState& selection) const;
-    // Render function: draws board side geometry.
+    void drawTiles(const glm::mat4& viewProjection, const Board& board, const settings& gameSettings, std::optional<std::pair<int, int>> kirbyPosition, const SelectionState& selection) const;
     void drawBoardEdges(const glm::mat4& viewProjection, const settings& gameSettings) const;
 
-    // Render function: draws regular and animated pieces.
-    void drawPieces(const glm::mat4& viewProjection, const Board& board, const settings& gameSettings, const ResourceManager& resourceManager,
-                    const AnimatedPiecePositions& animatedPiecePositions, const ExplodingPiecePositions& explodingPiecePositions) const;
-    // Render function: draws procedural/texture skybox.
+    void drawPieces(const glm::mat4& viewProjection, const Board& board, const settings& gameSettings, const ResourceManager& resourceManager, const AnimatedPiecePositions& animatedPiecePositions, const ExplodingPiecePositions& explodingPiecePositions) const;
     void drawSkybox(const glm::mat4& view, const glm::mat4& projection, const settings& gameSettings, const ResourceManager& resourceManager) const;
 
 private:
+    // Internal state structures
     // Cached uniform locations for board shader.
     struct UniformLocations {
         int mvp      = -1;
@@ -81,8 +71,8 @@ private:
         int vp          = -1;
         int topColor    = -1;
         int bottomColor = -1;
-        int cubemap      = -1;
-        int useCubemap   = -1;
+        int cubemap     = -1;
+        int useCubemap  = -1;
 
         bool isValid() const
         {
@@ -95,8 +85,7 @@ private:
     };
 
     // Cached uniform locations for explosion shader.
-    struct ExplosionUniformLocations
-    {
+    struct ExplosionUniformLocations {
         int mvp      = -1;
         int model    = -1;
         int color    = -1;
@@ -110,35 +99,35 @@ private:
         }
     };
 
+    // Internal helpers
     // Queries and caches board shader uniform locations.
     static UniformLocations queryUniformLocations(const Shader& shader);
     // Queries and caches explosion shader uniform locations.
     static ExplosionUniformLocations queryExplosionUniformLocations(const Shader& shader);
     // Creates shared cube geometry VAO/VBO used by board rendering.
-    void                    initializeCubeGeometry();
+    void initializeCubeGeometry();
 
     // Draws one standard piece instance.
-    void drawSinglePiece(const glm::mat4& viewProj, const Piece* piece, float boardX, float boardY, float yOffset, float originX, float originZ,
-                         float topY, const ResourceManager& resourceManager) const;
+    void drawSinglePiece(const glm::mat4& viewProj, const Piece* piece, float boardX, float boardY, float yOffset, float originX, float originZ, float topY, const ResourceManager& resourceManager) const;
     // Draws one exploding piece instance.
-    void drawSingleExplodingPiece(const glm::mat4& viewProj, const Piece* piece, float boardX, float boardY, float yOffset, float originX, float originZ,
-                                  float topY, float explosionProgress, const ResourceManager& resourceManager) const;
+    void drawSingleExplodingPiece(const glm::mat4& viewProj, const Piece* piece, float boardX, float boardY, float yOffset, float originX, float originZ, float topY, float explosionProgress, const ResourceManager& resourceManager) const;
 
+    // Parameters
     // Shared cube geometry state.
     unsigned int _vao         = 0;
     unsigned int _vbo         = 0;
     bool         _initialized = false;
     bool         _skyboxReady = false;
 
-    // Shader programs used by different render passes.
+    // Shader programs used by render passes.
     Shader _boardShader;
     Shader _pieceExplosionShader;
     Shader _skyboxShader;
 
-    UniformLocations         _boardUniforms{};
+    UniformLocations          _boardUniforms{};
     ExplosionUniformLocations _pieceExplosionUniforms{};
-    SkyboxUniformLocations   _skyboxUniforms{};
-    bool                     _pieceExplosionReady = false;
+    SkyboxUniformLocations    _skyboxUniforms{};
+    bool                      _pieceExplosionReady = false;
 };
 
 } // namespace Render3D
