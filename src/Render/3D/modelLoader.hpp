@@ -3,27 +3,54 @@
 #include <cstdint>
 #include <glm/mat4x4.hpp>
 #include <glm/vec3.hpp>
+#include <optional>
 #include <string>
 #include <vector>
+
+#include "Render/TextureData.hpp"
 
 // Vertex layout used by normalized piece meshes.
 struct Vertex {
     glm::vec3 position{0.f, 0.f, 0.f};
     glm::vec3 normal{0.f, 1.f, 0.f};
+    glm::vec2 uv{0.f, 0.f};
 };
 
 // Packed mesh data ready for GPU upload.
-struct ModelMeshData {
-    std::vector<Vertex>        vertices;
-    std::vector<std::uint32_t> indices;
+struct SubMeshGL
+{
+    uint32_t indexOffset = 0;
+    uint32_t indexCount  = 0;
+    unsigned int texture = 0;
+};
+
+struct ModelMeshData
+{
+    std::vector<Vertex> vertices;
+    std::vector<uint32_t> indices;
+
+    std::vector<SubMeshGL> submeshes;
+};
+
+struct SubMeshData
+{
+    uint32_t indexOffset = 0;
+    uint32_t indexCount  = 0;
+    glm::vec3 baseColorFactor{1.f, 1.f, 1.f};
+    std::optional<TextureData> baseColorTexture;
 };
 
 // Raw mesh data extracted from source files.
-struct RawMeshData {
-    std::vector<glm::vec3>     positions;
-    std::vector<glm::vec3>     normals;
-    std::vector<std::uint32_t> indices;
-    glm::mat4                  worldTransform{1.f};
+struct RawMeshData
+{
+    std::vector<glm::vec3> positions;
+    std::vector<glm::vec3> normals;
+    std::vector<glm::vec2> uvs;
+    std::vector<uint32_t> indices;
+
+    std::vector<SubMeshData> submeshes;
+
+    glm::mat4 worldTransform{1.f};
 };
 
 // Normalization options applied to raw meshes.
@@ -37,6 +64,7 @@ struct RawMeshLoadResult {
     bool        success = false;
     RawMeshData mesh{};
     std::string error{};
+    std::optional<TextureData> baseColorTexture{};
 };
 
 // Result of packed mesh generation.
@@ -44,6 +72,9 @@ struct MeshLoadResult {
     bool          success = false;
     ModelMeshData mesh{};
     std::string   error{};
+    std::optional<TextureData> baseColorTexture{};
+    std::vector<std::optional<TextureData>> submeshBaseColorTextures{};
+    std::vector<glm::vec3> submeshBaseColorFactors{};
 };
 
 // Load helpers

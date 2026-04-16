@@ -2,6 +2,7 @@
 
 in vec3 vNormal;
 in vec3 vWorldPos;
+in vec2 vUv;
 
 uniform vec3 uColor;
 uniform vec3 uTopLightDirection;
@@ -14,6 +15,7 @@ uniform float uAmbientStrength;
 uniform sampler2D uTexture;
 uniform int uUseTexture;
 uniform float uTextureScale;
+uniform int uUseMeshUv;
 
 out vec4 FragColor;
 
@@ -46,7 +48,7 @@ void main()
     vec3 albedo = uColor;
     if (uUseTexture == 1)
     {
-        vec2 uv = projectedTextureUv(vWorldPos, normal);
+        vec2 uv = (uUseMeshUv == 1) ? (vUv * uTextureScale) : projectedTextureUv(vWorldPos, normal);
         vec3 textureColor = texture(uTexture, uv).rgb;
         albedo *= textureColor;
     }

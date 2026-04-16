@@ -5,6 +5,8 @@
 #include "Game/Pieces/Piece.hpp"
 #include "utilities/AppConfig.hpp"
 
+struct TextureData;
+
 // Loads and serves piece textures for 2D rendering.
 class TextureManager
 {
@@ -13,6 +15,8 @@ public:
     void load(const AppConfig& config = {});
     // Getters
     ImTextureID getPieceTexture(PieceColor color, PieceType type) const;
+    // Builds a GPU texture from raw pixel data.
+    static unsigned int createTexture2D(const TextureData& data, bool generateMipmaps = true);
 
 private:
     // Fixed counts used to size texture tables.

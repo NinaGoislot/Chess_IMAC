@@ -23,7 +23,7 @@ struct settings {
     ImVec4 skyboxBottomColor = ImVec4(0.85f, 0.90f, 0.98f, 1.00f);
 
     float  boardThickness     = 0.18f;
-    ImVec4 boardSideColor     = ImVec4(0.28f, 0.18f, 0.10f, 1.00f);
+    ImVec4 boardSideColor     = ImVec4(0.28f, 0.48f, 0.50f, 1.00f);
     float  boardSideThickness = 0.30f;
     float  boardSideDrop      = 0.14f;
     float  cameraYawDegrees   = 45.f;

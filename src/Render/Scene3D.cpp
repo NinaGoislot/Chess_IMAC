@@ -12,8 +12,8 @@ constexpr glm::vec3 TOP_LIGHT_COLOR{1.00f, 0.98f, 0.95f};
 constexpr glm::vec3 WHITE_SIDE_LIGHT_DIRECTION{0.f, 0.42f, 0.91f};
 constexpr glm::vec3 BLACK_SIDE_LIGHT_DIRECTION{0.f, 0.42f, -0.91f};
 
-constexpr glm::vec3 WHITE_SIDE_TINT{0.74f, 0.52f, 1.00f};
-constexpr glm::vec3 BLACK_SIDE_TINT{1.00f, 0.86f, 0.36f};
+constexpr glm::vec3 WHITE_SIDE_TINT{1.00f, 0.86f, 0.36f};
+constexpr glm::vec3 BLACK_SIDE_TINT{0.74f, 0.52f, 1.00f};
 
 Render3D::BoardLighting makeBoardLighting(PieceColor currentTurn)
 {

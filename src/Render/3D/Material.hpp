@@ -10,6 +10,7 @@ struct Material {
     unsigned int textureId = 0;
     float textureScale = 1.f;
     bool useTexture = false;
+    bool useMeshUv = false;
 
     bool hasTexture() const { return useTexture && textureId != 0; }
 };

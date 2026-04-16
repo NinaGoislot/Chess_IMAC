@@ -2,6 +2,8 @@
 
 #include <array>
 #include <cstddef>
+#include <cstdint>
+#include <glm/vec3.hpp>
 #include <string>
 #include <string_view>
 #include <unordered_map>
@@ -10,6 +12,7 @@
 #include "utilities/AppConfig.hpp"
 
 struct ModelMeshData;
+struct TextureData;
 
 namespace Render3D {
 
@@ -27,6 +30,15 @@ public:
         unsigned int vbo        = 0;
         unsigned int ebo        = 0;
         int          indexCount = 0;
+        unsigned int textureId  = 0;
+        struct SubMeshGlData
+        {
+            uint32_t indexOffset = 0;
+            uint32_t indexCount  = 0;
+            unsigned int textureId = 0;
+            glm::vec3 baseColorFactor{1.f, 1.f, 1.f};
+        };
+        std::vector<SubMeshGlData> submeshes;
 
         bool isValid() const { return vao != 0 && vbo != 0 && ebo != 0 && indexCount > 0; }
     };
@@ -44,24 +56,32 @@ public:
     void destroy();
 
     const PieceMeshGlData* getPieceMeshFor(PieceType type) const;
+    const PieceMeshGlData* getKirbyMesh() const;
     unsigned int           getSkyboxCubemap() const { return _skyboxCubemap; }
     unsigned int           getTexture2D(const std::string& textureId) const;
 
 private:
     // Uploads one normalized mesh to GPU buffers.
     bool uploadPieceMesh(PieceType type, const ModelMeshData& meshData);
+    bool uploadMesh(PieceMeshGlData& mesh, const ModelMeshData& meshData);
     // Loads and initializes all piece meshes.
     void initializePieceModels(const std::string& modelsDirectory);
     // Initializes optional chaos model resources.
     void initChaosModel(const std::string& modelsDirectory, const std::string& modelName);
     // Loads one 2D texture into the cache using ordered file candidates.
     bool loadTexture2D(const std::string& textureId, const std::vector<std::string>& candidatePaths, bool optional = true);
+    // Loads one 2D texture into the cache from raw pixel data.
+    bool loadTexture2D(const std::string& textureId, const TextureData& data, bool generateMipmaps = true);
     // Loads all board-related textures.
     void initializeBoardTextures(const std::string& boardTexturesDirectory);
     // Loads cubemap textures for skybox rendering.
     bool loadSkyboxCubemap(const std::string& skyboxDirectory);
     // Destroys all piece mesh buffers.
     void destroyPieceMeshes();
+    // Destroys the Kirby mesh buffers.
+    void destroyKirbyMesh();
+    // Destroys one mesh buffer set.
+    void destroyMesh(PieceMeshGlData& mesh);
     // Destroys skybox cubemap resource.
     void destroySkybox();
     // Destroys a cached 2D texture resource.
@@ -73,6 +93,8 @@ private:
 
     // Piece mesh data indexed by piece type.
     std::array<PieceMeshGlData, PieceMeshCount> _pieceMeshes{};
+    // Kirby mesh used in chaos mode.
+    PieceMeshGlData _kirbyMesh{};
 
     // Skybox cubemap texture id.
     unsigned int _skyboxCubemap = 0;

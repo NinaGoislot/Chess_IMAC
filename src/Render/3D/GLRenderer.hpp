@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cstddef>
 #include <glm/mat4x4.hpp>
 #include <glm/vec3.hpp>
 #include <string>
@@ -62,10 +63,13 @@ public:
     void setMaterial(const Material& material) const;
     void drawCube(const glm::mat4& viewProjection, const glm::mat4& model, const Material& material) const;
     void drawIndexedMesh(const glm::mat4& viewProjection, const glm::mat4& model, const Material& material, unsigned int vao, int indexCount) const;
+    void drawIndexedMesh(const glm::mat4& viewProjection, const glm::mat4& model, const Material& material, unsigned int vao, int indexCount, std::size_t indexOffset) const;
     void drawMesh(const glm::mat4& viewProjection, const glm::mat4& model, const Material& material, unsigned int vao, int indexCount) const;
 
     void drawExplosionCube(const glm::mat4& viewProjection, const glm::mat4& model, const Material& material, float progress) const;
     void drawExplosionIndexedMesh(const glm::mat4& viewProjection, const glm::mat4& model, const Material& material, unsigned int vao, int indexCount, float progress) const;
+    void drawExplosionIndexedMesh(const glm::mat4& viewProjection, const glm::mat4& model, const Material& material, unsigned int vao,
+                                  int indexCount, std::size_t indexOffset, float progress) const;
 
     void drawSkybox(const glm::mat4& view, const glm::mat4& projection, const settings& gameSettings, const ResourceManager& resourceManager) const;
 
@@ -85,6 +89,7 @@ private:
         int textureSampler = -1;
         int useTexture = -1;
         int textureScale = -1;
+        int useMeshUv = -1;
 
         bool isValid() const
         {
@@ -92,7 +97,8 @@ private:
                    && topLightDir >= 0 && topLightColor >= 0 && topLightStrength >= 0
                    && sideLightDir >= 0 && sideLightColor >= 0 && sideLightStrength >= 0
                    && ambient >= 0
-                   && textureSampler >= 0 && useTexture >= 0 && textureScale >= 0;
+                   && textureSampler >= 0 && useTexture >= 0 && textureScale >= 0
+                   && useMeshUv >= 0;
         }
     };
 
@@ -136,9 +142,10 @@ private:
     bool ensureFramebufferSize(int width, int height);
     void destroyFramebuffer();
 
-    void drawGeometry(const glm::mat4& viewProjection, const glm::mat4& model, unsigned int vao, int drawCount, bool indexed) const;
+    void drawGeometry(const glm::mat4& viewProjection, const glm::mat4& model, unsigned int vao, int drawCount, bool indexed,
+                      std::size_t indexOffsetBytes = 0u) const;
     void drawExplosionGeometry(const glm::mat4& viewProjection, const glm::mat4& model, const Material& material,
-                               float progress, unsigned int vao, int drawCount, bool indexed) const;
+                               float progress, unsigned int vao, int drawCount, bool indexed, std::size_t indexOffsetBytes = 0u) const;
 
     // Shared cube geometry state.
     unsigned int _vao         = 0;

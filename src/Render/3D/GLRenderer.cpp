@@ -3,6 +3,7 @@
 #include <glad/glad.h>
 
 #include <algorithm>
+#include <cstdint>
 #include <iostream>
 
 #include <glm/mat3x3.hpp>
@@ -40,6 +41,7 @@ GLRenderer::UniformLocations GLRenderer::queryUniformLocations(const Shader& sha
     locations.textureSampler = shader.getUniform("uTexture");
     locations.useTexture     = shader.getUniform("uUseTexture");
     locations.textureScale   = shader.getUniform("uTextureScale");
+    locations.useMeshUv       = shader.getUniform("uUseMeshUv");
     return locations;
 }
 
@@ -247,6 +249,7 @@ bool GLRenderer::beginBoardPass() const
     glUniform1i(_boardUniforms.textureSampler, 0);
     glUniform1i(_boardUniforms.useTexture, 0);
     glUniform1f(_boardUniforms.textureScale, 1.f);
+    glUniform1i(_boardUniforms.useMeshUv, 0);
     return true;
 }
 
@@ -298,6 +301,7 @@ void GLRenderer::setMaterial(const Material& material) const
     const bool useTexture = material.hasTexture();
     glUniform1i(_boardUniforms.useTexture, useTexture ? 1 : 0);
     glUniform1f(_boardUniforms.textureScale, material.textureScale);
+    glUniform1i(_boardUniforms.useMeshUv, (useTexture && material.useMeshUv) ? 1 : 0);
 
     if (useTexture)
     {
@@ -310,7 +314,8 @@ void GLRenderer::setMaterial(const Material& material) const
     }
 }
 
-void GLRenderer::drawGeometry(const glm::mat4& viewProjection, const glm::mat4& model, unsigned int vao, int drawCount, bool indexed) const
+void GLRenderer::drawGeometry(const glm::mat4& viewProjection, const glm::mat4& model, unsigned int vao, int drawCount, bool indexed,
+                              std::size_t indexOffsetBytes) const
 {
     if (!_boardUniforms.isValid() || vao == 0 || drawCount <= 0)
         return;
@@ -321,13 +326,13 @@ void GLRenderer::drawGeometry(const glm::mat4& viewProjection, const glm::mat4& 
 
     glBindVertexArray(vao);
     if (indexed)
-        glDrawElements(GL_TRIANGLES, drawCount, GL_UNSIGNED_INT, nullptr);
+        glDrawElements(GL_TRIANGLES, drawCount, GL_UNSIGNED_INT, reinterpret_cast<void*>(indexOffsetBytes));
     else
         glDrawArrays(GL_TRIANGLES, 0, drawCount);
 }
 
 void GLRenderer::drawExplosionGeometry(const glm::mat4& viewProjection, const glm::mat4& model, const Material& material,
-                                       float progress, unsigned int vao, int drawCount, bool indexed) const
+                                       float progress, unsigned int vao, int drawCount, bool indexed, std::size_t indexOffsetBytes) const
 {
     if (!_pieceExplosionUniforms.isValid() || vao == 0 || drawCount <= 0)
         return;
@@ -340,7 +345,7 @@ void GLRenderer::drawExplosionGeometry(const glm::mat4& viewProjection, const gl
 
     glBindVertexArray(vao);
     if (indexed)
-        glDrawElements(GL_TRIANGLES, drawCount, GL_UNSIGNED_INT, nullptr);
+        glDrawElements(GL_TRIANGLES, drawCount, GL_UNSIGNED_INT, reinterpret_cast<void*>(indexOffsetBytes));
     else
         glDrawArrays(GL_TRIANGLES, 0, drawCount);
 }
@@ -357,7 +362,14 @@ void GLRenderer::drawCube(const glm::mat4& viewProjection, const glm::mat4& mode
 void GLRenderer::drawIndexedMesh(const glm::mat4& viewProjection, const glm::mat4& model, const Material& material, unsigned int vao, int indexCount) const
 {
     setMaterial(material);
-    drawGeometry(viewProjection, model, vao, indexCount, true);
+    drawGeometry(viewProjection, model, vao, indexCount, true, 0u);
+}
+
+void GLRenderer::drawIndexedMesh(const glm::mat4& viewProjection, const glm::mat4& model, const Material& material, unsigned int vao,
+                                 int indexCount, std::size_t indexOffset) const
+{
+    setMaterial(material);
+    drawGeometry(viewProjection, model, vao, indexCount, true, indexOffset * sizeof(uint32_t));
 }
 
 void GLRenderer::drawMesh(const glm::mat4& viewProjection, const glm::mat4& model, const Material& material, unsigned int vao, int indexCount) const
@@ -375,7 +387,13 @@ void GLRenderer::drawExplosionCube(const glm::mat4& viewProjection, const glm::m
 
 void GLRenderer::drawExplosionIndexedMesh(const glm::mat4& viewProjection, const glm::mat4& model, const Material& material, unsigned int vao, int indexCount, float progress) const
 {
-    drawExplosionGeometry(viewProjection, model, material, progress, vao, indexCount, true);
+    drawExplosionGeometry(viewProjection, model, material, progress, vao, indexCount, true, 0u);
+}
+
+void GLRenderer::drawExplosionIndexedMesh(const glm::mat4& viewProjection, const glm::mat4& model, const Material& material, unsigned int vao,
+                                          int indexCount, std::size_t indexOffset, float progress) const
+{
+    drawExplosionGeometry(viewProjection, model, material, progress, vao, indexCount, true, indexOffset * sizeof(uint32_t));
 }
 
 void GLRenderer::drawSkybox(const glm::mat4& view, const glm::mat4& projection, const settings& gameSettings, const ResourceManager& resourceManager) const

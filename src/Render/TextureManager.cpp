@@ -1,11 +1,16 @@
 #include "TextureManager.hpp"
 #include <array>
+#include <cstdint>
 #include <filesystem>
 #include <iostream>
 #include <string>
 #include <string_view>
 #include <utility>
 #include <vector>
+
+#include <glad/glad.h>
+
+#include "Render/TextureData.hpp"
 #include "TextureLoader.hpp"
 
 
@@ -67,6 +72,60 @@ ImTextureID loadFirstAvailableTexture(const std::vector<std::string>& candidates
               << std::filesystem::current_path().string() << "\n";
     return nullptr;
 }
+
+const unsigned char* expandTexturePixels(const TextureData& data, std::vector<std::uint8_t>& scratch)
+{
+    const std::size_t pixelCount = static_cast<std::size_t>(data.width) * static_cast<std::size_t>(data.height);
+    if (pixelCount == 0u)
+        return nullptr;
+
+    const std::size_t expectedSize = pixelCount * static_cast<std::size_t>(data.channels);
+    if (data.pixels.size() < expectedSize)
+        return nullptr;
+
+    if (data.channels == 4)
+        return data.pixels.data();
+
+    scratch.assign(pixelCount * 4u, 255u);
+
+    if (data.channels == 3)
+    {
+        for (std::size_t i = 0u; i < pixelCount; ++i)
+        {
+            scratch[i * 4u + 0u] = data.pixels[i * 3u + 0u];
+            scratch[i * 4u + 1u] = data.pixels[i * 3u + 1u];
+            scratch[i * 4u + 2u] = data.pixels[i * 3u + 2u];
+        }
+        return scratch.data();
+    }
+
+    if (data.channels == 2)
+    {
+        for (std::size_t i = 0u; i < pixelCount; ++i)
+        {
+            const std::uint8_t luminance = data.pixels[i * 2u + 0u];
+            scratch[i * 4u + 0u] = luminance;
+            scratch[i * 4u + 1u] = luminance;
+            scratch[i * 4u + 2u] = luminance;
+            scratch[i * 4u + 3u] = data.pixels[i * 2u + 1u];
+        }
+        return scratch.data();
+    }
+
+    if (data.channels == 1)
+    {
+        for (std::size_t i = 0u; i < pixelCount; ++i)
+        {
+            const std::uint8_t luminance = data.pixels[i];
+            scratch[i * 4u + 0u] = luminance;
+            scratch[i * 4u + 1u] = luminance;
+            scratch[i * 4u + 2u] = luminance;
+        }
+        return scratch.data();
+    }
+
+    return nullptr;
+}
 } // namespace
 
 void TextureManager::load(const AppConfig& config)
@@ -119,4 +178,31 @@ void TextureManager::load(const AppConfig& config)
 ImTextureID TextureManager::getPieceTexture(PieceColor color, PieceType type) const
 {
     return _pieceTextures[colorIndex(color)][pieceTypeIndex(type)];
+}
+
+unsigned int TextureManager::createTexture2D(const TextureData& data, bool generateMipmaps)
+{
+    if (!data.isValid())
+        return 0;
+
+    std::vector<std::uint8_t> scratch;
+    const unsigned char* pixels = expandTexturePixels(data, scratch);
+    if (pixels == nullptr)
+        return 0;
+
+    GLuint tex = 0;
+    glGenTextures(1, &tex);
+    glBindTexture(GL_TEXTURE_2D, tex);
+
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, generateMipmaps ? GL_LINEAR_MIPMAP_LINEAR : GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, data.width, data.height, 0, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
+    if (generateMipmaps)
+        glGenerateMipmap(GL_TEXTURE_2D);
+
+    glBindTexture(GL_TEXTURE_2D, 0);
+    return tex;
 }

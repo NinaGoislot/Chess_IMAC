@@ -10,6 +10,8 @@
 #include <utility>
 #include <vector>
 #include "ModelLoader.hpp"
+#include "Render/TextureData.hpp"
+#include "Render/TextureManager.hpp"
 
 namespace {
 
@@ -82,6 +84,8 @@ bool ResourceManager::initialize(const AssetPaths& assetPaths)
     const bool skyboxLoaded = loadSkyboxCubemap(assetPaths.skybox);
     initializeBoardTextures(assetPaths.board);
 
+    initChaosModel(assetPaths.models, "kirby");
+
     _initialized = true;
     return skyboxLoaded;
 }
@@ -103,10 +107,53 @@ void ResourceManager::initChaosModel(const std::string& modelsDirectory, const s
         return;
     }
 
-    if (!uploadPieceMesh(PieceType::Queen, loadResult.mesh)) // Using Queen as a placeholder type for Chaos
+    if (!uploadMesh(_kirbyMesh, loadResult.mesh))
     {
         std::cout << "Failed to upload GLB mesh for '" << modelPath << "' to the GPU.\n";
         return;
+    }
+
+    const auto& submeshTextures = loadResult.submeshBaseColorTextures;
+    const auto& submeshFactors  = loadResult.submeshBaseColorFactors;
+    if (!submeshTextures.empty())
+    {
+        const std::size_t submeshCount = (_kirbyMesh.submeshes.size() < submeshTextures.size())
+                                          ? _kirbyMesh.submeshes.size()
+                                          : submeshTextures.size();
+        for (std::size_t submeshIndex = 0u; submeshIndex < submeshCount; ++submeshIndex)
+        {
+            if (submeshIndex < submeshFactors.size())
+                _kirbyMesh.submeshes[submeshIndex].baseColorFactor = submeshFactors[submeshIndex];
+
+            if (!submeshTextures[submeshIndex].has_value() || !submeshTextures[submeshIndex]->isValid())
+                continue;
+
+            const std::string textureId = "kirby.submesh" + std::to_string(submeshIndex) + ".baseColor";
+            if (loadTexture2D(textureId, *submeshTextures[submeshIndex], true))
+            {
+                _kirbyMesh.submeshes[submeshIndex].textureId = getTexture2D(textureId);
+            }
+        }
+    }
+    else if (loadResult.baseColorTexture.has_value() && loadResult.baseColorTexture->isValid())
+    {
+        const std::string textureId = "kirby.baseColor";
+        if (loadTexture2D(textureId, *loadResult.baseColorTexture, true))
+        {
+            _kirbyMesh.textureId = getTexture2D(textureId);
+            if (!_kirbyMesh.submeshes.empty())
+                _kirbyMesh.submeshes.front().textureId = _kirbyMesh.textureId;
+        }
+    }
+    else if (!submeshFactors.empty())
+    {
+        const std::size_t submeshCount = (_kirbyMesh.submeshes.size() < submeshFactors.size())
+                                          ? _kirbyMesh.submeshes.size()
+                                          : submeshFactors.size();
+        for (std::size_t submeshIndex = 0u; submeshIndex < submeshCount; ++submeshIndex)
+        {
+            _kirbyMesh.submeshes[submeshIndex].baseColorFactor = submeshFactors[submeshIndex];
+        }
     }
 
     std::cout << "Loaded Chaos piece GLB model from: " << modelPath << "\n";
@@ -118,6 +165,13 @@ const ResourceManager::PieceMeshGlData* ResourceManager::getPieceMeshFor(PieceTy
     const std::size_t index = pieceTypeIndex(type);
     if (index >= _pieceMeshes.size()) return nullptr;
     return &_pieceMeshes[index];
+}
+
+const ResourceManager::PieceMeshGlData* ResourceManager::getKirbyMesh() const
+{
+    if (_kirbyMesh.isValid())
+        return &_kirbyMesh;
+    return nullptr;
 }
 
 unsigned int ResourceManager::getTexture2D(const std::string& textureId) const
@@ -174,6 +228,22 @@ bool ResourceManager::loadTexture2D(const std::string& textureId, const std::vec
     return true;
 }
 
+bool ResourceManager::loadTexture2D(const std::string& textureId, const TextureData& data, bool generateMipmaps)
+{
+    destroyTexture2D(textureId);
+
+    const unsigned int textureIdGl = TextureManager::createTexture2D(data, generateMipmaps);
+    if (textureIdGl == 0)
+    {
+        std::cout << "Failed to build texture '" << textureId << "' from embedded data.\n";
+        return false;
+    }
+
+    _textures2D[textureId] = textureIdGl;
+    std::cout << "Loaded texture '" << textureId << "' from embedded data.\n";
+    return true;
+}
+
 void ResourceManager::initializeBoardTextures(const std::string& boardTexturesDirectory)
 {
     std::vector<std::string> boardEdgeCandidates;
@@ -192,17 +262,18 @@ void ResourceManager::initializeBoardTextures(const std::string& boardTexturesDi
 
 bool ResourceManager::uploadPieceMesh(PieceType type, const ModelMeshData& meshData)
 {
-    // [This function remains exactly the same as your original code]
-    if (meshData.vertices.empty() || meshData.indices.empty()) return false;
     const std::size_t index = pieceTypeIndex(type);
     if (index >= _pieceMeshes.size()) return false;
 
-    PieceMeshGlData& mesh = _pieceMeshes[index];
+    return uploadMesh(_pieceMeshes[index], meshData);
+}
 
-    glDeleteBuffers(1, &mesh.ebo);
-    glDeleteBuffers(1, &mesh.vbo);
-    glDeleteVertexArrays(1, &mesh.vao);
+bool ResourceManager::uploadMesh(PieceMeshGlData& mesh, const ModelMeshData& meshData)
+{
+    if (meshData.vertices.empty() || meshData.indices.empty())
+        return false;
 
+    destroyMesh(mesh);
     mesh = PieceMeshGlData{};
 
     glGenVertexArrays(1, &mesh.vao);
@@ -220,10 +291,26 @@ bool ResourceManager::uploadPieceMesh(PieceType type, const ModelMeshData& meshD
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), nullptr);
     glEnableVertexAttribArray(1);
     glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), reinterpret_cast<void*>(offsetof(Vertex, normal)));
+    glEnableVertexAttribArray(2);
+    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), reinterpret_cast<void*>(offsetof(Vertex, uv)));
 
     mesh.indexCount = static_cast<int>(meshData.indices.size());
+    mesh.submeshes.clear();
+
+    if (meshData.submeshes.empty())
+    {
+        mesh.submeshes.push_back(PieceMeshGlData::SubMeshGlData{0u, static_cast<uint32_t>(mesh.indexCount), 0u});
+    }
+    else
+    {
+        mesh.submeshes.reserve(meshData.submeshes.size());
+        for (const SubMeshGL& submesh : meshData.submeshes)
+        {
+            mesh.submeshes.push_back(PieceMeshGlData::SubMeshGlData{submesh.indexOffset, submesh.indexCount, 0u});
+        }
+    }
+
     glBindVertexArray(0);
-    
     return mesh.isValid();
 }
 
@@ -251,6 +338,50 @@ void ResourceManager::initializePieceModels(const std::string& modelsDirectory)
         {
             std::cout << "Failed to upload GLB mesh for '" << modelPath << "' to the GPU.\n";
             continue;
+        }
+
+        PieceMeshGlData& pieceMesh = _pieceMeshes[pieceTypeIndex(type)];
+        const auto& submeshTextures = loadResult.submeshBaseColorTextures;
+        const auto& submeshFactors  = loadResult.submeshBaseColorFactors;
+        if (!submeshTextures.empty())
+        {
+            const std::size_t submeshCount = (pieceMesh.submeshes.size() < submeshTextures.size())
+                                              ? pieceMesh.submeshes.size()
+                                              : submeshTextures.size();
+            for (std::size_t submeshIndex = 0u; submeshIndex < submeshCount; ++submeshIndex)
+            {
+                if (submeshIndex < submeshFactors.size())
+                    pieceMesh.submeshes[submeshIndex].baseColorFactor = submeshFactors[submeshIndex];
+
+                if (!submeshTextures[submeshIndex].has_value() || !submeshTextures[submeshIndex]->isValid())
+                    continue;
+
+                const std::string textureId = "piece." + pieceModelName(type) + ".submesh" + std::to_string(submeshIndex) + ".baseColor";
+                if (loadTexture2D(textureId, *submeshTextures[submeshIndex], true))
+                {
+                    pieceMesh.submeshes[submeshIndex].textureId = getTexture2D(textureId);
+                }
+            }
+        }
+        else if (loadResult.baseColorTexture.has_value() && loadResult.baseColorTexture->isValid())
+        {
+            const std::string textureId = "piece." + pieceModelName(type) + ".baseColor";
+            if (loadTexture2D(textureId, *loadResult.baseColorTexture, true))
+            {
+                pieceMesh.textureId = getTexture2D(textureId);
+                if (!pieceMesh.submeshes.empty())
+                    pieceMesh.submeshes.front().textureId = pieceMesh.textureId;
+            }
+        }
+        else if (!submeshFactors.empty())
+        {
+            const std::size_t submeshCount = (pieceMesh.submeshes.size() < submeshFactors.size())
+                                              ? pieceMesh.submeshes.size()
+                                              : submeshFactors.size();
+            for (std::size_t submeshIndex = 0u; submeshIndex < submeshCount; ++submeshIndex)
+            {
+                pieceMesh.submeshes[submeshIndex].baseColorFactor = submeshFactors[submeshIndex];
+            }
         }
 
         std::cout << "Loaded GLB model from: " << modelPath << "\n";
@@ -333,14 +464,26 @@ void ResourceManager::destroyPieceMeshes()
 {
     for (PieceMeshGlData& mesh : _pieceMeshes)
     {
-        glDeleteBuffers(1, &mesh.ebo);
-        mesh.ebo = 0;
-        glDeleteBuffers(1, &mesh.vbo);
-        mesh.vbo = 0;
-        glDeleteVertexArrays(1, &mesh.vao);
-        mesh.vao = 0;
-        mesh.indexCount = 0;
+        destroyMesh(mesh);
     }
+}
+
+void ResourceManager::destroyKirbyMesh()
+{
+    destroyMesh(_kirbyMesh);
+}
+
+void ResourceManager::destroyMesh(PieceMeshGlData& mesh)
+{
+    glDeleteBuffers(1, &mesh.ebo);
+    mesh.ebo = 0;
+    glDeleteBuffers(1, &mesh.vbo);
+    mesh.vbo = 0;
+    glDeleteVertexArrays(1, &mesh.vao);
+    mesh.vao = 0;
+    mesh.indexCount = 0;
+    mesh.textureId = 0;
+    mesh.submeshes.clear();
 }
 
 void ResourceManager::destroySkybox()
@@ -381,6 +524,7 @@ void ResourceManager::destroyAllTextures2D()
 void ResourceManager::destroy()
 {
     destroyPieceMeshes();
+    destroyKirbyMesh();
     destroySkybox();
     destroyAllTextures2D();
     _initialized = false;

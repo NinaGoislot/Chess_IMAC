@@ -18,6 +18,7 @@ constexpr float BOARD_TILE_SIZE  = 0.94f;
 constexpr float BOARD_CENTER_Y   = -0.05f;
 constexpr float PIECE_LIFT_Y     = 0.01f;
 constexpr float PIECE_BASE_WIDTH = 0.45f;
+constexpr float KIRBY_HEIGHT     = 0.7f;
 
 constexpr std::array<float, PIECE_TYPE_COUNT> PIECES_HEIGHT = {
     0.6f,
@@ -67,6 +68,7 @@ void ChessSceneRenderer::drawBoard(GLRenderer& glRenderer, const glm::mat4& view
     (void)currentTurn;
     drawBoardGaps(glRenderer, viewProjection, gameSettings);
     drawTiles(glRenderer, viewProjection, board, gameSettings, kirbyPosition, selection);
+    drawKirby(glRenderer, viewProjection, gameSettings, kirbyPosition, resourceManager);
     drawBoardEdges(glRenderer, viewProjection, gameSettings, resourceManager);
 }
 
@@ -90,6 +92,7 @@ void ChessSceneRenderer::drawBoardGaps(GLRenderer& glRenderer, const glm::mat4& 
 void ChessSceneRenderer::drawTiles(GLRenderer& glRenderer, const glm::mat4& viewProjection, const Board& board, const settings& gameSettings,
                               std::optional<std::pair<int, int>> kirbyPosition, const SelectionState& selection) const
 {
+    (void)kirbyPosition;
     const float boardOriginX = -(static_cast<float>(Board::SIZE) - 1.f) * 0.5f;
     const float boardOriginZ = -(static_cast<float>(Board::SIZE) - 1.f) * 0.5f;
 
@@ -148,11 +151,63 @@ void ChessSceneRenderer::drawTiles(GLRenderer& glRenderer, const glm::mat4& view
             const glm::mat4 model = glm::translate(glm::mat4{1.f}, glm::vec3{worldX, BOARD_CENTER_Y, worldZ}) * tileScale;
 
             glRenderer.drawCube(viewProjection, model, tileMaterial);
-
-            const bool isKirbyHere = kirbyPosition.has_value() && kirbyPosition->first == x && kirbyPosition->second == y;
-            (void)isKirbyHere;
         }
     }
+}
+
+void ChessSceneRenderer::drawKirby(GLRenderer& glRenderer, const glm::mat4& viewProjection, const settings& gameSettings,
+                                   std::optional<std::pair<int, int>> kirbyPosition, const ResourceManager& resourceManager) const
+{
+    if (!kirbyPosition.has_value())
+        return;
+
+    const float boardOriginX = -(static_cast<float>(Board::SIZE) - 1.f) * 0.5f;
+    const float boardOriginZ = -(static_cast<float>(Board::SIZE) - 1.f) * 0.5f;
+    const float boardTopY    = BOARD_CENTER_Y + gameSettings.boardThickness * 0.5f;
+
+    const float worldX = boardOriginX + static_cast<float>(kirbyPosition->first);
+    const float worldZ = boardOriginZ + static_cast<float>(kirbyPosition->second);
+
+    const glm::mat4 model = glm::translate(glm::mat4{1.f}, glm::vec3{worldX, boardTopY + PIECE_LIFT_Y, worldZ})
+                            * glm::scale(glm::mat4{1.f}, glm::vec3{KIRBY_HEIGHT, KIRBY_HEIGHT, KIRBY_HEIGHT});
+
+    const ResourceManager::PieceMeshGlData* kirbyMesh = resourceManager.getKirbyMesh();
+    if (kirbyMesh != nullptr && kirbyMesh->isValid())
+    {
+        Material kirbyMaterial;
+        kirbyMaterial.color = glm::vec3{1.f, 1.f, 1.f};
+        kirbyMaterial.useMeshUv = true;
+
+        if (!kirbyMesh->submeshes.empty())
+        {
+            for (const auto& submesh : kirbyMesh->submeshes)
+            {
+                Material submeshMaterial = kirbyMaterial;
+                const unsigned int textureId = (submesh.textureId != 0) ? submesh.textureId : kirbyMesh->textureId;
+                submeshMaterial.textureId = textureId;
+                submeshMaterial.useTexture = (textureId != 0);
+                submeshMaterial.useMeshUv = true;
+                submeshMaterial.color = submesh.baseColorFactor;
+
+                glRenderer.drawIndexedMesh(viewProjection,
+                                           model,
+                                           submeshMaterial,
+                                           kirbyMesh->vao,
+                                           static_cast<int>(submesh.indexCount),
+                                           static_cast<std::size_t>(submesh.indexOffset));
+            }
+        }
+        else
+        {
+            glRenderer.drawIndexedMesh(viewProjection, model, kirbyMaterial, kirbyMesh->vao, kirbyMesh->indexCount);
+        }
+
+        return;
+    }
+
+    Material fallbackMaterial;
+    fallbackMaterial.color = glm::vec3{0.96f, 0.48f, 0.82f};
+    glRenderer.drawCube(viewProjection, model, fallbackMaterial);
 }
 
 void ChessSceneRenderer::drawBoardEdges(GLRenderer& glRenderer, const glm::mat4& viewProjection, const settings& gameSettings, const ResourceManager& resourceManager) const
@@ -220,7 +275,29 @@ void ChessSceneRenderer::drawSinglePiece(GLRenderer& glRenderer, const glm::mat4
         const glm::mat4 model = glm::translate(glm::mat4{1.f}, glm::vec3{worldX, topY + PIECE_LIFT_Y + yOffset, worldZ})
                                 * glm::scale(glm::mat4{1.f}, glm::vec3{pieceHeight, pieceHeight, pieceHeight});
 
-        glRenderer.drawIndexedMesh(viewProjection, model, pieceMaterial, modelMesh->vao, modelMesh->indexCount);
+        if (!modelMesh->submeshes.empty())
+        {
+            for (const auto& submesh : modelMesh->submeshes)
+            {
+                Material submeshMaterial = pieceMaterial;
+                const unsigned int textureId = (submesh.textureId != 0) ? submesh.textureId : modelMesh->textureId;
+                submeshMaterial.textureId = textureId;
+                submeshMaterial.useTexture = (textureId != 0);
+                submeshMaterial.useMeshUv = true;
+                submeshMaterial.color = pieceColor * submesh.baseColorFactor;
+
+                glRenderer.drawIndexedMesh(viewProjection,
+                                           model,
+                                           submeshMaterial,
+                                           modelMesh->vao,
+                                           static_cast<int>(submesh.indexCount),
+                                           static_cast<std::size_t>(submesh.indexOffset));
+            }
+        }
+        else
+        {
+            glRenderer.drawIndexedMesh(viewProjection, model, pieceMaterial, modelMesh->vao, modelMesh->indexCount);
+        }
     }
     else
     {
@@ -255,7 +332,23 @@ void ChessSceneRenderer::drawSingleExplodingPiece(GLRenderer& glRenderer, const 
         const glm::mat4 model = glm::translate(glm::mat4{1.f}, glm::vec3{worldX, topY + PIECE_LIFT_Y + yOffset, worldZ})
                               * glm::scale(glm::mat4{1.f}, glm::vec3{pieceHeight, pieceHeight, pieceHeight});
 
-        glRenderer.drawExplosionIndexedMesh(viewProjection, model, pieceMaterial, modelMesh->vao, modelMesh->indexCount, explosionProgress);
+        if (!modelMesh->submeshes.empty())
+        {
+            for (const auto& submesh : modelMesh->submeshes)
+            {
+                glRenderer.drawExplosionIndexedMesh(viewProjection,
+                                                    model,
+                                                    pieceMaterial,
+                                                    modelMesh->vao,
+                                                    static_cast<int>(submesh.indexCount),
+                                                    static_cast<std::size_t>(submesh.indexOffset),
+                                                    explosionProgress);
+            }
+        }
+        else
+        {
+            glRenderer.drawExplosionIndexedMesh(viewProjection, model, pieceMaterial, modelMesh->vao, modelMesh->indexCount, explosionProgress);
+        }
     }
     else
     {

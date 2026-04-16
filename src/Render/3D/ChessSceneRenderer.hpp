@@ -31,6 +31,8 @@ private:
     void drawTiles(GLRenderer& glRenderer, const glm::mat4& viewProjection, const Board& board, const settings& gameSettings,
                    std::optional<std::pair<int, int>> kirbyPosition, const SelectionState& selection) const;
     void drawBoardEdges(GLRenderer& glRenderer, const glm::mat4& viewProjection, const settings& gameSettings, const ResourceManager& resourceManager) const;
+    void drawKirby(GLRenderer& glRenderer, const glm::mat4& viewProjection, const settings& gameSettings,
+                   std::optional<std::pair<int, int>> kirbyPosition, const ResourceManager& resourceManager) const;
 
     void drawSinglePiece(GLRenderer& glRenderer, const glm::mat4& viewProjection, const Piece* piece, float boardX, float boardY, float yOffset,
                          float originX, float originZ, float topY, const ResourceManager& resourceManager, bool isHovered, const glm::vec3& hoverColor) const;
