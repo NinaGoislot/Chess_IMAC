@@ -4,7 +4,6 @@
 #include "Model/Chaos/Rules/SetupBackrowChaosRule.hpp"
 #include "Model/Chaos/Rules/SlidingAndObedienceRule.hpp"
 
-
 ChaosMode::ChaosMode()
     : _rng(std::random_device{}())
 {
@@ -70,6 +69,16 @@ bool ChaosMode::beforeMove(MoveAttempt& attempt, Board& board, std::array<Player
     return true;
 }
 
+void ChaosMode::afterMove(MoveAttempt& attempt, Board& board, std::array<Player, 2>& players, std::vector<std::string>& history)
+{
+    if (!_enabled)
+        return;
+
+    ChaosMoveContext context{attempt, board, players, history, _rng, nullptr, &_kirbyPosition};
+    for (auto& rule : _rules)
+        rule->afterMove(context);
+}
+
 bool ChaosMode::consumeSkipTurnRequested()
 {
     const bool requested = _skipTurnRequested;
@@ -81,4 +90,3 @@ bool ChaosMode::getHasKirbyAt(int x, int y) const
 {
     return _kirbyPosition.has_value() && _kirbyPosition->first == x && _kirbyPosition->second == y;
 }
-

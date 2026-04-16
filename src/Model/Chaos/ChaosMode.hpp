@@ -45,6 +45,7 @@ public:
     void onTurnEnd(Board& board, std::array<Player, 2>& players, std::vector<std::string>& history, PieceColor currentTurn);
     // Move callback
     bool beforeMove(MoveAttempt& attempt, Board& board, std::array<Player, 2>& players, std::vector<std::string>& history);
+    void afterMove(MoveAttempt& attempt, Board& board, std::array<Player, 2>& players, std::vector<std::string>& history);
     bool consumeSkipTurnRequested();
 
 private:
