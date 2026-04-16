@@ -92,6 +92,9 @@ bool MatchState::tryMove(Vector2D from, Vector2D to)
     if (!result.moved)
         return false;
 
+    // Apply chaos effects after move execution
+    _chaosMode->afterMove(attempt, _board, _players, _moveHistory.entries());
+
     if (result.capturedPiece != nullptr && result.capturedPiece->getType() == PieceType::King)
     {
         const int winnerIndex = (result.movedPiece != nullptr && result.movedPiece->getColor() == PieceColor::White) ? 0 : 1;

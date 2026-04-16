@@ -85,9 +85,9 @@ void KirbyPoissonRule::onGameSetup(ChaosRuleContext& context)
 /**
  * Handles Kirby spawning and despawning at the start of each turn.
  *
- * Kirby can spawn multiple times per game, with frequency determined by Poisson distribution.
- * He appears at the center of the board and eats a piece when he spawns.
- * He remains visible for 1 turn only, then disappears until the next spawn event.
+ * Kirby can spawn multiple times per game, with frequency determined by Poisson distribution
+ * He appears at the center of the board (not in the spawn of players pieces)and eats a random piece when he spawns
+ * He remains visible for 1 turn only, blocking the tile, then disappears until the next spawn event
  *
  * Flow:
  * 1. Handle visibility timer: if Kirby was visible last turn, hide him now
@@ -114,7 +114,7 @@ void KirbyPoissonRule::onTurnStart(ChaosRuleContext& context)
         }
     }
 
-    // Step 2: Use Poisson distribution to roll for spawn chance (no limit, let chaos happen)
+    // Step 2: Use Poisson distribution
     // If the random value is 0, Kirby doesn't spawn this turn
     PoissonDistribution spawnCount(_options->kirbySpawnLambda);
     if (spawnCount(context.rng) == 0)
@@ -128,11 +128,11 @@ void KirbyPoissonRule::onTurnStart(ChaosRuleContext& context)
         const int x = uniformIndex(context.rng, 0, Board::SIZE - 1);
         const int y = uniformIndex(context.rng, 2, 5);
 
-        // Reject if a pawn occupies this spot (pawns are too important to kill)
+        // Reject if a pawn occupies this spot (kirby isn't sooo cheat. Players can elaborate strategies the :D)
         if (hasPawnAt(context.board, x, y))
             continue;
 
-        // Collect all pieces at the spawn location and in adjacent squares (8 neighbors)
+        // Collect all pieces around at the spawn location
         std::vector<std::pair<int, int>> targets;
 
         // Check the spawn location itself
@@ -162,7 +162,7 @@ void KirbyPoissonRule::onTurnStart(ChaosRuleContext& context)
             }
         }
 
-        // Reject this spawn location if there are no adjacent pieces to eat
+        // Reject this spawn location if there are no adjacent pieces to eat. Kirby is hungry. 
         if (targets.empty())
             continue;
 
@@ -176,9 +176,9 @@ void KirbyPoissonRule::onTurnStart(ChaosRuleContext& context)
         removePieceAt(context.board, context.players, victim.first, victim.second);
 
         // Update counters and history
-        _remainingTurnsVisible = 1;    // Kirby stays visible for 1 turn
-        spawned                = true; // Mark success and exit loop
-        context.history.push_back("Chaos: Kirby apparait au centre et mange une piece.");
+        _remainingTurnsVisible = 1;    
+        spawned                = true;
+        context.history.push_back("Chaos: Kirby apparait au centre et mange une piece. MIAM !");
     }
 }
 
@@ -197,7 +197,7 @@ bool KirbyPoissonRule::beforeMove(ChaosMoveContext& context)
 
     if (KirbyTileMatches(context.kirbyPosition, context.attempt.toX, context.attempt.toY))
     {
-        context.history.push_back("Chaos: Kirby bloque cette case.");
+        context.history.push_back("Chaos: Kirby bloque cette case. Mieux vaut ne pas le déranger. ");
         return false;
     }
 

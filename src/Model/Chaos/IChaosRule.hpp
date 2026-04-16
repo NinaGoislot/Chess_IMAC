@@ -46,4 +46,8 @@ public:
         (void)context;
         return true;
     }
+    virtual void afterMove(ChaosMoveContext& context)
+    {
+        (void)context;
+    }
 };

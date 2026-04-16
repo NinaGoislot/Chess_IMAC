@@ -4,7 +4,8 @@
 
 /**
  * Note: this file orchestrates the main game loop and holds the match state.
- * Collects board interactions from both 2D and 3D views and merges them into a single update per frame. (we do this beca)
+ * Collects board interactions from both 2D and 3D views and merges them into a single update per frame.
+ * (we do this because 2D and 3D views ar shown at the same time but render one after the other, so we can get duplicate interactions if we don't filter them)
  */
 
 GameManager::GameManager(const AppConfig& config)

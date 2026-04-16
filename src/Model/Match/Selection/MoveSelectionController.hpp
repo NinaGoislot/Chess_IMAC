@@ -1,12 +1,12 @@
 #pragma once
 
 #include <optional>
-#include "Model/Match/SelectionState.hpp"
+#include "SelectionState.hpp"
 #include "utilities/Vector2D.hpp"
 
 class MatchState;
 
-// Translates board click intent into selection/reselection/move actions.
+// Translates board interactions into actions on match state
 class MoveSelectionController {
 public:
     bool onTileClicked(Vector2D clickedTile, MatchState& matchState);

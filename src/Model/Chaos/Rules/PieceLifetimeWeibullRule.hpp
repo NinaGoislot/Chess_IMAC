@@ -14,10 +14,10 @@ public:
     // Callback
     void onGameSetup(ChaosRuleContext& context) override;
     bool beforeMove(ChaosMoveContext& context) override;
+    void afterMove(ChaosMoveContext& context) override;
 
 private:
-    int  sampleLifetime(std::mt19937& rng) const;
-    void initializeMissingPieces(ChaosRuleContext& context);
+    int sampleLifetime(std::mt19937& rng) const;
 
     // Parameters
     const ChaosOptions*                   _options = nullptr;

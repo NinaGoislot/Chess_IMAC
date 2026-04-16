@@ -6,16 +6,16 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/trigonometric.hpp>
 #include "Model/Board/Board.hpp"
-#include "Model/Match/SelectionState.hpp"
+#include "Model/Match/Selection/SelectionState.hpp"
 #include "Model/settings.hpp"
 
 namespace {
 
-constexpr float CAMERA_TARGET_Y        = 0.2f;
+constexpr float CAMERA_TARGET_Y         = 0.2f;
 constexpr float PERSPECTIVE_FOV_DEGREES = 45.f;
 constexpr float CAMERA_SMOOTHING_RATE   = 8.f;
-constexpr float MAX_DELTA_TIME_SECONDS   = 0.1f;
-constexpr float POV_EYE_HEIGHT_OFFSET    = 0.55f;
+constexpr float MAX_DELTA_TIME_SECONDS  = 0.1f;
+constexpr float POV_EYE_HEIGHT_OFFSET   = 0.55f;
 constexpr float POV_LOOK_DISTANCE       = 3.f;
 constexpr float ORBIT_MIN_PITCH_DEGREES = 10.f;
 constexpr float ORBIT_MAX_PITCH_DEGREES = 80.f;
@@ -50,9 +50,9 @@ void CameraController::reset()
     _cameraTarget            = boardCenterTarget();
     _cameraTargetInitialized = false;
     _trackedPiece            = nullptr;
-    _lastView                 = glm::mat4{1.f};
-    _lastProjection           = glm::mat4{1.f};
-    _hasCameraMatrices        = false;
+    _lastView                = glm::mat4{1.f};
+    _lastProjection          = glm::mat4{1.f};
+    _hasCameraMatrices       = false;
 }
 
 void CameraController::updateTrackedPieceFromSelection(const Board& board, const SelectionState& selection)
@@ -134,8 +134,8 @@ glm::mat4 CameraController::calculateViewProjection(const settings& gameSettings
 {
     const glm::mat4 projection = glm::perspective(glm::radians(PERSPECTIVE_FOV_DEGREES), aspect, 0.1f, 100.f);
 
-    const float minPitch = gameSettings.cameraPieceTarget ? POV_MIN_PITCH_DEGREES : ORBIT_MIN_PITCH_DEGREES;
-    const float maxPitch = gameSettings.cameraPieceTarget ? POV_MAX_PITCH_DEGREES : ORBIT_MAX_PITCH_DEGREES;
+    const float minPitch            = gameSettings.cameraPieceTarget ? POV_MIN_PITCH_DEGREES : ORBIT_MIN_PITCH_DEGREES;
+    const float maxPitch            = gameSettings.cameraPieceTarget ? POV_MAX_PITCH_DEGREES : ORBIT_MAX_PITCH_DEGREES;
     const float clampedPitchDegrees = std::clamp(gameSettings.cameraPitchDegrees, minPitch, maxPitch);
 
     const float yawRadians   = glm::radians(gameSettings.cameraYawDegrees);
@@ -255,4 +255,3 @@ bool CameraController::pickBoardTile(const settings& gameSettings, float localX,
 }
 
 } // namespace Render3D
-

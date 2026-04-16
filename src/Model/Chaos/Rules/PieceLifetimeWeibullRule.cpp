@@ -4,7 +4,6 @@
 #include "probabimac/WeibullDistribution.hpp"
 #include "utilities/Vector2D.hpp"
 
-
 namespace {
 void removePieceAt(Board& board, std::array<Player, 2>& players, int x, int y)
 {
@@ -34,9 +33,15 @@ PieceLifetimeWeibullRule::PieceLifetimeWeibullRule(const ChaosOptions* options)
 void PieceLifetimeWeibullRule::onGameSetup(ChaosRuleContext& context)
 {
     _remainingTurns.clear();
-    initializeMissingPieces(context);
 }
 
+/**
+ * Called before a move is attempted
+ * Initializes lifetime for the piece if not already done, then decrements it
+ *
+ * @param context : the chaos move context
+ * @return : always true to allow the move (if no errors)
+ */
 bool PieceLifetimeWeibullRule::beforeMove(ChaosMoveContext& context)
 {
     if (_options == nullptr || !_options->enableWeibullLifetime)
@@ -46,36 +51,65 @@ bool PieceLifetimeWeibullRule::beforeMove(ChaosMoveContext& context)
     if (piece == nullptr)
         return true;
 
-    // Kings are exempt from chaos lifetime decay.
+    // Kings are exempt from chaos lifetime decay
     if (piece->getType() == PieceType::King)
     {
         _remainingTurns.erase(piece);
         return true;
     }
 
+    // Initialize lifetime on first use if not already done
     if (!_remainingTurns.contains(piece))
     {
         _remainingTurns[piece] = sampleLifetime(context.rng);
     }
 
+    // Decrement lifetime counter
     auto it = _remainingTurns.find(piece);
-    if (it == _remainingTurns.end())
-        return true;
-
-    --it->second;
-    if (it->second > 0)
-        return true;
-
-    if (context.skipTurnRequested != nullptr)
+    if (it != _remainingTurns.end())
     {
-        *context.skipTurnRequested = true;
+        --it->second;
     }
 
-    removePieceAt(context.board, context.players, context.attempt.fromX, context.attempt.fromY);
-    context.history.push_back("Chaos: la piece se desintegre apres usage (Weibull).");
-    return false;
+    return true;
 }
 
+/**
+ * Called immediately after a move is executed
+ * Removes pieces that have reached end of lifetime
+ *
+ * @param context : the chaos move context
+ */
+void PieceLifetimeWeibullRule::afterMove(ChaosMoveContext& context)
+{
+    // cheeck if law is enableed
+    if (_options == nullptr || !_options->enableWeibullLifetime)
+        return;
+
+    Piece* piece = context.attempt.piece;
+    if (piece == nullptr)
+        return;
+
+    // Check if piece has a lifetime counter (it should, but just in case)
+    auto it = _remainingTurns.find(piece);
+    if (it == _remainingTurns.end())
+        return;
+
+    // Check if piece has reached end of life
+    if (it->second <= 0)
+    {
+        removePieceAt(context.board, context.players, context.attempt.toX, context.attempt.toY);
+        _remainingTurns.erase(piece);
+        context.history.push_back("Chaos: une piece à rendue l'âme apres usage (Weibull). BoooooooM ! ");
+    }
+}
+
+/**
+ * Samples a lifetime for a piece using the Weibull distribution
+ *
+ * @param rng : the random number generator
+ * @return : the sampled lifetime
+ */
 int PieceLifetimeWeibullRule::sampleLifetime(std::mt19937& rng) const
 {
     if (_options == nullptr)
@@ -85,29 +119,3 @@ int PieceLifetimeWeibullRule::sampleLifetime(std::mt19937& rng) const
     const int           sampled = weibull(rng);
     return std::max(2, sampled);
 }
-
-void PieceLifetimeWeibullRule::initializeMissingPieces(ChaosRuleContext& context)
-{
-    for (int x = 0; x < Board::SIZE; ++x)
-    {
-        for (int y = 0; y < Board::SIZE; ++y)
-        {
-            const Case& square = context.board.getCase(x, y);
-            if (!square.getHasPiece())
-                continue;
-
-            Piece* piece = square.getPiece();
-            if (piece != nullptr && piece->getType() == PieceType::King)
-            {
-                _remainingTurns.erase(piece);
-                continue;
-            }
-
-            if (!_remainingTurns.contains(piece))
-            {
-                _remainingTurns[piece] = sampleLifetime(context.rng);
-            }
-        }
-    }
-}
-

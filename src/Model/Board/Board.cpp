@@ -33,6 +33,13 @@ const Case& Board::getCase(int x, int y) const
     return _cases[x][y];
 }
 
+/**
+ * Returns the legal moves for a piece at the specified position
+ * @param from : the position of the piece to move
+ * @param currentTurn : the color of the player whose turn it is
+ * @return : a vector of legal move positions
+ */
+
 std::vector<Vector2D> Board::getLegalMovesFrom(Vector2D from, PieceColor currentTurn) const
 {
     if (!isInside(from))
@@ -85,6 +92,13 @@ bool Board::canMove(Vector2D from, Vector2D to, PieceColor currentTurn) const
     );
 }
 
+/**
+ * Attempts to move a piece from one position to another
+ * @param from : the position of the piece to move
+ * @param to : the position to move the piece to
+ * @param currentTurn : the color of the player whose turn it is
+ * @return : the result of the move attempt
+ */
 Board::MoveResult Board::tryMove(Vector2D from, Vector2D to, PieceColor currentTurn)
 {
     MoveResult result;
@@ -154,4 +168,3 @@ bool Board::isEnemy(Vector2D pos, PieceColor color) const
     const Case& caseAtPos = getCase(static_cast<int>(pos.getX()), static_cast<int>(pos.getY()));
     return caseAtPos.getHasPiece() && caseAtPos.getPiece()->getColor() != color;
 }
-

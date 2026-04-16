@@ -3,6 +3,8 @@
 #include <type_traits>
 #include "Model/settings.hpp"
 
+/** Manager for handling input events. */
+
 class InputManager {
 public:
     static InputManager& instance();
@@ -27,6 +29,7 @@ private:
     static constexpr float MIN_DISTANCE      = 6.0f;
     static constexpr float MAX_DISTANCE      = 25.0f;
 
+    // Static assertions to catch config errors at compile time
     static_assert(MIN_PITCH < MAX_PITCH, "InputManager: min pitch must be < max pitch");
     static_assert(MIN_DISTANCE < MAX_DISTANCE, "InputManager: min distance must be < max distance");
     static_assert(MOUSE_SENSITIVITY > 0.0f, "InputManager: mouse sensitivity must be > 0");
@@ -35,6 +38,7 @@ private:
     static_assert(std::is_floating_point_v<decltype(settings::cameraPitchDegrees)>, "InputManager: camera pitch must be a float");
     static_assert(std::is_floating_point_v<decltype(settings::cameraDistance)>, "InputManager: camera distance must be a float");
 
+    // Parameters
     settings* _settings       = nullptr;
     bool      _firstMouseMove = true;
     double    _lastMouseX     = 0.0;

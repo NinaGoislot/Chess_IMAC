@@ -19,4 +19,11 @@ private:
 
     // Parameters
     const ChaosOptions* _options = nullptr;
+
+    const double PAWN_OBEDIENCE_PROBA   = 0.95;
+    const double KNIGHT_OBEDIENCE_PROBA = 1.0;
+    const double KING_OBEDIENCE_PROBA   = 0.95;
+    const double QUEEN_OBEDIENCE_PROBA  = 0.65;
+    const double ROOK_OBEDIENCE_PROBA   = 0.80;
+    const double BISHOP_OBEDIENCE_PROBA = 0.80;
 };

@@ -3,7 +3,7 @@
 #include <optional>
 #include <utility>
 #include "Model/Board/Board.hpp"
-#include "Model/Match/SelectionState.hpp"
+#include "Model/Match/Selection/SelectionState.hpp"
 #include "Model/settings.hpp"
 #include "Scene3D.hpp"
 #include "TextureManager.hpp"
