@@ -2,7 +2,7 @@
 #include <imgui.h>
 #include <array>
 
-#include "Game/Pieces/Piece.hpp"
+#include "Model/PieceFactory/Piece.hpp"
 #include "utilities/AppConfig.hpp"
 
 // Loads and serves piece textures for 2D rendering.

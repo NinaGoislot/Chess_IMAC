@@ -5,9 +5,9 @@
 #include <glm/gtc/matrix_inverse.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/trigonometric.hpp>
-#include "Board/Board.hpp"
-#include "Game/State/SelectionState.hpp"
-#include "Game/settings.hpp"
+#include "Model/Board/Board.hpp"
+#include "Model/Match/SelectionState.hpp"
+#include "Model/settings.hpp"
 
 namespace {
 

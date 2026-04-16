@@ -1,7 +1,7 @@
 #pragma once
 
 #include <functional>
-#include "Game/Pieces/Piece.hpp"
+#include "Model/PieceFactory/Piece.hpp"
 
 class TurnManager {
 public:

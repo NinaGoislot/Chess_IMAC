@@ -5,8 +5,8 @@
 #include <glm/vec2.hpp>
 #include <glm/vec3.hpp>
 
-#include "Game/Pieces/Piece.hpp"
-#include "Game/settings.hpp"
+#include "Model/PieceFactory/Piece.hpp"
+#include "Model/settings.hpp"
 #include "Render/3D/PieceEffects.hpp"
 
 class Board;

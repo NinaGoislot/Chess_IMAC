@@ -1,7 +1,7 @@
 #pragma once
 
 #include <type_traits>
-#include "Game/settings.hpp"
+#include "Model/settings.hpp"
 
 class InputManager {
 public:

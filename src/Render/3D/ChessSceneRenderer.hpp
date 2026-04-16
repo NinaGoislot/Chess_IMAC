@@ -5,9 +5,9 @@
 #include <optional>
 #include <utility>
 
-#include "Board/Board.hpp"
-#include "Game/State/SelectionState.hpp"
-#include "Game/settings.hpp"
+#include "Model/Board/Board.hpp"
+#include "Model/Match/SelectionState.hpp"
+#include "Model/settings.hpp"
 #include "Render/3D/PieceAnimator.hpp"
 #include "Render/3D/PieceEffects.hpp"
 
