@@ -1,5 +1,6 @@
 ﻿#include "ModelLoader.hpp"
 
+#define TINYGLTF_IMPLEMENTATION
 #define TINYGLTF_NO_STB_IMAGE_WRITE
 #include <tiny_gltf.h>
 #include <algorithm>
@@ -93,11 +94,8 @@ bool readAccessor(const tinygltf::Model& model, const tinygltf::Accessor& access
     return true;
 }
 
-template <typename T>
-bool readAccessor(const tinygltf::Model& model,
-                  int accessorIndex,
-                  std::vector<T>& out,
-                  std::string& error)
+template<typename T>
+bool readAccessor(const tinygltf::Model& model, int accessorIndex, std::vector<T>& out, std::string& error)
 {
     if (!isValidIndex(accessorIndex, model.accessors))
     {
@@ -131,9 +129,7 @@ bool readAccessor(const tinygltf::Model& model,
 
     for (std::size_t i = 0; i < view.count; ++i)
     {
-        std::memcpy(&out[i],
-                    view.data + i * view.stride,
-                    sizeof(T));
+        std::memcpy(&out[i], view.data + i * view.stride, sizeof(T));
     }
 
     return true;
@@ -222,8 +218,8 @@ glm::vec3 extractBaseColorFactor(const tinygltf::Model& model, const tinygltf::P
     if (!isValidIndex(primitive.material, model.materials))
         return glm::vec3{1.f, 1.f, 1.f};
 
-    const tinygltf::Material& material = model.materials[toSize(primitive.material)];
-    const std::vector<double>& factor = material.pbrMetallicRoughness.baseColorFactor;
+    const tinygltf::Material&  material = model.materials[toSize(primitive.material)];
+    const std::vector<double>& factor   = material.pbrMetallicRoughness.baseColorFactor;
     if (factor.size() < 3u)
         return glm::vec3{1.f, 1.f, 1.f};
 
@@ -618,8 +614,8 @@ RawMeshLoadResult loadRawGLBMesh(const std::string& filepath)
         result.mesh.indices.insert(result.mesh.indices.end(), indices.begin(), indices.end());
 
         SubMeshData submesh;
-        submesh.indexOffset = indexOffset;
-        submesh.indexCount  = indexCount;
+        submesh.indexOffset     = indexOffset;
+        submesh.indexCount      = indexCount;
         submesh.baseColorFactor = extractBaseColorFactor(model, primitive);
 
         TextureData baseColorTexture;
@@ -755,7 +751,7 @@ MeshLoadResult buildMeshData(const RawMeshData& rawMesh)
             result.baseColorTexture = result.submeshBaseColorTextures.front();
     }
 
-    result.success      = !result.mesh.vertices.empty() && !result.mesh.indices.empty();
+    result.success = !result.mesh.vertices.empty() && !result.mesh.indices.empty();
     if (!result.success)
         result.error = "Mesh conversion produced an empty result.";
 

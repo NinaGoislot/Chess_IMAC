@@ -4,16 +4,16 @@
 #include <glm/mat4x4.hpp>
 #include <glm/vec3.hpp>
 #include <string>
-
 #include "Model/settings.hpp"
 #include "Render/3D/Material.hpp"
 #include "Render/3D/Shader.hpp"
+
 
 namespace Render3D {
 
 class ResourceManager;
 
-// Lighting parameters for the board shader.
+// Lighting parameters for the board shader
 struct BoardLighting {
     glm::vec3 topLightDirection{0.f, 1.f, 0.f};
     glm::vec3 topLightColor{1.f, 1.f, 1.f};
@@ -21,16 +21,16 @@ struct BoardLighting {
     glm::vec3 sideLightDirection{0.f, 1.f, 0.f};
     glm::vec3 sideLightColor{1.f, 1.f, 1.f};
     float     sideLightStrength = 0.5f;
-    float     ambientStrength = 0.2f;
+    float     ambientStrength   = 0.2f;
 };
 
-// Lighting parameters for the explosion shader.
+// Lighting parameters for the explosion shader
 struct ExplosionPassSettings {
     glm::vec3 lightDirection{0.f, 1.f, 0.f};
     float     ambientStrength = 0.25f;
 };
 
-// Owns low-level OpenGL rendering for board primitives and skybox.
+// Owns low-level OpenGL rendering for board primitives and skybox
 class GLRenderer {
 public:
     // Constructors
@@ -46,11 +46,11 @@ public:
     void destroy();
 
     // Framebuffer-backed frame helpers.
-    bool beginFrame(int width, int height);
-    void endFrame();
+    bool         beginFrame(int width, int height);
+    void         endFrame();
     unsigned int colorTextureId() const;
-    int framebufferWidth() const;
-    int framebufferHeight() const;
+    int          framebufferWidth() const;
+    int          framebufferHeight() const;
 
     // Render pipeline helpers
     bool beginBoardPass() const;
@@ -68,28 +68,27 @@ public:
 
     void drawExplosionCube(const glm::mat4& viewProjection, const glm::mat4& model, const Material& material, float progress) const;
     void drawExplosionIndexedMesh(const glm::mat4& viewProjection, const glm::mat4& model, const Material& material, unsigned int vao, int indexCount, float progress) const;
-    void drawExplosionIndexedMesh(const glm::mat4& viewProjection, const glm::mat4& model, const Material& material, unsigned int vao,
-                                  int indexCount, std::size_t indexOffset, float progress) const;
+    void drawExplosionIndexedMesh(const glm::mat4& viewProjection, const glm::mat4& model, const Material& material, unsigned int vao, int indexCount, std::size_t indexOffset, float progress) const;
 
     void drawSkybox(const glm::mat4& view, const glm::mat4& projection, const settings& gameSettings, const ResourceManager& resourceManager) const;
 
 private:
-    // Cached uniform locations for board shader.
+    // Cached uniform locations for board shader
     struct UniformLocations {
-        int mvp      = -1;
-        int model    = -1;
-        int color    = -1;
-        int topLightDir = -1;
-        int topLightColor = -1;
-        int topLightStrength = -1;
-        int sideLightDir = -1;
-        int sideLightColor = -1;
+        int mvp               = -1;
+        int model             = -1;
+        int color             = -1;
+        int topLightDir       = -1;
+        int topLightColor     = -1;
+        int topLightStrength  = -1;
+        int sideLightDir      = -1;
+        int sideLightColor    = -1;
         int sideLightStrength = -1;
-        int ambient  = -1;
-        int textureSampler = -1;
-        int useTexture = -1;
-        int textureScale = -1;
-        int useMeshUv = -1;
+        int ambient           = -1;
+        int textureSampler    = -1;
+        int useTexture        = -1;
+        int textureScale      = -1;
+        int useMeshUv         = -1;
 
         bool isValid() const
         {
@@ -102,7 +101,7 @@ private:
         }
     };
 
-    // Cached uniform locations for skybox shader.
+    // Cached uniform locations for skybox shader
     struct SkyboxUniformLocations {
         int vp          = -1;
         int topColor    = -1;
@@ -120,7 +119,7 @@ private:
         }
     };
 
-    // Cached uniform locations for explosion shader.
+    // Cached uniform locations for explosion shader
     struct ExplosionUniformLocations {
         int mvp      = -1;
         int model    = -1;
@@ -136,31 +135,29 @@ private:
     };
 
     // Internal helpers
-    static UniformLocations queryUniformLocations(const Shader& shader);
+    static UniformLocations          queryUniformLocations(const Shader& shader);
     static ExplosionUniformLocations queryExplosionUniformLocations(const Shader& shader);
-    void initializeCubeGeometry();
-    bool ensureFramebufferSize(int width, int height);
-    void destroyFramebuffer();
+    void                             initializeCubeGeometry();
+    bool                             ensureFramebufferSize(int width, int height);
+    void                             destroyFramebuffer();
 
-    void drawGeometry(const glm::mat4& viewProjection, const glm::mat4& model, unsigned int vao, int drawCount, bool indexed,
-                      std::size_t indexOffsetBytes = 0u) const;
-    void drawExplosionGeometry(const glm::mat4& viewProjection, const glm::mat4& model, const Material& material,
-                               float progress, unsigned int vao, int drawCount, bool indexed, std::size_t indexOffsetBytes = 0u) const;
+    void drawGeometry(const glm::mat4& viewProjection, const glm::mat4& model, unsigned int vao, int drawCount, bool indexed, std::size_t indexOffsetBytes = 0u) const;
+    void drawExplosionGeometry(const glm::mat4& viewProjection, const glm::mat4& model, const Material& material, float progress, unsigned int vao, int drawCount, bool indexed, std::size_t indexOffsetBytes = 0u) const;
 
-    // Shared cube geometry state.
+    // Shared cube geometry state
     unsigned int _vao         = 0;
     unsigned int _vbo         = 0;
     bool         _initialized = false;
     bool         _skyboxReady = false;
 
-    // Off-screen framebuffer resources.
+    // Off-screen framebuffer resources
     unsigned int _fbo          = 0;
     unsigned int _colorTexture = 0;
     unsigned int _depthStencil = 0;
     int          _framebufferW = 0;
     int          _framebufferH = 0;
 
-    // Shader programs used by render passes.
+    // Shader programs used by render passes
     Shader _boardShader;
     Shader _pieceExplosionShader;
     Shader _skyboxShader;

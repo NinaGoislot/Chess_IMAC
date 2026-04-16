@@ -10,13 +10,12 @@
 #include "Render/3D/PieceAnimator.hpp"
 #include "Render/3D/PieceEffects.hpp"
 
-
 namespace Render3D {
 
 class GLRenderer;
 class ResourceManager;
 
-// High-level board/piece renderer. Stateless; draw calls require a renderer.
+// High-level board/piece renderer. Stateless; draw calls require a renderer
 class ChessSceneRenderer {
 public:
     // Draw functions

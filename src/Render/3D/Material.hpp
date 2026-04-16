@@ -4,13 +4,13 @@
 
 namespace Render3D {
 
-// Simple material data for board/piece rendering.
+// Simple material data for board/piece rendering
 struct Material {
-    glm::vec3 color{1.f, 1.f, 1.f};
-    unsigned int textureId = 0;
-    float textureScale = 1.f;
-    bool useTexture = false;
-    bool useMeshUv = false;
+    glm::vec3    color{1.f, 1.f, 1.f};
+    unsigned int textureId    = 0;
+    float        textureScale = 1.f;
+    bool         useTexture   = false;
+    bool         useMeshUv    = false;
 
     bool hasTexture() const { return useTexture && textureId != 0; }
 };

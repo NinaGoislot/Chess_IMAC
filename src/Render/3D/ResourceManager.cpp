@@ -18,31 +18,50 @@ namespace {
 constexpr std::size_t PIECE_TYPE_COUNT = 6u;
 
 constexpr std::array<const char*, PIECE_TYPE_COUNT> PIECE_MODEL_NAMES = {
-    "pawn", "rook", "knight", "bishop", "queen", "king",
+    "pawn",
+    "rook",
+    "knight",
+    "bishop",
+    "queen",
+    "king",
 };
 
 constexpr std::array<const char*, 6> SKYBOX_FACE_NAMES = {
-    "right", "left", "top", "bottom", "front", "back",
+    "right",
+    "left",
+    "top",
+    "bottom",
+    "front",
+    "back",
 };
 
 // We keep extensions so you can mix and match jpg/png easily
 constexpr std::array<const char*, 5> SKYBOX_FILE_EXTENSIONS = {
-    ".png", ".jpg", ".jpeg", ".bmp", ".tga",
+    ".png",
+    ".jpg",
+    ".jpeg",
+    ".bmp",
+    ".tga",
 };
 
 constexpr std::array<const char*, 5> BOARD_TEXTURE_FILE_EXTENSIONS = {
-    ".png", ".jpg", ".jpeg", ".bmp", ".tga",
+    ".png",
+    ".jpg",
+    ".jpeg",
+    ".bmp",
+    ".tga",
 };
 
 constexpr const char* BOARD_EDGE_TEXTURE_BASENAME = "edges";
 
 GLenum textureFormatForChannels(int channels)
 {
-    switch (channels) {
-        case 1: return GL_RED;
-        case 3: return GL_RGB;
-        case 4: return GL_RGBA;
-        default: return GL_RGB;
+    switch (channels)
+    {
+    case 1: return GL_RED;
+    case 3: return GL_RGB;
+    case 4: return GL_RGBA;
+    default: return GL_RGB;
     }
 }
 
@@ -63,8 +82,6 @@ std::string joinPath(const std::string& directory, const std::string& filename)
 {
     return (std::filesystem::path(directory) / filename).string();
 }
-
-// Notice: modelCandidates() is completely DELETED. We don't need it anymore!
 
 } // namespace
 
@@ -118,8 +135,8 @@ void ResourceManager::initChaosModel(const std::string& modelsDirectory, const s
     if (!submeshTextures.empty())
     {
         const std::size_t submeshCount = (_kirbyMesh.submeshes.size() < submeshTextures.size())
-                                          ? _kirbyMesh.submeshes.size()
-                                          : submeshTextures.size();
+                                             ? _kirbyMesh.submeshes.size()
+                                             : submeshTextures.size();
         for (std::size_t submeshIndex = 0u; submeshIndex < submeshCount; ++submeshIndex)
         {
             if (submeshIndex < submeshFactors.size())
@@ -148,8 +165,8 @@ void ResourceManager::initChaosModel(const std::string& modelsDirectory, const s
     else if (!submeshFactors.empty())
     {
         const std::size_t submeshCount = (_kirbyMesh.submeshes.size() < submeshFactors.size())
-                                          ? _kirbyMesh.submeshes.size()
-                                          : submeshFactors.size();
+                                             ? _kirbyMesh.submeshes.size()
+                                             : submeshFactors.size();
         for (std::size_t submeshIndex = 0u; submeshIndex < submeshCount; ++submeshIndex)
         {
             _kirbyMesh.submeshes[submeshIndex].baseColorFactor = submeshFactors[submeshIndex];
@@ -159,11 +176,11 @@ void ResourceManager::initChaosModel(const std::string& modelsDirectory, const s
     std::cout << "Loaded Chaos piece GLB model from: " << modelPath << "\n";
 }
 
-
 const ResourceManager::PieceMeshGlData* ResourceManager::getPieceMeshFor(PieceType type) const
 {
     const std::size_t index = pieceTypeIndex(type);
-    if (index >= _pieceMeshes.size()) return nullptr;
+    if (index >= _pieceMeshes.size())
+        return nullptr;
     return &_pieceMeshes[index];
 }
 
@@ -192,10 +209,10 @@ bool ResourceManager::loadTexture2D(const std::string& textureId, const std::vec
         if (!std::filesystem::exists(candidatePath))
             continue;
 
-        int width = 0;
-        int height = 0;
-        int channels = 0;
-        unsigned char* data = stbi_load(candidatePath.c_str(), &width, &height, &channels, 4);
+        int            width    = 0;
+        int            height   = 0;
+        int            channels = 0;
+        unsigned char* data     = stbi_load(candidatePath.c_str(), &width, &height, &channels, 4);
         if (data == nullptr)
             continue;
 
@@ -263,7 +280,8 @@ void ResourceManager::initializeBoardTextures(const std::string& boardTexturesDi
 bool ResourceManager::uploadPieceMesh(PieceType type, const ModelMeshData& meshData)
 {
     const std::size_t index = pieceTypeIndex(type);
-    if (index >= _pieceMeshes.size()) return false;
+    if (index >= _pieceMeshes.size())
+        return false;
 
     return uploadMesh(_pieceMeshes[index], meshData);
 }
@@ -318,7 +336,7 @@ void ResourceManager::initializePieceModels(const std::string& modelsDirectory)
 {
     for (std::size_t i = 0u; i < PIECE_TYPE_COUNT; ++i)
     {
-        const PieceType type = static_cast<PieceType>(i);
+        const PieceType   type      = static_cast<PieceType>(i);
         const std::string modelPath = joinPath(modelsDirectory, pieceModelName(type) + ".glb");
 
         if (!std::filesystem::exists(modelPath))
@@ -340,14 +358,14 @@ void ResourceManager::initializePieceModels(const std::string& modelsDirectory)
             continue;
         }
 
-        PieceMeshGlData& pieceMesh = _pieceMeshes[pieceTypeIndex(type)];
-        const auto& submeshTextures = loadResult.submeshBaseColorTextures;
-        const auto& submeshFactors  = loadResult.submeshBaseColorFactors;
+        PieceMeshGlData& pieceMesh       = _pieceMeshes[pieceTypeIndex(type)];
+        const auto&      submeshTextures = loadResult.submeshBaseColorTextures;
+        const auto&      submeshFactors  = loadResult.submeshBaseColorFactors;
         if (!submeshTextures.empty())
         {
             const std::size_t submeshCount = (pieceMesh.submeshes.size() < submeshTextures.size())
-                                              ? pieceMesh.submeshes.size()
-                                              : submeshTextures.size();
+                                                 ? pieceMesh.submeshes.size()
+                                                 : submeshTextures.size();
             for (std::size_t submeshIndex = 0u; submeshIndex < submeshCount; ++submeshIndex)
             {
                 if (submeshIndex < submeshFactors.size())
@@ -376,8 +394,8 @@ void ResourceManager::initializePieceModels(const std::string& modelsDirectory)
         else if (!submeshFactors.empty())
         {
             const std::size_t submeshCount = (pieceMesh.submeshes.size() < submeshFactors.size())
-                                              ? pieceMesh.submeshes.size()
-                                              : submeshFactors.size();
+                                                 ? pieceMesh.submeshes.size()
+                                                 : submeshFactors.size();
             for (std::size_t submeshIndex = 0u; submeshIndex < submeshCount; ++submeshIndex)
             {
                 pieceMesh.submeshes[submeshIndex].baseColorFactor = submeshFactors[submeshIndex];
@@ -391,7 +409,7 @@ void ResourceManager::initializePieceModels(const std::string& modelsDirectory)
 bool ResourceManager::loadSkyboxCubemap(const std::string& skyboxDirectory)
 {
     std::array<std::string, SKYBOX_FACE_NAMES.size()> selectedFacePaths{};
-    bool hasAllFaces = true;
+    bool                                              hasAllFaces = true;
 
     // Only loop through faces and extensions now. No more root guessing!
     for (std::size_t i = 0; i < SKYBOX_FACE_NAMES.size(); ++i)
@@ -403,7 +421,7 @@ bool ResourceManager::loadSkyboxCubemap(const std::string& skyboxDirectory)
             if (std::filesystem::exists(candidatePath))
             {
                 selectedFacePaths[i] = candidatePath;
-                faceFound = true;
+                faceFound            = true;
                 break;
             }
         }
@@ -420,7 +438,7 @@ bool ResourceManager::loadSkyboxCubemap(const std::string& skyboxDirectory)
         // Cleanup if we had a previous skybox, then exit cleanly
         destroySkybox();
         std::cout << "Skybox textures not found in " << skyboxDirectory << ". Using gradient skybox colors only.\n";
-        return true; 
+        return true;
     }
 
     destroySkybox(); // clear any existing texture safely
@@ -430,7 +448,7 @@ bool ResourceManager::loadSkyboxCubemap(const std::string& skyboxDirectory)
 
     for (std::size_t i = 0; i < selectedFacePaths.size(); ++i)
     {
-        int width = 0, height = 0, channels = 0;
+        int            width = 0, height = 0, channels = 0;
         unsigned char* data = stbi_load(selectedFacePaths[i].c_str(), &width, &height, &channels, 0);
 
         if (data == nullptr)
@@ -441,8 +459,8 @@ bool ResourceManager::loadSkyboxCubemap(const std::string& skyboxDirectory)
             return false;
         }
 
-        const GLenum format = textureFormatForChannels(channels);
-        GLenum internalFormat = (format == GL_RGBA) ? GL_RGBA8 : ((format == GL_RED) ? GL_R8 : GL_RGB8);
+        const GLenum format         = textureFormatForChannels(channels);
+        GLenum       internalFormat = (format == GL_RGBA) ? GL_RGBA8 : ((format == GL_RED) ? GL_R8 : GL_RGB8);
 
         glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + static_cast<GLenum>(i), 0, static_cast<GLint>(internalFormat), width, height, 0, format, GL_UNSIGNED_BYTE, data);
         stbi_image_free(data);
@@ -480,9 +498,9 @@ void ResourceManager::destroyMesh(PieceMeshGlData& mesh)
     glDeleteBuffers(1, &mesh.vbo);
     mesh.vbo = 0;
     glDeleteVertexArrays(1, &mesh.vao);
-    mesh.vao = 0;
+    mesh.vao        = 0;
     mesh.indexCount = 0;
-    mesh.textureId = 0;
+    mesh.textureId  = 0;
     mesh.submeshes.clear();
 }
 

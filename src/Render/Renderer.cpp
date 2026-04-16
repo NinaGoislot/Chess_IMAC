@@ -27,7 +27,7 @@ void Renderer::initialize(const AppConfig& config)
 
 /**
  *
- * Dessine la vue 3D dans la fenetre courante et renvoie la tuile cliquee si applicable.
+ * Dessine la vue 3D dans la fenetre courante et renvoie la tuile cliquee si applicable
  * @param board : etat courant du plateau.
  * @param gameSettings : reglages de rendu 3D.
  * @param currentTurn : couleur du joueur actif.
