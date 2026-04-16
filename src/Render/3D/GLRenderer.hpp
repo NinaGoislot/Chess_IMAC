@@ -5,7 +5,7 @@
 #include <glm/vec3.hpp>
 #include <string>
 
-#include "Game/settings.hpp"
+#include "Model/settings.hpp"
 #include "Render/3D/Material.hpp"
 #include "Render/3D/Shader.hpp"
 

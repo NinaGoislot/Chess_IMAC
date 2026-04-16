@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Game/settings.hpp"
+#include "Model/settings.hpp"
 
 // Draws the UI panel used to tweak runtime game/render settings.
 namespace SettingsPanel {

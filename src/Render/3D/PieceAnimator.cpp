@@ -5,7 +5,7 @@
 #include <unordered_set>
 #include <vector>
 
-#include "Board/Board.hpp"
+#include "Model/Board/Board.hpp"
 
 namespace {
 

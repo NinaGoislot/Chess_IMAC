@@ -1,12 +1,12 @@
 #pragma once
 
-#include "Game/Chaos/ChaosMode.hpp"
-#include "Game/Promotion/PromotionFlow.hpp"
-#include "Game/State/MatchState.hpp"
-#include "Game/settings.hpp"
+#include "Model/Chaos/ChaosMode.hpp"
+#include "Model/Match/Promotion/PromotionFlow.hpp"
+#include "Model/Match/MatchState.hpp"
+#include "Model/settings.hpp"
 #include "Render/Renderer.hpp"
 #include "Render/TextureManager.hpp"
-#include "Systems/MoveSelectionController.hpp"
+#include "Input/MoveSelectionController.hpp"
 #include "utilities/AppConfig.hpp"
 
 // High-level app game controller

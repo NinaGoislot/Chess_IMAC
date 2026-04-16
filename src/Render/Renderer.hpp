@@ -2,9 +2,9 @@
 
 #include <optional>
 #include <utility>
-#include "Board/Board.hpp"
-#include "Game/State/SelectionState.hpp"
-#include "Game/settings.hpp"
+#include "Model/Board/Board.hpp"
+#include "Model/Match/SelectionState.hpp"
+#include "Model/settings.hpp"
 #include "Scene3D.hpp"
 #include "TextureManager.hpp"
 #include "utilities/AppConfig.hpp"

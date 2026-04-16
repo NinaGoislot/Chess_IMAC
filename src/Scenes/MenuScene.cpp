@@ -1,6 +1,6 @@
 #include "MenuScene.hpp"
 #include <imgui.h>
-#include "Game/Chaos/ChaosMode.hpp"
+#include "Model/Chaos/ChaosMode.hpp"
 #include "Managers/SceneManager.hpp"
 
 namespace {

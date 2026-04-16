@@ -8,9 +8,9 @@
 #include "3D/GLRenderer.hpp"
 #include "3D/PieceAnimator.hpp"
 #include "3D/ResourceManager.hpp"
-#include "Board/Board.hpp"
-#include "Game/State/SelectionState.hpp"
-#include "Game/settings.hpp"
+#include "Model/Board/Board.hpp"
+#include "Model/Match/SelectionState.hpp"
+#include "Model/settings.hpp"
 #include "utilities/AppConfig.hpp"
 
 // Coordinates full 3D rendering flow: framebuffer, camera, resources, and draw calls.

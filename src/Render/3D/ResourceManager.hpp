@@ -8,7 +8,7 @@
 #include <string_view>
 #include <unordered_map>
 #include <vector>
-#include "Game/Pieces/Piece.hpp"
+#include "Model/PieceFactory/Piece.hpp"
 #include "utilities/AppConfig.hpp"
 
 struct ModelMeshData;

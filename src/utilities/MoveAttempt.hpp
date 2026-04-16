@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Game/Pieces/Piece.hpp"
+#include "Model/PieceFactory/Piece.hpp"
 
 // Carries full move context so hooks and chaos rules can inspect or modify it.
 struct MoveAttempt {
