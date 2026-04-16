@@ -2,36 +2,38 @@
 #include <imgui.h>
 #include <vector>
 #include "Model/Board/Board.hpp"
+#include "utilities/Direction.hpp"
 #include "utilities/Vector2D.hpp"
-
 
 King::King()
     : Piece()
 {
-    _name = "King";
-    _type = PieceType::King;
+    _name  = "King";
+    _type  = PieceType::King;
     _color = PieceColor::White;
 }
 
 void King::updateAllowedMoves(const Board& board, Vector2D position)
 {
-   std::vector<Vector2D> directions {
-    {0, 1},   // up
-    {0, -1},  // down
-    {-1, 0},  // left
-    {1, 0},   // right
-    {1, 1},   // up-right
-    {1, -1},  // down-right
-    {-1, 1},  // up-left
-    {-1, -1}  // down-left
-   };
+    std::vector<Vector2D> directions{
+        dir::up(),
+        dir::down(),
+        dir::left(),
+        dir::right(),
+        dir::up_right(),
+        dir::down_right(),
+        dir::up_left(),
+        dir::down_left()
+    };
 
-   _allowedMoves.clear();
+    _allowedMoves.clear();
 
-    for (const Vector2D& dir : directions) {
+    for (const Vector2D& dir : directions)
+    {
         Vector2D currentPos = position + dir;
 
-        if (board.isInside(currentPos) && (!board.isEmpty(currentPos) ? board.isEnemy(currentPos, _color) : true)) {
+        if (board.isInside(currentPos) && (!board.isEmpty(currentPos) ? board.isEnemy(currentPos, _color) : true))
+        {
             _allowedMoves.push_back(currentPos);
         }
     }
@@ -39,17 +41,17 @@ void King::updateAllowedMoves(const Board& board, Vector2D position)
 
 King::King(ImTextureID texture)
 {
-    _name = "King";
-    _type = PieceType::King;
-    _color = PieceColor::White;
+    _name    = "King";
+    _type    = PieceType::King;
+    _color   = PieceColor::White;
     _texture = texture;
 }
 
 King::King(PieceColor color, ImTextureID texture)
 {
-    _name = "King";
-    _type = PieceType::King;
-    _color = color;
+    _name    = "King";
+    _type    = PieceType::King;
+    _color   = color;
     _texture = texture;
 }
 

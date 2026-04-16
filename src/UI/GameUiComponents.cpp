@@ -61,8 +61,8 @@ void drawMenuHero(const MenuHeroText& heroText)
 
 void drawTurnStatusCard(int turnNumber, const std::string& activePlayerName, PieceColor activeColor)
 {
-    ImGui::TextColored(UiTheme::panelHeader.toImVec4(), "Statut de partie");
-    ImGui::Separator();
+    // ImGui::TextColored(UiTheme::panelHeader.toImVec4(), "Statut de partie");
+    // ImGui::Separator();
 
     ImGui::Text("Tour actuel: #%d", turnNumber);
 
@@ -70,12 +70,14 @@ void drawTurnStatusCard(int turnNumber, const std::string& activePlayerName, Pie
     ImGui::ColorButton("##activeTurnColor", colorPill, ImGuiColorEditFlags_NoTooltip, ImVec2{16.f, 16.f});
     ImGui::SameLine();
     ImGui::Text("Joueur actif: %s (%s)", activePlayerName.c_str(), PieceColorUtils::toFrenchLabel(activeColor));
+
+    ImGui::Separator();
 }
 
 void drawWinnerBanner(const Player* winner)
 {
     const char* winnerName = (winner != nullptr && !winner->getName().empty()) ? winner->getName().c_str() : "joueur inconnu";
-    ImGui::TextColored(UiTheme::winner.toImVec4(), "Partie terminee - Victoire %s", winnerName);
+    ImGui::TextColored(UiTheme::winner.toImVec4(), "Partie terminee ! Victoire %s", winnerName);
 }
 
 void drawMoveHistoryList(const std::vector<std::string>& history)

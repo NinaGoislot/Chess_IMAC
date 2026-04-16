@@ -3,6 +3,14 @@
 
 namespace {
 
+/**
+ * Add a new entry to the turn history
+ * @param history : the move history object
+ * @param turnNumber : the current turn number
+ * @param playerName : the name of the player whose turn it is
+ * @param color : the color of the player whose turn it is
+
+ */
 void appendTurnHistory(MoveHistory& history, int turnNumber, const std::string& playerName, PieceColor color)
 {
     history.add(
@@ -32,9 +40,9 @@ MatchState::MatchState(const TextureManager& textures)
 
 /**
  *
- * Reinitialise la partie, les joueurs et les regles selon le mode choisi.
- * @param mode : mode de partie (classique ou chaos).
- * @return Aucun.
+ * Reinitialise la partie
+ * @param mode : mode de partie
+ * @return Aucun
  */
 void MatchState::newMatch(Mode mode)
 {
@@ -64,10 +72,10 @@ void MatchState::newMatch(Mode mode)
 
 /**
  *
- * Tente de jouer un coup en appliquant regles, chaos et promotions.
- * @param from : position de depart.
- * @param to : position d'arrivee.
- * @return Vrai si le coup a ete valide.
+ * Tente de jouer un coup en appliquant regles, chaos et promotions
+ * @param from : position de depart
+ * @param to : position d'arrivee
+ * @return Vrai si le coup a ete valide
  */
 bool MatchState::tryMove(Vector2D from, Vector2D to)
 {
@@ -118,9 +126,9 @@ bool MatchState::tryMove(Vector2D from, Vector2D to)
 
 /**
  *
- * Valide une promotion en attente et applique la progression du tour.
- * @param type : type de piece choisie pour la promotion.
- * @return Vrai si la promotion est validee.
+ * Valide une promotion en attente
+ * @param type : type de piece choisie pour la promotion
+ * @return Vrai si la promotion est validee
  */
 bool MatchState::choosePromotion(PieceType type)
 {
@@ -273,8 +281,8 @@ void MatchState::addMoveToHistory(const std::string& move)
 /**
  *
  * Applique les regles Chaos avant un coup, avec possibilite d'annulation.
- * @param attempt : tentative de coup a modifier ou annuler.
- * @return Vrai si le coup peut continuer.
+ * @param attempt : tentative de coup a modifier ou annuler
+ * @return Vrai si le coup peut continuer
  */
 bool MatchState::applyChaosPreMove(MoveAttempt& attempt)
 {
@@ -283,7 +291,7 @@ bool MatchState::applyChaosPreMove(MoveAttempt& attempt)
 
     if (_chaosMode->consumeSkipTurnRequested())
     {
-        _moveHistory.add("Chaos: tour saute apres refus d'obeissance.");
+        // _moveHistory.add("Chaos: tour saute apres refus d'obeissance.");
         applyTurnProgression();
     }
 
@@ -309,11 +317,11 @@ void MatchState::placePieces()
 
 /**
  *
- * Place les pieces d'un joueur sur les rangs de depart.
- * @param backRankY : ligne des pieces majeures.
- * @param pawnRankY : ligne des pions.
- * @param owner : joueur proprietaire des pieces.
- * @return Aucun.
+ * Place les pieces d'un joueur sur les rangs de depart
+ * @param backRankY : ligne des pieces majeures
+ * @param pawnRankY : ligne des pions
+ * @param owner : joueur proprietaire
+ * @return Aucun
  */
 void MatchState::placePiecesForPlayer(int backRankY, int pawnRankY, Player& owner)
 {
@@ -332,7 +340,7 @@ void MatchState::placePiecesForPlayer(int backRankY, int pawnRankY, Player& owne
 
 /**
  *
- * Avance le compteur de tour et declenche les hooks de fin/debut de tour.
+ * Avance le compteur de tour et declenche les hooks de fin/debut de tour
  * @return Aucun.
  */
 void MatchState::applyTurnProgression()

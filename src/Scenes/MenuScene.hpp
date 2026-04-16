@@ -5,28 +5,26 @@
 class SceneManager;
 class GameManager;
 
-// Main menu scene used to choose game mode and start a match.
+// Main menu scene used to choose game mode and start a match
 class MenuScene : public Scene {
 public:
     // Constructors
     explicit MenuScene(SceneManager& sceneManager);
 
-    // Render function: draws menu UI and mode buttons.
+    // Render function
     void render() override;
 
 private:
     void drawMainActions(float buttonWidth);
-    void drawInterruptedMatchCard(GameManager& game, float buttonWidth);
+    void drawInterruptedMatchCard(GameManager& game, float buttonWidth, float height = 200.f);
     void drawOverwritePopup();
     void drawSetupPopup(GameManager& game);
 
-    // Non-owning scene manager used to launch next scenes.
-    SceneManager* _sceneManager = nullptr;
-    // Selected mode index from menu controls.
-    int  _selectedMode            = 0;
-    int  _requestedMode           = 0;
-    bool _openSetupPopupNextFrame = false;
-    // Player names are explicit scene state, not hidden globals.
+    // Parameters
+    SceneManager*        _sceneManager            = nullptr;
+    int                  _selectedMode            = 0;
+    int                  _requestedMode           = 0;
+    bool                 _openSetupPopupNextFrame = false;
     std::array<char, 64> _whitePlayerName{};
     std::array<char, 64> _blackPlayerName{};
 };

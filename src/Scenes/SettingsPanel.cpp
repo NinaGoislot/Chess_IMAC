@@ -5,8 +5,8 @@ namespace SettingsPanel {
 
 /**
  *
- * Affiche les reglages graphiques et d'interaction avec sections repliables.
- * @param gameSettings : structure de settings modifiable.
+ * Affiche les reglages graphiques et d'interaction
+ * @param gameSettings : structure de settings modifiable
  * @return Aucun.
  */
 void draw(settings& gameSettings)
@@ -15,7 +15,8 @@ void draw(settings& gameSettings)
 
     ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2{8.f, 9.f});
 
-    if (ImGui::CollapsingHeader("2D", ImGuiTreeNodeFlags_DefaultOpen))
+    // === 2D SECTION (Parent header, collapsed by default) ===
+    if (ImGui::CollapsingHeader("2D"))
     {
         ImGui::ColorEdit4("White Tile Color", &gameSettings.whiteColor.x);
         ImGui::ColorEdit4("Black Tile Color", &gameSettings.blackColor.x);
@@ -33,11 +34,13 @@ void draw(settings& gameSettings)
         ImGui::SliderFloat("Button Size", &gameSettings.buttonSize, 25.f, 100.f);
     }
 
-    if (ImGui::CollapsingHeader("3D", ImGuiTreeNodeFlags_DefaultOpen))
+    // === 3D SECTION (Parent header, collapsed by default) ===
+    if (ImGui::CollapsingHeader("3D"))
     {
         ImGui::Checkbox("Render Board In 3D", &gameSettings.use3D);
 
-        if (gameSettings.use3D && ImGui::CollapsingHeader("Scene", ImGuiTreeNodeFlags_DefaultOpen))
+        // --- Scene subsection (tree node for subtle appearance) ---
+        if (gameSettings.use3D && ImGui::TreeNodeEx("Scene", ImGuiTreeNodeFlags_DefaultOpen))
         {
             ImGui::Checkbox("Draw Pieces In 3D", &gameSettings.drawPieces3D);
             ImGui::Checkbox("Draw Skybox", &gameSettings.drawSkybox);
@@ -47,26 +50,32 @@ void draw(settings& gameSettings)
                 ImGui::ColorEdit3("Skybox Top Color", &gameSettings.skyboxTopColor.x);
                 ImGui::ColorEdit3("Skybox Bottom Color", &gameSettings.skyboxBottomColor.x);
             }
+            ImGui::TreePop();
         }
 
-        if (gameSettings.use3D && ImGui::CollapsingHeader("Animation", ImGuiTreeNodeFlags_DefaultOpen))
+        // --- Animation subsection (tree node for subtle appearance) ---
+        if (gameSettings.use3D && ImGui::TreeNodeEx("Animation", ImGuiTreeNodeFlags_DefaultOpen))
         {
             ImGui::Checkbox("Animate Piece Movement", &gameSettings.animatePieces);
             if (gameSettings.animatePieces)
             {
                 ImGui::SliderFloat("Move Animation Duration", &gameSettings.pieceMoveDuration, 0.05f, 0.6f, "%.2fs");
             }
+            ImGui::TreePop();
         }
 
-        if (gameSettings.use3D && ImGui::CollapsingHeader("Board Geometry", ImGuiTreeNodeFlags_DefaultOpen))
+        // --- Board Geometry subsection (tree node for subtle appearance) ---
+        if (gameSettings.use3D && ImGui::TreeNodeEx("Board Geometry", ImGuiTreeNodeFlags_DefaultOpen))
         {
             ImGui::SliderFloat("Board Thickness", &gameSettings.boardThickness, 0.05f, 0.4f);
             ImGui::ColorEdit3("Board Side Color", &gameSettings.boardSideColor.x);
             ImGui::SliderFloat("Board Side Width", &gameSettings.boardSideThickness, 0.05f, 0.8f);
             ImGui::SliderFloat("Board Side Depth", &gameSettings.boardSideDrop, 0.f, 0.5f);
+            ImGui::TreePop();
         }
 
-        if (gameSettings.use3D && ImGui::CollapsingHeader("Camera", ImGuiTreeNodeFlags_DefaultOpen))
+        // --- Camera subsection (tree node for subtle appearance) ---
+        if (gameSettings.use3D && ImGui::TreeNodeEx("Camera", ImGuiTreeNodeFlags_DefaultOpen))
         {
             ImGui::Checkbox("Use Piece POV Camera", &gameSettings.cameraPieceTarget);
 
@@ -82,6 +91,7 @@ void draw(settings& gameSettings)
                 ImGui::SliderFloat("Camera Pitch", &gameSettings.cameraPitchDegrees, 10.f, 80.f);
                 ImGui::SliderFloat("Camera Distance", &gameSettings.cameraDistance, 6.f, 25.f);
             }
+            ImGui::TreePop();
         }
     }
 

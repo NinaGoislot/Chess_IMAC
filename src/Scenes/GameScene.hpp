@@ -14,11 +14,9 @@ public:
     void render() override;
 
 private:
-    // Non-owning scene manager used for scene transitions.
-    SceneManager* _sceneManager = nullptr;
-    // Reference to the app controller.
-    GameManager& _game;
-    // Mode used for current match instance.
+    // ¨Parameters
+    SceneManager*     _sceneManager = nullptr;
+    GameManager&      _game;
     GameManager::Mode _mode             = GameManager::Mode::Classic;
     bool              _winnerPopupShown = false;
 };

@@ -2,38 +2,42 @@
 #include <imgui.h>
 #include <vector>
 #include "Model/Board/Board.hpp"
+#include "utilities/Direction.hpp"
 #include "utilities/Vector2D.hpp"
-
 
 Queen::Queen()
     : Piece()
 {
-    _name = "Queen";
-    _type = PieceType::Queen;
+    _name  = "Queen";
+    _type  = PieceType::Queen;
     _color = PieceColor::White;
 }
 
 void Queen::updateAllowedMoves(const Board& board, Vector2D position)
 {
-   std::vector<Vector2D> directions {
-    {0, 1},   // up
-    {0, -1},  // down
-    {-1, 0},  // left
-    {1, 0},   // right
-    {1, 1},   // up-right
-    {1, -1},  // down-right
-    {-1, 1},  // up-left
-    {-1, -1}  // down-left
-   };
+    std::vector<Vector2D> directions{
+        dir::up(),
+        dir::down(),
+        dir::left(),
+        dir::right(),
+        dir::up_right(),
+        dir::down_right(),
+        dir::up_left(),
+        dir::down_left()
+    };
 
-   _allowedMoves.clear();
+    _allowedMoves.clear();
 
-    for (const Vector2D& dir : directions) {
+    for (const Vector2D& dir : directions)
+    {
         Vector2D currentPos = position + dir;
 
-        while (board.isInside(currentPos)) {
-            if (!board.isEmpty(currentPos)) {
-                if (board.isEnemy(currentPos, _color)) {
+        while (board.isInside(currentPos))
+        {
+            if (!board.isEmpty(currentPos))
+            {
+                if (board.isEnemy(currentPos, _color))
+                {
                     _allowedMoves.push_back(currentPos);
                 }
                 break;
@@ -48,17 +52,17 @@ void Queen::updateAllowedMoves(const Board& board, Vector2D position)
 
 Queen::Queen(ImTextureID texture)
 {
-    _name = "Queen";
-    _type = PieceType::Queen;
-    _color = PieceColor::White;
+    _name    = "Queen";
+    _type    = PieceType::Queen;
+    _color   = PieceColor::White;
     _texture = texture;
 }
 
 Queen::Queen(PieceColor color, ImTextureID texture)
 {
-    _name = "Queen";
-    _type = PieceType::Queen;
-    _color = color;
+    _name    = "Queen";
+    _type    = PieceType::Queen;
+    _color   = color;
     _texture = texture;
 }
 

@@ -5,7 +5,6 @@
 #include "quick_imgui/quick_imgui.hpp"
 #include "utilities/AppConfig.hpp"
 
-
 int main(int argc, char** argv)
 {
     std::filesystem::path exePath = std::filesystem::absolute(argv[0]);

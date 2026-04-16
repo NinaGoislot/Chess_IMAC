@@ -50,7 +50,7 @@ void loop(const char* window_name, Callbacks callbacks, std::function<bool()> st
 
     while (!glfwWindowShouldClose(window) && !stopFlag())
     {
-        glfwPollEvents(); 
+        glfwPollEvents();
         ImGuiWrapper::begin_frame({0.302f, 0.302f, 0.302f, 1.000f});
         callbacks.loop();
         ImGuiWrapper::end_frame(window);
