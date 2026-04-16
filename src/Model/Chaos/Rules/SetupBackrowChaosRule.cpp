@@ -37,7 +37,7 @@ void SetupBackrowChaosRule::onGameSetup(ChaosRuleContext& context)
     if (_options == nullptr || !_options->enableBernoulliBackrowAndShuffle)
         return;
 
-    LoiBernoulli pawnInBackrow(_options->pawnBackrowProbability);
+    BernoulliDistribution pawnInBackrow(_options->pawnBackrowProbability);
 
     for (int playerIndex = 0; playerIndex < 2; ++playerIndex)
     {

@@ -2,13 +2,13 @@
 #include <random>
 #include "UniformDistribution.hpp"
 
-class LoiBernoulli {
+class BernoulliDistribution {
 private:
     double _p; // Probabilité de succès (0 <= p <= 1)
     UniformDistribution _uniform; // Générateur de nombres aléatoires uniformes
 
 public:
-    explicit LoiBernoulli(double p) : _p(p), _uniform(0.0, 1.0) {}
+    explicit BernoulliDistribution(double p) : _p(p), _uniform(0.0, 1.0) {}
 
     // Fonction de génération d'un résultat selon une loi de Bernoulli
     int operator()(std::mt19937& gen) const

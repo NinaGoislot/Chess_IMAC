@@ -16,7 +16,7 @@ bool SlidingAndObedienceRule::beforeMove(ChaosMoveContext& context)
     if (_options == nullptr || !_options->enableGeometricSlidingAndObedience)
         return true;
 
-    LoiBernoulli obeyDistribution(obedienceProbabilityFor(context.attempt.piece));
+    BernoulliDistribution obeyDistribution(obedienceProbabilityFor(context.attempt.piece));
     if (obeyDistribution(context.rng) == 0)
     {
         context.history.push_back("Chaos: la piece refuse d'obeir.");

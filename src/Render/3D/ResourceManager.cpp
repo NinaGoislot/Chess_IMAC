@@ -34,7 +34,7 @@ constexpr std::array<const char*, 5> BOARD_TEXTURE_FILE_EXTENSIONS = {
     ".png", ".jpg", ".jpeg", ".bmp", ".tga",
 };
 
-constexpr const char* BOARD_EDGE_TEXTURE_BASENAME = "rosewood_veneer1_diff_2k";
+constexpr const char* BOARD_EDGE_TEXTURE_BASENAME = "edges";
 
 GLenum textureFormatForChannels(int channels)
 {

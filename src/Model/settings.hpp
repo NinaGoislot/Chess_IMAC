@@ -24,7 +24,7 @@ struct settings {
 
     float  boardThickness     = 0.18f;
     ImVec4 boardSideColor     = ImVec4(0.28f, 0.48f, 0.50f, 1.00f);
-    float  boardSideThickness = 0.30f;
+    float  boardSideThickness = 0.50f;
     float  boardSideDrop      = 0.14f;
     float  cameraYawDegrees   = 45.f;
     float  cameraPitchDegrees = 32.f;

@@ -230,10 +230,11 @@ void ChessSceneRenderer::drawBoardEdges(GLRenderer& glRenderer, const glm::mat4&
     const unsigned int boardEdgeTexture = resourceManager.getTexture2D(std::string(ResourceManager::BoardEdgeTextureId));
 
     Material sideMaterial;
-    sideMaterial.color        = gameSettings.getBoardSideColorVec3();
+    const bool hasEdgeTexture = (boardEdgeTexture != 0);
+    sideMaterial.color        = hasEdgeTexture ? glm::vec3{1.f, 1.f, 1.f} : gameSettings.getBoardSideColorVec3();
     sideMaterial.textureId    = boardEdgeTexture;
     sideMaterial.textureScale = 1.75f;
-    sideMaterial.useTexture   = (boardEdgeTexture != 0);
+    sideMaterial.useTexture   = hasEdgeTexture;
 
     glRenderer.drawCube(viewProjection, northSide, sideMaterial);
     glRenderer.drawCube(viewProjection, southSide, sideMaterial);
