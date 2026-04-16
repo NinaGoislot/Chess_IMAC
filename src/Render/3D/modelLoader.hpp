@@ -77,7 +77,7 @@ struct MeshLoadResult {
     std::vector<glm::vec3> submeshBaseColorFactors{};
 };
 
-// Load helpers
+// ---------- Load helpers ----------
 // Loads raw mesh data from a GLB file.
 RawMeshLoadResult loadRawGLBMesh(const std::string& filepath);
 // Applies transform and normalization options to raw mesh data.
