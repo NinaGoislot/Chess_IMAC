@@ -225,7 +225,7 @@ void MenuScene::render()
     ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 8.f);
 
     GameUiComponents::drawMenuHero({
-        "Le super jeu d'echecs de Paul et Nina !",
+        "Le super jeu d'echecs de Nina et Paul !",
         "Un banger absolu.",
     });
 
