@@ -30,7 +30,7 @@ bool SlidingAndObedienceRule::beforeMove(ChaosMoveContext& context)
     if (obeyDistribution(context.rng) == 0)
     // --- MECHANIC 1: OBEDIENCE CHECK ---
     // Roll Bernoulli: "Will this piece obey the player's command?"
-    LoiBernoulli obeyDistribution(obedienceProbabilityFor(context.attempt.piece)); // Each piece type has different obedience probability (configured in options)
+    BernoulliDistribution obeyDistribution(obedienceProbabilityFor(context.attempt.piece)); // Each piece type has different obedience probability (configured in options)
     if (obeyDistribution(context.rng) == 0)                                        // Roll failed (piece refuses)
     {
         // OMG, Piece disobeys! Cancel the move and skip turn :(
