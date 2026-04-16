@@ -12,12 +12,12 @@ struct settings {
     float buttonSize = 50.f;
 
     // 3D rendering settings
-    bool use3D = true;
-    bool drawPieces3D = true;
-    bool drawSkybox = true;
-    bool animatePieces = true;
+    bool  use3D             = true;
+    bool  drawPieces3D      = true;
+    bool  drawSkybox        = true;
+    bool  animatePieces     = true;
     float pieceMoveDuration = 0.5f;
-    bool cameraPieceTarget = false;
+    bool  cameraPieceTarget = false;
 
     ImVec4 skyboxTopColor    = ImVec4(0.20f, 0.35f, 0.62f, 1.00f);
     ImVec4 skyboxBottomColor = ImVec4(0.85f, 0.90f, 0.98f, 1.00f);

@@ -1,14 +1,12 @@
 #include "ChessSceneRenderer.hpp"
-
 #include <algorithm>
 #include <array>
 #include <cstddef>
-
 #include <glm/gtc/matrix_transform.hpp>
-
 #include "Render/3D/GLRenderer.hpp"
 #include "Render/3D/Material.hpp"
 #include "Render/3D/ResourceManager.hpp"
+
 
 namespace {
 
@@ -27,7 +25,6 @@ constexpr std::array<float, PIECE_TYPE_COUNT> PIECES_HEIGHT = {
     1.1f,
     1.2f,
 };
-
 
 std::size_t pieceTypeIndex(PieceType type)
 {
@@ -60,9 +57,7 @@ bool hasTile(const std::vector<Vector2D>& tiles, int x, int y)
 
 namespace Render3D {
 
-void ChessSceneRenderer::drawBoard(GLRenderer& glRenderer, const glm::mat4& viewProjection, const Board& board, const settings& gameSettings,
-                              const ResourceManager& resourceManager, PieceColor currentTurn,
-                              std::optional<std::pair<int, int>> kirbyPosition, const SelectionState& selection) const
+void ChessSceneRenderer::drawBoard(GLRenderer& glRenderer, const glm::mat4& viewProjection, const Board& board, const settings& gameSettings, const ResourceManager& resourceManager, PieceColor currentTurn, std::optional<std::pair<int, int>> kirbyPosition, const SelectionState& selection) const
 {
     (void)currentTurn;
     drawBoardGaps(glRenderer, viewProjection, gameSettings);
@@ -87,9 +82,10 @@ void ChessSceneRenderer::drawBoardGaps(GLRenderer& glRenderer, const glm::mat4& 
     glRenderer.drawCube(viewProjection, gapLayerModel, gapMaterial);
 }
 
-void ChessSceneRenderer::drawTiles(GLRenderer& glRenderer, const glm::mat4& viewProjection, const Board& board, const settings& gameSettings,
-                              std::optional<std::pair<int, int>> kirbyPosition, const SelectionState& selection) const
+void ChessSceneRenderer::drawTiles(GLRenderer& glRenderer, const glm::mat4& viewProjection, const Board& board, const settings& gameSettings, std::optional<std::pair<int, int>> kirbyPosition, const SelectionState& selection) const
 {
+    (void)kirbyPosition;
+
     const float boardOriginX = -(static_cast<float>(Board::SIZE) - 1.f) * 0.5f;
     const float boardOriginZ = -(static_cast<float>(Board::SIZE) - 1.f) * 0.5f;
 
@@ -98,7 +94,7 @@ void ChessSceneRenderer::drawTiles(GLRenderer& glRenderer, const glm::mat4& view
     const glm::vec3 selectedOwnPieceColor{0.20f, 0.45f, 1.f};
     const glm::vec3 availableMoveColor{0.20f, 0.75f, 0.25f};
     const glm::vec3 captureMoveColor{1.f, 0.55f, 0.f};
-    const ImVec4 hoverColorRaw = gameSettings.getHighlight();
+    const ImVec4    hoverColorRaw = gameSettings.getHighlight();
     const glm::vec3 hoverSelectableColor{hoverColorRaw.x, hoverColorRaw.y, hoverColorRaw.z};
 
     const glm::mat4 tileScale = glm::scale(glm::mat4{1.f}, glm::vec3{BOARD_TILE_SIZE, gameSettings.boardThickness, BOARD_TILE_SIZE});
@@ -107,12 +103,12 @@ void ChessSceneRenderer::drawTiles(GLRenderer& glRenderer, const glm::mat4& view
     {
         for (int x = 0; x < Board::SIZE; ++x)
         {
-            const Case&     tileCase    = board.getCase(x, y);
-            const bool      isWhiteTile = ((x + y) % 2) == 0;
-            glm::vec3       tileColor   = isWhiteTile ? whiteTileColor : blackTileColor;
+            const Case& tileCase    = board.getCase(x, y);
+            const bool  isWhiteTile = ((x + y) % 2) == 0;
+            glm::vec3   tileColor   = isWhiteTile ? whiteTileColor : blackTileColor;
 
             const bool isHighlighted = hasTile(selection.highlighted, x, y);
-            const bool isSelected = selection.selected.has_value()
+            const bool isSelected    = selection.selected.has_value()
                                     && static_cast<int>(selection.selected->getX()) == x
                                     && static_cast<int>(selection.selected->getY()) == y;
             const bool isHovered = selection.hoveredSelectable.has_value()
@@ -148,9 +144,6 @@ void ChessSceneRenderer::drawTiles(GLRenderer& glRenderer, const glm::mat4& view
             const glm::mat4 model = glm::translate(glm::mat4{1.f}, glm::vec3{worldX, BOARD_CENTER_Y, worldZ}) * tileScale;
 
             glRenderer.drawCube(viewProjection, model, tileMaterial);
-
-            const bool isKirbyHere = kirbyPosition.has_value() && kirbyPosition->first == x && kirbyPosition->second == y;
-            (void)isKirbyHere;
         }
     }
 }
@@ -179,10 +172,10 @@ void ChessSceneRenderer::drawBoardEdges(GLRenderer& glRenderer, const glm::mat4&
     const unsigned int boardEdgeTexture = resourceManager.getTexture2D(std::string(ResourceManager::BoardEdgeTextureId));
 
     Material sideMaterial;
-    sideMaterial.color = gameSettings.getBoardSideColorVec3();
-    sideMaterial.textureId = boardEdgeTexture;
+    sideMaterial.color        = gameSettings.getBoardSideColorVec3();
+    sideMaterial.textureId    = boardEdgeTexture;
     sideMaterial.textureScale = 1.75f;
-    sideMaterial.useTexture = (boardEdgeTexture != 0);
+    sideMaterial.useTexture   = (boardEdgeTexture != 0);
 
     glRenderer.drawCube(viewProjection, northSide, sideMaterial);
     glRenderer.drawCube(viewProjection, southSide, sideMaterial);
@@ -190,8 +183,7 @@ void ChessSceneRenderer::drawBoardEdges(GLRenderer& glRenderer, const glm::mat4&
     glRenderer.drawCube(viewProjection, westSide, sideMaterial);
 }
 
-void ChessSceneRenderer::drawSinglePiece(GLRenderer& glRenderer, const glm::mat4& viewProjection, const Piece* piece, float boardX, float boardY, float yOffset,
-                                    float originX, float originZ, float topY, const ResourceManager& resourceManager, bool isHovered, const glm::vec3& hoverColor) const
+void ChessSceneRenderer::drawSinglePiece(GLRenderer& glRenderer, const glm::mat4& viewProjection, const Piece* piece, float boardX, float boardY, float yOffset, float originX, float originZ, float topY, const ResourceManager& resourceManager, bool isHovered, const glm::vec3& hoverColor) const
 {
     if (piece == nullptr)
         return;
@@ -200,12 +192,12 @@ void ChessSceneRenderer::drawSinglePiece(GLRenderer& glRenderer, const glm::mat4
     if (pieceIndex >= PIECES_HEIGHT.size())
         return;
 
-    Material pieceMaterial;
+    Material  pieceMaterial;
     glm::vec3 pieceColor = colorForPiece(piece);
     if (isHovered)
     {
         constexpr float hoverBlend = 0.55f;
-        pieceColor = pieceColor * (1.f - hoverBlend) + hoverColor * hoverBlend;
+        pieceColor                 = pieceColor * (1.f - hoverBlend) + hoverColor * hoverBlend;
     }
     pieceMaterial.color = pieceColor;
 
@@ -231,9 +223,7 @@ void ChessSceneRenderer::drawSinglePiece(GLRenderer& glRenderer, const glm::mat4
     }
 }
 
-void ChessSceneRenderer::drawSingleExplodingPiece(GLRenderer& glRenderer, const glm::mat4& viewProjection, const Piece* piece, float boardX, float boardY, float yOffset,
-                                             float originX, float originZ, float topY, float explosionProgress,
-                                             const ResourceManager& resourceManager) const
+void ChessSceneRenderer::drawSingleExplodingPiece(GLRenderer& glRenderer, const glm::mat4& viewProjection, const Piece* piece, float boardX, float boardY, float yOffset, float originX, float originZ, float topY, float explosionProgress, const ResourceManager& resourceManager) const
 {
     if (piece == nullptr)
         return;
@@ -253,23 +243,20 @@ void ChessSceneRenderer::drawSingleExplodingPiece(GLRenderer& glRenderer, const 
     if (modelMesh != nullptr && modelMesh->isValid())
     {
         const glm::mat4 model = glm::translate(glm::mat4{1.f}, glm::vec3{worldX, topY + PIECE_LIFT_Y + yOffset, worldZ})
-                              * glm::scale(glm::mat4{1.f}, glm::vec3{pieceHeight, pieceHeight, pieceHeight});
+                                * glm::scale(glm::mat4{1.f}, glm::vec3{pieceHeight, pieceHeight, pieceHeight});
 
         glRenderer.drawExplosionIndexedMesh(viewProjection, model, pieceMaterial, modelMesh->vao, modelMesh->indexCount, explosionProgress);
     }
     else
     {
         const glm::mat4 model = glm::translate(glm::mat4{1.f}, glm::vec3{worldX, topY + PIECE_LIFT_Y + pieceHeight * 0.5f + yOffset, worldZ})
-                              * glm::scale(glm::mat4{1.f}, glm::vec3{PIECE_BASE_WIDTH, pieceHeight, PIECE_BASE_WIDTH});
+                                * glm::scale(glm::mat4{1.f}, glm::vec3{PIECE_BASE_WIDTH, pieceHeight, PIECE_BASE_WIDTH});
 
         glRenderer.drawExplosionCube(viewProjection, model, pieceMaterial, explosionProgress);
     }
 }
 
-void ChessSceneRenderer::drawPieces(GLRenderer& glRenderer, const glm::mat4& viewProjection, const Board& board, const settings& gameSettings,
-                               const ResourceManager& resourceManager, PieceColor currentTurn, const SelectionState& selection,
-                               const PieceAnimator::AnimatedPiecePositions& animatedPiecePositions,
-                               const ExplodingPiecePositions& explodingPiecePositions) const
+void ChessSceneRenderer::drawPieces(GLRenderer& glRenderer, const glm::mat4& viewProjection, const Board& board, const settings& gameSettings, const ResourceManager& resourceManager, PieceColor currentTurn, const SelectionState& selection, const PieceAnimator::AnimatedPiecePositions& animatedPiecePositions, const ExplodingPiecePositions& explodingPiecePositions) const
 {
     (void)currentTurn;
 
@@ -277,7 +264,7 @@ void ChessSceneRenderer::drawPieces(GLRenderer& glRenderer, const glm::mat4& vie
     const float boardOriginZ = -(static_cast<float>(Board::SIZE) - 1.f) * 0.5f;
     const float boardTopY    = BOARD_CENTER_Y + gameSettings.boardThickness * 0.5f;
 
-    const ImVec4 hoverColorRaw = gameSettings.getHighlight();
+    const ImVec4    hoverColorRaw = gameSettings.getHighlight();
     const glm::vec3 hoverColor{hoverColorRaw.x, hoverColorRaw.y, hoverColorRaw.z};
 
     for (int y = 0; y < Board::SIZE; ++y)
@@ -293,16 +280,16 @@ void ChessSceneRenderer::drawPieces(GLRenderer& glRenderer, const glm::mat4& vie
                                        && static_cast<int>(selection.hoveredSelectable->getX()) == x
                                        && static_cast<int>(selection.hoveredSelectable->getY()) == y;
 
-                float boardX = static_cast<float>(x);
-                float boardY = static_cast<float>(y);
+                float boardX  = static_cast<float>(x);
+                float boardY  = static_cast<float>(y);
                 float yOffset = 0.f;
 
                 const auto animatedPosition = animatedPiecePositions.find(piece);
                 if (animatedPosition != animatedPiecePositions.end())
                 {
-                    boardX   = animatedPosition->second.x;
-                    boardY   = animatedPosition->second.y;
-                    yOffset  = animatedPosition->second.z;
+                    boardX  = animatedPosition->second.x;
+                    boardY  = animatedPosition->second.y;
+                    yOffset = animatedPosition->second.z;
                 }
 
                 drawSinglePiece(glRenderer, viewProjection, piece, boardX, boardY, yOffset, boardOriginX, boardOriginZ, boardTopY, resourceManager, isHovered, hoverColor);
@@ -314,7 +301,7 @@ void ChessSceneRenderer::drawPieces(GLRenderer& glRenderer, const glm::mat4& vie
         return;
 
     ExplosionPassSettings explosionSettings;
-    explosionSettings.lightDirection = glm::vec3{-0.35f, 1.f, 0.25f};
+    explosionSettings.lightDirection  = glm::vec3{-0.35f, 1.f, 0.25f};
     explosionSettings.ambientStrength = 0.25f;
 
     if (!glRenderer.beginExplosionPass(explosionSettings))
@@ -322,17 +309,7 @@ void ChessSceneRenderer::drawPieces(GLRenderer& glRenderer, const glm::mat4& vie
 
     for (const auto& [piece, explosion] : explodingPiecePositions)
     {
-        drawSingleExplodingPiece(glRenderer,
-                     viewProjection,
-                                 piece,
-                                 explosion.position.x,
-                                 explosion.position.y,
-                                 explosion.position.z,
-                                 boardOriginX,
-                                 boardOriginZ,
-                                 boardTopY,
-                                 explosion.progress,
-                                 resourceManager);
+        drawSingleExplodingPiece(glRenderer, viewProjection, piece, explosion.position.x, explosion.position.y, explosion.position.z, boardOriginX, boardOriginZ, boardTopY, explosion.progress, resourceManager);
     }
 
     glRenderer.endExplosionPass();

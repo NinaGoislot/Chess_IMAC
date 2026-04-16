@@ -3,6 +3,7 @@
 #include "Scene.hpp"
 
 class SceneManager;
+class GameManager;
 
 // Main menu scene used to choose game mode and start a match.
 class MenuScene : public Scene {
@@ -14,12 +15,17 @@ public:
     void render() override;
 
 private:
+    void drawMainActions(float buttonWidth);
+    void drawInterruptedMatchCard(GameManager& game, float buttonWidth);
+    void drawOverwritePopup();
+    void drawSetupPopup(GameManager& game);
+
     // Non-owning scene manager used to launch next scenes.
     SceneManager* _sceneManager = nullptr;
     // Selected mode index from menu controls.
-    int           _selectedMode = 0;
-    int           _requestedMode = 0;
-    bool          _openSetupPopupNextFrame = false;
+    int  _selectedMode            = 0;
+    int  _requestedMode           = 0;
+    bool _openSetupPopupNextFrame = false;
     // Player names are explicit scene state, not hidden globals.
     std::array<char, 64> _whitePlayerName{};
     std::array<char, 64> _blackPlayerName{};

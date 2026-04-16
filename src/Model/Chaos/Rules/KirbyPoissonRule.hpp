@@ -18,6 +18,5 @@ public:
 private:
     // Parameters
     const ChaosOptions* _options               = nullptr;
-    int                 _spawnCount            = 0;
     int                 _remainingTurnsVisible = 0;
 };

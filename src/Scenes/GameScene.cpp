@@ -2,6 +2,8 @@
 #include <imgui.h>
 #include "Managers/SceneManager.hpp"
 #include "Scenes/SettingsPanel.hpp"
+#include "UI/GameUiComponents.hpp"
+
 
 GameScene::GameScene(SceneManager& sceneManager, GameManager::Mode mode)
     : _sceneManager(&sceneManager)
@@ -10,59 +12,91 @@ GameScene::GameScene(SceneManager& sceneManager, GameManager::Mode mode)
 {
 }
 
+/**
+ *
+ * Orchestration du rendu de la scene de jeu, avec UI, vue 3D integree et vue 2D separee.
+ * @return Aucun.
+ */
 void GameScene::render()
 {
+    constexpr ImVec2 actionButtonSize{170.f, 0.f};
+
     ImGui::Begin("Partie");
-    if (ImGui::Button("Retour au menu"))
+    if (GameUiComponents::drawPrimaryButton("Retour au menu", actionButtonSize))
     {
         _sceneManager->saveInterruptedMatch();
         _sceneManager->launchMenuScene();
+        _winnerPopupShown = false;
         ImGui::End();
         return;
     }
+
     ImGui::SameLine();
-    if (ImGui::Button("Nouvelle partie"))
+
+    if (GameUiComponents::drawDangerButton("Nouvelle partie", actionButtonSize))
     {
         _game.newGame(_mode);
+        _winnerPopupShown = false;
     }
 
     ImGui::Separator();
 
     if (_game.getHasWinner())
     {
-        const Player* winner = _game.getWinner();
-        ImGui::TextColored(
-            ImVec4(0.2f, 0.85f, 0.3f, 1.0f),
-            "Partie terminee - Victoire %s",
-            winner != nullptr ? winner->getName().c_str() : "d'un nullos qui a pas mis de nom"
-        );
+        GameUiComponents::drawWinnerBanner(_game.getWinner());
         ImGui::Separator();
+
+        if (!_winnerPopupShown)
+        {
+            ImGui::OpenPopup("Fin de partie");
+            _winnerPopupShown = true;
+        }
     }
 
-    _game.displayBoard(ImGui::GetIO().DeltaTime);
-    _game.getPromotionFlow().drawPopup();
+    _game.beginBoardViewsFrame();
+    _game.draw3DBoardView(ImGui::GetIO().DeltaTime);
+
+    if (ImGui::BeginPopupModal("Fin de partie", nullptr, ImGuiWindowFlags_AlwaysAutoResize))
+    {
+        const Player* winner     = _game.getWinner();
+        const char*   winnerName = (winner != nullptr && !winner->getName().empty()) ? winner->getName().c_str() : "joueur inconnu";
+        ImGui::Text("Victoire de %s", winnerName);
+        ImGui::Spacing();
+
+        if (GameUiComponents::drawPrimaryButton("Recommencer", ImVec2(180.f, 0.f)))
+        {
+            _game.newGame(_mode);
+            _winnerPopupShown = false;
+            ImGui::CloseCurrentPopup();
+        }
+
+        ImGui::SameLine();
+
+        if (GameUiComponents::drawSecondaryButton("Retour menu", ImVec2(160.f, 0.f)))
+        {
+            _sceneManager->saveInterruptedMatch();
+            _sceneManager->launchMenuScene();
+            _winnerPopupShown = false;
+            ImGui::CloseCurrentPopup();
+        }
+
+        ImGui::EndPopup();
+    }
 
     ImGui::End();
+
+    ImGui::Begin("Vue 2D");
+    _game.draw2DBoardView();
+    ImGui::End();
+
+    _game.endBoardViewsFrame();
+    _game.getPromotionFlow().drawPopup();
 
     SettingsPanel::draw(_game.getSettings());
 
     ImGui::Begin("Historique");
-
-    ImGui::BeginChild("Scrolling");
-
-    const std::vector<std::string>& history = _game.getMoveHistory();
-    for (const std::string& move : history)
-    {
-        ImGui::Text("%s", move.c_str());
-    }
-
-    // auto-scrolling
-    if (ImGui::GetScrollY() >= ImGui::GetScrollMaxY())
-    {
-        ImGui::SetScrollHereY(1.0f);
-    }
-
-    ImGui::EndChild();
-
+    GameUiComponents::drawTurnStatusCard(_game.getCurrentTurnNumber(), _game.getActivePlayerName(), _game.getCurrentTurnColor());
+    ImGui::Spacing();
+    GameUiComponents::drawMoveHistoryList(_game.getMoveHistory());
     ImGui::End();
 }

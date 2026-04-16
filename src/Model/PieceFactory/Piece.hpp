@@ -34,10 +34,9 @@ public:
 
     // Getters
     std::vector<Vector2D> getAllowedMoves() const { return _allowedMoves; }
-    // void                  updateAllowedMoves(const Board& board, Vector2D position) { getAllowedMoves(board, position); }
-    PieceColor         getColor() const { return _color; }
-    PieceType          getType() const { return _type; }
-    const std::string& getName() const { return _name; }
+    PieceColor            getColor() const { return _color; }
+    PieceType             getType() const { return _type; }
+    const std::string&    getName() const { return _name; }
 
     // update
     virtual void updateAllowedMoves(const Board& board, Vector2D position) = 0;
