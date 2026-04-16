@@ -2,7 +2,6 @@
 #include "Managers/GameManager.hpp"
 #include "Scene.hpp"
 
-
 class SceneManager;
 
 // Gameplay scene that renders and drives an active chess game.
@@ -18,7 +17,8 @@ private:
     // Non-owning scene manager used for scene transitions.
     SceneManager* _sceneManager = nullptr;
     // Reference to the app controller.
-    GameManager&  _game;
+    GameManager& _game;
     // Mode used for current match instance.
-    GameManager::Mode _mode = GameManager::Mode::Classic;
+    GameManager::Mode _mode             = GameManager::Mode::Classic;
+    bool              _winnerPopupShown = false;
 };

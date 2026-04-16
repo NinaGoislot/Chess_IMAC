@@ -1,8 +1,22 @@
-#include "Input/MoveSelectionController.hpp"
+#include "Model/Match/Selection/MoveSelectionController.hpp"
 #include "Model/Match/MatchState.hpp"
 
+/**
+ *
+ * Traduit un clic gauche en selection ou tentative de coup.
+ * Ignore les clics sur les cases contenant des pieces speciales (Kirby).
+ * @param clickedTile : tuile cliquee.
+ * @param matchState : etat courant du match.
+ * @return Vrai si un coup a ete valide.
+ */
 bool MoveSelectionController::onTileClicked(Vector2D clickedTile, MatchState& matchState)
 {
+    // Ignore les clics sur les pieces speciales
+    const int x = static_cast<int>(clickedTile.getX());
+    const int y = static_cast<int>(clickedTile.getY());
+    if (matchState.getHasKirbyAt(x, y))
+        return false;
+
     if (!_selection.selected.has_value())
     {
         if (matchState.canSelect(clickedTile))
@@ -15,7 +29,6 @@ bool MoveSelectionController::onTileClicked(Vector2D clickedTile, MatchState& ma
 
     if (_selection.selected.value() == clickedTile)
     {
-        clearSelection();
         return false;
     }
 

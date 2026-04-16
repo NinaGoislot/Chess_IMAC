@@ -1,4 +1,22 @@
 #include "Model/Match/MatchState.hpp"
+#include "utilities/PieceColorUtils.hpp"
+
+namespace {
+
+void appendTurnHistory(MoveHistory& history, int turnNumber, const std::string& playerName, PieceColor color)
+{
+    history.add(
+        std::string("Tour ")
+        + std::to_string(turnNumber)
+        + " - A jouer: "
+        + playerName
+        + " ("
+        + PieceColorUtils::toFrenchLabel(color)
+        + ")"
+    );
+}
+
+} // namespace
 
 MatchState::MatchState(const TextureManager& textures)
     : _board()
@@ -12,6 +30,12 @@ MatchState::MatchState(const TextureManager& textures)
     _players[1] = Player(PieceColor::Black, "Black", textures);
 }
 
+/**
+ *
+ * Reinitialise la partie, les joueurs et les regles selon le mode choisi.
+ * @param mode : mode de partie (classique ou chaos).
+ * @return Aucun.
+ */
 void MatchState::newMatch(Mode mode)
 {
     const std::string whiteName = _players[0].getName();
@@ -25,7 +49,7 @@ void MatchState::newMatch(Mode mode)
     _promotion.clear();
     _moveHistory.clear();
     _validatedMoveCount = 0;
-    _winner = nullptr;
+    _winner             = nullptr;
 
     _players[0] = Player(PieceColor::White, whiteName.empty() ? "White" : whiteName, *_textures);
     _players[1] = Player(PieceColor::Black, blackName.empty() ? "Black" : blackName, *_textures);
@@ -34,8 +58,17 @@ void MatchState::newMatch(Mode mode)
 
     _chaosMode->onGameSetup(_board, _players, _moveHistory.entries(), _turnManager.getCurrent());
     _chaosMode->onTurnStart(_board, _players, _moveHistory.entries(), _turnManager.getCurrent());
+
+    appendTurnHistory(_moveHistory, getCurrentTurnNumber(), getActivePlayerName(), _turnManager.getCurrent());
 }
 
+/**
+ *
+ * Tente de jouer un coup en appliquant regles, chaos et promotions.
+ * @param from : position de depart.
+ * @param to : position d'arrivee.
+ * @return Vrai si le coup a ete valide.
+ */
 bool MatchState::tryMove(Vector2D from, Vector2D to)
 {
     if (_winner != nullptr)
@@ -62,7 +95,7 @@ bool MatchState::tryMove(Vector2D from, Vector2D to)
     if (result.capturedPiece != nullptr && result.capturedPiece->getType() == PieceType::King)
     {
         const int winnerIndex = (result.movedPiece != nullptr && result.movedPiece->getColor() == PieceColor::White) ? 0 : 1;
-        _winner = &_players[winnerIndex];
+        _winner               = &_players[winnerIndex];
 
         consumeCapturedPiece(result.capturedPiece);
         _moveHistory.add("Victoire de " + _winner->getName() + " : roi adverse capture.");
@@ -80,6 +113,12 @@ bool MatchState::tryMove(Vector2D from, Vector2D to)
     return true;
 }
 
+/**
+ *
+ * Valide une promotion en attente et applique la progression du tour.
+ * @param type : type de piece choisie pour la promotion.
+ * @return Vrai si la promotion est validee.
+ */
 bool MatchState::choosePromotion(PieceType type)
 {
     if (_winner != nullptr)
@@ -153,9 +192,19 @@ const std::string& MatchState::getBlackPlayerName() const
     return _players[1].getName();
 }
 
+const std::string& MatchState::getActivePlayerName() const
+{
+    return _turnManager.getCurrent() == PieceColor::White ? _players[0].getName() : _players[1].getName();
+}
+
 int MatchState::getFullTurnCount() const
 {
     return _validatedMoveCount / 2;
+}
+
+int MatchState::getCurrentTurnNumber() const
+{
+    return getFullTurnCount() + 1;
 }
 
 bool MatchState::getHasWinner() const
@@ -218,6 +267,12 @@ void MatchState::addMoveToHistory(const std::string& move)
     _moveHistory.add(move);
 }
 
+/**
+ *
+ * Applique les regles Chaos avant un coup, avec possibilite d'annulation.
+ * @param attempt : tentative de coup a modifier ou annuler.
+ * @return Vrai si le coup peut continuer.
+ */
 bool MatchState::applyChaosPreMove(MoveAttempt& attempt)
 {
     if (_chaosMode->beforeMove(attempt, _board, _players, _moveHistory.entries()))
@@ -249,6 +304,14 @@ void MatchState::placePieces()
     placePiecesForPlayer(0, 1, _players[1]);
 }
 
+/**
+ *
+ * Place les pieces d'un joueur sur les rangs de depart.
+ * @param backRankY : ligne des pieces majeures.
+ * @param pawnRankY : ligne des pions.
+ * @param owner : joueur proprietaire des pieces.
+ * @return Aucun.
+ */
 void MatchState::placePiecesForPlayer(int backRankY, int pawnRankY, Player& owner)
 {
     const auto& pieces = owner.getAllPieces();
@@ -264,6 +327,11 @@ void MatchState::placePiecesForPlayer(int backRankY, int pawnRankY, Player& owne
     }
 }
 
+/**
+ *
+ * Avance le compteur de tour et declenche les hooks de fin/debut de tour.
+ * @return Aucun.
+ */
 void MatchState::applyTurnProgression()
 {
     ++_validatedMoveCount;
@@ -276,4 +344,6 @@ void MatchState::applyTurnProgression()
             _chaosMode->onTurnStart(_board, _players, _moveHistory.entries(), turn);
         }
     );
+
+    appendTurnHistory(_moveHistory, getCurrentTurnNumber(), getActivePlayerName(), _turnManager.getCurrent());
 }

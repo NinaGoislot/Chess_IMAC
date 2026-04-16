@@ -1,12 +1,12 @@
 #pragma once
 
 #include "Model/Chaos/ChaosMode.hpp"
-#include "Model/Match/Promotion/PromotionFlow.hpp"
 #include "Model/Match/MatchState.hpp"
+#include "Model/Match/Promotion/PromotionFlow.hpp"
+#include "Model/Match/Selection/MoveSelectionController.hpp"
 #include "Model/settings.hpp"
 #include "Render/Renderer.hpp"
 #include "Render/TextureManager.hpp"
-#include "Input/MoveSelectionController.hpp"
 #include "utilities/AppConfig.hpp"
 
 // High-level app game controller
@@ -23,8 +23,11 @@ public:
     // Lifecycle
     void newGame(Mode mode = Mode::Classic);
 
-    // Render/update entry point
-    void displayBoard(float deltaTimeSeconds);
+    // Render/update entry points
+    void beginBoardViewsFrame();
+    void draw3DBoardView(float deltaTimeSeconds);
+    void draw2DBoardView();
+    void endBoardViewsFrame();
 
     // Getters
     settings&                       getSettings();
@@ -36,7 +39,10 @@ public:
     Mode                            getMode() const;
     const std::string&              getWhitePlayerName() const;
     const std::string&              getBlackPlayerName() const;
+    const std::string&              getActivePlayerName() const;
     int                             getFullTurnCount() const;
+    int                             getCurrentTurnNumber() const;
+    PieceColor                      getCurrentTurnColor() const;
     bool                            getHasWinner() const;
     const Player*                   getWinner() const;
 
@@ -46,15 +52,18 @@ public:
     void addMoveToHistory(const std::string& move);
 
 private:
-    void handleBoardClick(Vector2D clickedTile);
+    void collectBoardInteraction(const std::optional<BoardClick>& clickedTile, const std::optional<BoardClick>& hoveredTile);
 
     // Parameters
-    settings       _settings;
-    TextureManager _textures;
-    Renderer       _renderer;
-    MatchState     _match;
-    PromotionFlow  _promotionFlow;
-    MoveSelectionController     _moveSelectionController;
+    settings                _settings;
+    TextureManager          _textures;
+    Renderer                _renderer;
+    MatchState              _match;
+    PromotionFlow           _promotionFlow;
+    MoveSelectionController _moveSelectionController;
+
+    std::optional<BoardClick> _pendingClickedTile;
+    std::optional<BoardClick> _pendingHoveredTile;
 
     // Current session mode
     Mode _mode = Mode::Classic;

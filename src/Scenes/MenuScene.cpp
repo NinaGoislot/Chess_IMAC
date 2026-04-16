@@ -1,9 +1,17 @@
 #include "MenuScene.hpp"
 #include <imgui.h>
-#include "Model/Chaos/ChaosMode.hpp"
 #include "Managers/SceneManager.hpp"
+#include "Model/Chaos/ChaosMode.hpp"
+#include "UI/GameUiComponents.hpp"
+#include "utilities/UiTheme.hpp"
 
 namespace {
+/**
+ *
+ * Affiche les options du mode Chaos dans la fenetre de setup.
+ * @param options : options Chaos a modifier.
+ * @return Aucun.
+ */
 void drawChaosRulesSection(ChaosOptions& options)
 {
     ImGui::Separator();
@@ -27,33 +35,15 @@ MenuScene::MenuScene(SceneManager& sceneManager)
     : _sceneManager(&sceneManager)
 {}
 
-void MenuScene::render()
+/**
+ *
+ * Affiche les actions principales du menu (modes et sortie).
+ * @param buttonWidth : largeur des boutons principaux.
+ * @return Aucun.
+ */
+void MenuScene::drawMainActions(float buttonWidth)
 {
-    GameManager& game         = _sceneManager->getGame();
-    settings&    gameSettings = game.getSettings();
-
-    if (_openSetupPopupNextFrame)
-    {
-        ImGui::OpenPopup("Setup Partie");
-        _openSetupPopupNextFrame = false;
-    }
-
-    ImGui::Begin("Menu principal");
-    ImGui::Text("Bienvenue dans le super jeu d'echecs de Paul et Nina");
-
-    ////////////////////// Sub-title //////////////////////
-    ImGui::SetCursorPosX((ImGui::GetWindowWidth() - ImGui::CalcTextSize("Bienvenue!").x) * 0.5f);
-    ImGui::Text("Bienvenue!");
-
-    ImGui::Spacing();
-
-    /////////////////////// Buttons ///////////////////////
-    float buttonWidth = 280.f;
-    ImGui::SetCursorPosX((ImGui::GetWindowWidth() - buttonWidth) * 0.5f);
-    ImGui::BeginGroup();
-
-    // BTN classic
-    if (ImGui::Button("Mode Classique", ImVec2(buttonWidth, 45.f)))
+    if (GameUiComponents::drawPrimaryButton("Lancer mode classique", ImVec2(buttonWidth, 48.f)))
     {
         _requestedMode = 0;
         if (_sceneManager->hasInterruptedMatch())
@@ -67,8 +57,7 @@ void MenuScene::render()
 
     ImGui::Spacing();
 
-    // BTN chaos
-    if (ImGui::Button("Mode Chaos", ImVec2(buttonWidth, 45.f)))
+    if (GameUiComponents::drawSecondaryButton("Lancer mode chaos", ImVec2(buttonWidth, 48.f)))
     {
         _requestedMode = 1;
         if (_sceneManager->hasInterruptedMatch())
@@ -82,111 +71,175 @@ void MenuScene::render()
 
     ImGui::Spacing();
 
-    // BTN Quit
-    ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.85f, 0.2f, 0.2f, 1.0f));
-    ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(1.0f, 0.3f, 0.3f, 1.0f));
-    ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0.7f, 0.1f, 0.1f, 1.0f));
-
-    if (ImGui::Button("Quitter le jeu", ImVec2(buttonWidth, 45.f)))
+    if (GameUiComponents::drawDangerButton("Quitter", ImVec2(buttonWidth, 44.f)))
     {
         _sceneManager->requestQuit();
     }
+}
 
-    ImGui::PopStyleColor(3);
+/**
+ *
+ * Affiche le resume d'une partie interrompue et le bouton de reprise.
+ * @param game : gestionnaire du match courant.
+ * @param buttonWidth : largeur cible de la carte.
+ * @return Aucun.
+ */
+void MenuScene::drawInterruptedMatchCard(GameManager& game, float buttonWidth)
+{
+    ImGui::Spacing();
+    ImGui::Separator();
+    ImGui::Spacing();
+
+    ImGui::PushStyleColor(ImGuiCol_ChildBg, UiTheme::secondaryButton.toImVec4());
+    ImGui::BeginChild("InterruptedMatchCard", ImVec2(buttonWidth, 145.f), true);
+    ImGui::TextColored(UiTheme::panelStrong.toImVec4(), "Partie interrompue");
+
+    ImGui::Text("Joueur blanc: %s", game.getWhitePlayerName().c_str());
+    ImGui::Text("Joueur noir: %s", game.getBlackPlayerName().c_str());
+    ImGui::Text("Mode: %s", game.getMode() == GameManager::Mode::Chaos ? "Chaos" : "Classique");
+    ImGui::Text("Tours joues: %d", game.getFullTurnCount());
+
+    if (GameUiComponents::drawPrimaryButton("Reprendre", ImVec2(180.f, 0.f)))
+    {
+        _sceneManager->resumeInterruptedMatch();
+    }
+
+    ImGui::EndChild();
+    ImGui::PopStyleColor();
+}
+
+/**
+ *
+ * Affiche la fenetre de confirmation avant d'ecraser une partie interrompue.
+ * @return Aucun.
+ */
+void MenuScene::drawOverwritePopup()
+{
+    if (!ImGui::BeginPopupModal("Confirmer ecrasement", nullptr, ImGuiWindowFlags_AlwaysAutoResize))
+        return;
+
+    ImGui::TextUnformatted("Une partie interrompue existe deja.");
+    ImGui::TextUnformatted("Creer une nouvelle partie ecrasera cette sauvegarde.");
+    ImGui::Separator();
+
+    if (GameUiComponents::drawDangerButton("Ecraser et continuer", ImVec2(220.f, 0.f)))
+    {
+        _sceneManager->clearInterruptedMatch();
+        _selectedMode            = _requestedMode;
+        _openSetupPopupNextFrame = true;
+        ImGui::CloseCurrentPopup();
+    }
+
+    ImGui::SameLine();
+
+    if (GameUiComponents::drawSecondaryButton("Annuler", ImVec2(120.f, 0.f)))
+    {
+        ImGui::CloseCurrentPopup();
+    }
+
+    ImGui::EndPopup();
+}
+
+/**
+ *
+ * Affiche la fenetre de configuration d'une nouvelle partie.
+ * @param game : gestionnaire du match courant.
+ * @return Aucun.
+ */
+void MenuScene::drawSetupPopup(GameManager& game)
+{
+    if (!ImGui::BeginPopupModal("Setup Partie", nullptr, ImGuiWindowFlags_AlwaysAutoResize))
+        return;
+
+    ImGui::TextColored(UiTheme::panelHeader.toImVec4(), "Configuration de la partie");
+    ImGui::TextColored(UiTheme::mutedText.toImVec4(), "Personnalise les joueurs puis lance la partie.");
+    ImGui::Separator();
+
+    ImGui::InputText("Joueur Blanc", _whitePlayerName.data(), static_cast<int>(_whitePlayerName.size()));
+    ImGui::InputText("Joueur Noir", _blackPlayerName.data(), static_cast<int>(_blackPlayerName.size()));
+
+    if (_selectedMode == 1)
+    {
+        drawChaosRulesSection(game.getChaosOptionsMutable());
+    }
+
+    ImGui::Spacing();
+
+    if (GameUiComponents::drawPrimaryButton("Lancer la partie", ImVec2(200.f, 0.f)))
+    {
+        game.addPlayerWhite(_whitePlayerName.data());
+        game.addPlayerBlack(_blackPlayerName.data());
+
+        game.addMoveToHistory(
+            std::string("Début du match entre ")
+            + _whitePlayerName.data()
+            + " et "
+            + _blackPlayerName.data()
+            + " !"
+        );
+
+        const GameManager::Mode mode = (_selectedMode == 1) ? GameManager::Mode::Chaos : GameManager::Mode::Classic;
+        _sceneManager->launchGameScene(mode, true);
+        ImGui::CloseCurrentPopup();
+    }
+
+    ImGui::SameLine();
+
+    if (GameUiComponents::drawSecondaryButton("Annuler", ImVec2(120.f, 0.f)))
+    {
+        ImGui::CloseCurrentPopup();
+    }
+
+    ImGui::EndPopup();
+}
+
+/**
+ *
+ * Construit l'interface principale du menu avec ses popups associes.
+ * @return Aucun.
+ */
+void MenuScene::render()
+{
+    GameManager& game = _sceneManager->getGame();
+
+    if (_openSetupPopupNextFrame)
+    {
+        ImGui::OpenPopup("Setup Partie");
+        _openSetupPopupNextFrame = false;
+    }
+
+    ImGui::SetNextWindowSize(ImVec2(560.f, 660.f), ImGuiCond_FirstUseEver);
+    ImGui::Begin("Menu principal", nullptr, ImGuiWindowFlags_NoCollapse);
+
+    ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(10.f, 10.f));
+    ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 8.f);
+
+    GameUiComponents::drawMenuHero({
+        "Chess Arena",
+        "Une interface propre, moderne et lisible pour lancer ta partie.",
+    });
+
+    ImGui::Spacing();
+    ImGui::Separator();
+    ImGui::Spacing();
+
+    const float buttonWidth = 320.f;
+    ImGui::SetCursorPosX((ImGui::GetWindowWidth() - buttonWidth) * 0.5f);
+    ImGui::BeginGroup();
+
+    drawMainActions(buttonWidth);
+
     ImGui::EndGroup();
 
     if (_sceneManager->hasInterruptedMatch())
     {
-        ImGui::Spacing();
-        ImGui::Separator();
-        ImGui::Spacing();
-
-        ImGui::BeginChild("InterruptedMatchCard", ImVec2(buttonWidth, 130.f), true);
-        ImGui::TextUnformatted("Partie interrompue");
-
-        ImGui::Text("Joueur blanc: %s", game.getWhitePlayerName().c_str());
-        ImGui::Text("Joueur noir: %s", game.getBlackPlayerName().c_str());
-        ImGui::Text("Mode: %s", game.getMode() == GameManager::Mode::Chaos ? "Chaos" : "Classique");
-        ImGui::Text("Tours joues: %d", game.getFullTurnCount());
-
-        if (ImGui::Button("Reprendre", ImVec2(160.f, 0.f)))
-        {
-            _sceneManager->resumeInterruptedMatch();
-        }
-
-        ImGui::EndChild();
+        drawInterruptedMatchCard(game, buttonWidth);
     }
 
-    // Modal : confirm new game if interrupted match exists
-    if (ImGui::BeginPopupModal("Confirmer ecrasement", nullptr, ImGuiWindowFlags_AlwaysAutoResize))
-    {
-        ImGui::TextUnformatted("Une partie interrompue existe deja.");
-        ImGui::TextUnformatted("Creer une nouvelle partie ecrasera cette sauvegarde.");
-        ImGui::Separator();
+    drawOverwritePopup();
+    drawSetupPopup(game);
 
-        if (ImGui::Button("Ecraser et continuer", ImVec2(220.f, 0.f)))
-        {
-            _sceneManager->clearInterruptedMatch();
-            _selectedMode            = _requestedMode;
-            _openSetupPopupNextFrame = true;
-            ImGui::CloseCurrentPopup();
-        }
-
-        ImGui::SameLine();
-
-        if (ImGui::Button("Annuler", ImVec2(120.f, 0.f)))
-        {
-            ImGui::CloseCurrentPopup();
-        }
-
-        ImGui::EndPopup();
-    }
-
-    // Modal : new game setup
-    if (ImGui::BeginPopupModal("Setup Partie", nullptr, ImGuiWindowFlags_AlwaysAutoResize))
-    {
-        ImGui::Text("Configuration de la partie");
-        ImGui::Separator();
-
-        ImGui::InputText("Joueur Blanc", _whitePlayerName.data(), static_cast<int>(_whitePlayerName.size()));
-        ImGui::InputText("Joueur Noir", _blackPlayerName.data(), static_cast<int>(_blackPlayerName.size()));
-
-        if (_selectedMode == 1)
-        {
-            drawChaosRulesSection(game.getChaosOptionsMutable());
-        }
-
-        ImGui::Spacing();
-
-        if (ImGui::Button("Lancer la partie", ImVec2(200.f, 0.f)))
-        {
-            game.addPlayerWhite(_whitePlayerName.data());
-            game.addPlayerBlack(_blackPlayerName.data());
-
-            game.addMoveToHistory(
-                std::string("Début du match entre ")
-                + _whitePlayerName.data()
-                + " et "
-                + _blackPlayerName.data()
-                + " !"
-            );
-
-            const GameManager::Mode mode = (_selectedMode == 1) ? GameManager::Mode::Chaos : GameManager::Mode::Classic;
-            _sceneManager->launchGameScene(mode, true);
-            ImGui::CloseCurrentPopup();
-        }
-
-        ImGui::SameLine();
-
-        if (ImGui::Button("Annuler", ImVec2(120.f, 0.f)))
-        {
-            ImGui::CloseCurrentPopup();
-        }
-
-        ImGui::EndPopup();
-    }
+    ImGui::PopStyleVar(2);
 
     ImGui::End();
-
-    // ImGui::ShowDemoWindow();
 }

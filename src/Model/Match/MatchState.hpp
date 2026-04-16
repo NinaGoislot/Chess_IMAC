@@ -4,15 +4,16 @@
 #include <optional>
 #include <string>
 #include <vector>
+#include "Managers/TurnManager.hpp"
 #include "Model/Board/Board.hpp"
 #include "Model/Chaos/ChaosMode.hpp"
-#include "Model/Match/Player.hpp"
 #include "Model/Match/GameRules.hpp"
 #include "Model/Match/History.hpp"
+#include "Model/Match/Player.hpp"
 #include "Model/Match/Promotion/PromotionService.hpp"
-#include "Managers/TurnManager.hpp"
 #include "Render/TextureManager.hpp"
 #include "utilities/MoveAttempt.hpp"
+
 
 // Owns a complete chess match state and orchestrates rules, move execution, and chaos
 class MatchState {
@@ -48,7 +49,9 @@ public:
     const std::vector<std::string>&     getMoveHistory() const;
     const std::string&                  getWhitePlayerName() const;
     const std::string&                  getBlackPlayerName() const;
+    const std::string&                  getActivePlayerName() const;
     int                                 getFullTurnCount() const;
+    int                                 getCurrentTurnNumber() const;
     bool                                getHasWinner() const;
     const Player*                       getWinner() const;
     std::optional<std::pair<int, int>>  getKirbyPosition() const;
@@ -89,7 +92,7 @@ private:
     const TextureManager*      _textures = nullptr;
 
     // Parameters : Current match mode
-    Mode   _mode               = Mode::Classic;
-    int    _validatedMoveCount = 0;
-    Player* _winner            = nullptr;
+    Mode    _mode               = Mode::Classic;
+    int     _validatedMoveCount = 0;
+    Player* _winner             = nullptr;
 };

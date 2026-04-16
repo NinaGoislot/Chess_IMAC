@@ -1,5 +1,11 @@
 #include "Managers/GameManager.hpp"
+#include <imgui.h>
 #include <optional>
+
+/**
+ * Note: this file orchestrates the main game loop and holds the match state.
+ * Collects board interactions from both 2D and 3D views and merges them into a single update per frame. (we do this beca)
+ */
 
 GameManager::GameManager(const AppConfig& config)
     : _settings()
@@ -24,9 +30,25 @@ void GameManager::newGame(Mode mode)
     _match.newMatch(matchMode);
 }
 
-void GameManager::displayBoard(float deltaTimeSeconds)
+/**
+ *
+ * Initialise les interactions de la frame avant le rendu des vues
+ */
+void GameManager::beginBoardViewsFrame()
 {
-    const std::optional<BoardClick> clickedCase = _renderer.draw(
+    _pendingClickedTile.reset();
+    _pendingHoveredTile.reset();
+}
+
+/**
+ *
+ * Rend la vue 3D
+ * @param deltaTimeSeconds : temps ecoulé pour l'animation de la vue 3D. sert a synchro les animations
+ * @return Aucun
+ */
+void GameManager::draw3DBoardView(float deltaTimeSeconds)
+{
+    const std::optional<BoardClick> clickedCase = _renderer.draw3DView(
         _match.getBoard(),
         _settings,
         _match.getCurrentTurn(),
@@ -35,18 +57,76 @@ void GameManager::displayBoard(float deltaTimeSeconds)
         _moveSelectionController.getSelectionState()
     );
 
-    if (clickedCase.has_value())
-        handleBoardClick(Vector2D(static_cast<float>(clickedCase->x), static_cast<float>(clickedCase->y)));
+    collectBoardInteraction(clickedCase, _renderer.getHoveredTile()); // la vue 3D peut aussi detecter les clics et survols, on les collecte pour le traitement en fin de frame
+}
 
-    const std::optional<BoardClick> hoveredCase = _renderer.getHoveredTile();
-    if (hoveredCase.has_value())
+/**
+ *
+ * Rend la vue 2D
+ * @return Aucun
+ */
+void GameManager::draw2DBoardView()
+{
+    const std::optional<BoardClick> clickedCase = _renderer.draw2DView(
+        _match.getBoard(),
+        _settings,
+        _match.getKirbyPosition(),
+        _moveSelectionController.getSelectionState()
+    );
+
+    collectBoardInteraction(clickedCase, _renderer.getHoveredTile());
+}
+
+/**
+ *
+ * appelle et exécute les interactions cumulées pendant la frame
+ * @return Aucun
+ */
+void GameManager::endBoardViewsFrame()
+{
+    // PRIORITY : Clic droit = déselection
+    if (ImGui::IsMouseClicked(ImGuiMouseButton_Right) && _pendingHoveredTile.has_value())
     {
-        _moveSelectionController.updateHover(Vector2D(static_cast<float>(hoveredCase->x), static_cast<float>(hoveredCase->y)), _match);
+        _moveSelectionController.clearSelection();
+        return;
+    }
+
+    // clic gauche stocké
+    if (_pendingClickedTile.has_value())
+    {
+        _moveSelectionController.onTileClicked(
+            Vector2D(static_cast<float>(_pendingClickedTile->x), static_cast<float>(_pendingClickedTile->y)),
+            _match
+        );
+    }
+
+    // Update le survol (pour surligner les cases disponibles)
+    if (_pendingHoveredTile.has_value())
+    {
+        _moveSelectionController.updateHover(Vector2D(static_cast<float>(_pendingHoveredTile->x), static_cast<float>(_pendingHoveredTile->y)), _match);
     }
     else
     {
         _moveSelectionController.updateHover(std::optional<Vector2D>{}, _match);
     }
+}
+
+/**
+ *
+ * Collecte les interactions detectées pendant la frame
+ * @param clickedTile : tuile cliquee detectee
+ * @param hoveredTile : tuile survolee detectee
+ * @return Aucun
+ */
+void GameManager::collectBoardInteraction(const std::optional<BoardClick>& clickedTile, const std::optional<BoardClick>& hoveredTile)
+{
+    // Stocke le PREMIER clic détecté (ignore les suivants)
+    if (!_pendingClickedTile.has_value() && clickedTile.has_value())
+        _pendingClickedTile = clickedTile;
+
+    // Met à jour le survol
+    if (hoveredTile.has_value())
+        _pendingHoveredTile = hoveredTile;
 }
 
 settings& GameManager::getSettings()
@@ -94,9 +174,24 @@ const std::string& GameManager::getBlackPlayerName() const
     return _match.getBlackPlayerName();
 }
 
+const std::string& GameManager::getActivePlayerName() const
+{
+    return _match.getActivePlayerName();
+}
+
 int GameManager::getFullTurnCount() const
 {
     return _match.getFullTurnCount();
+}
+
+int GameManager::getCurrentTurnNumber() const
+{
+    return _match.getCurrentTurnNumber();
+}
+
+PieceColor GameManager::getCurrentTurnColor() const
+{
+    return _match.getCurrentTurn();
 }
 
 bool GameManager::getHasWinner() const
@@ -122,15 +217,4 @@ void GameManager::addPlayerBlack(const std::string& name)
 void GameManager::addMoveToHistory(const std::string& move)
 {
     _match.addMoveToHistory(move);
-}
-
-void GameManager::handleBoardClick(Vector2D clickedTile)
-{
-    const int x = static_cast<int>(clickedTile.getX());
-    const int y = static_cast<int>(clickedTile.getY());
-
-    if (_match.getHasKirbyAt(x, y))
-        return;
-
-    _moveSelectionController.onTileClicked(clickedTile, _match);
 }
