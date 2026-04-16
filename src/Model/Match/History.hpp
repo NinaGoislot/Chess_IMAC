@@ -3,6 +3,7 @@
 #include <string>
 #include <vector>
 
+// Owns the move history of a match
 class MoveHistory {
 public:
     void clear();

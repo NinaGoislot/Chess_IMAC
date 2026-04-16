@@ -2,34 +2,38 @@
 #include <imgui.h>
 #include <vector>
 #include "Model/Board/Board.hpp"
+#include "utilities/Direction.hpp"
 #include "utilities/Vector2D.hpp"
-
 
 Bishop::Bishop()
     : Piece()
 {
-    _name = "Bishop";
-    _type = PieceType::Bishop;
+    _name  = "Bishop";
+    _type  = PieceType::Bishop;
     _color = PieceColor::White;
 }
 
 void Bishop::updateAllowedMoves(const Board& board, Vector2D position)
 {
-   std::vector<Vector2D> directions {
-    {1, 1},   // up-right
-    {1, -1},  // down-right
-    {-1, 1},  // up-left
-    {-1, -1}  // down-left
-   };
+    std::vector<Vector2D> directions{
+        dir::up_right(),
+        dir::down_right(),
+        dir::up_left(),
+        dir::down_left()
+    };
 
-   _allowedMoves.clear();
+    _allowedMoves.clear();
 
-    for (const Vector2D& dir : directions) {
+    for (const Vector2D& dir : directions)
+    {
         Vector2D currentPos = position + dir;
 
-        while (board.isInside(currentPos)) {
-            if (!board.isEmpty(currentPos)) {
-                if (board.isEnemy(currentPos, _color)) {
+        while (board.isInside(currentPos))
+        {
+            if (!board.isEmpty(currentPos))
+            {
+                if (board.isEnemy(currentPos, _color))
+                {
                     _allowedMoves.push_back(currentPos);
                 }
                 break;
@@ -44,17 +48,17 @@ void Bishop::updateAllowedMoves(const Board& board, Vector2D position)
 
 Bishop::Bishop(ImTextureID texture)
 {
-    _name = "Bishop";
-    _type = PieceType::Bishop;
-    _color = PieceColor::White;
+    _name    = "Bishop";
+    _type    = PieceType::Bishop;
+    _color   = PieceColor::White;
     _texture = texture;
 }
 
 Bishop::Bishop(PieceColor color, ImTextureID texture)
 {
-    _name = "Bishop";
-    _type = PieceType::Bishop;
-    _color = color;
+    _name    = "Bishop";
+    _type    = PieceType::Bishop;
+    _color   = color;
     _texture = texture;
 }
 

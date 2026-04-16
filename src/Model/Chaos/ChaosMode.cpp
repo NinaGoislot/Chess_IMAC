@@ -52,6 +52,15 @@ void ChaosMode::onTurnEnd(Board& board, std::array<Player, 2>& players, std::vec
         rule->onTurnEnd(context);
 }
 
+/**
+ * Allow chaos rules to potentially modify or block the move.
+ * @param attempt The move attempt
+ * @param board The game board
+ * @param players The players
+ * @param history The game history
+ * @return True if the move is allowed
+
+ */
 bool ChaosMode::beforeMove(MoveAttempt& attempt, Board& board, std::array<Player, 2>& players, std::vector<std::string>& history)
 {
     if (!_enabled)
@@ -69,6 +78,13 @@ bool ChaosMode::beforeMove(MoveAttempt& attempt, Board& board, std::array<Player
     return true;
 }
 
+/**
+ * Allow chaos rules to react to the move that was just executed
+ * @param attempt The move attempt
+ * @param board The game board
+ * @param players The players
+ * @param history The game history
+ */
 void ChaosMode::afterMove(MoveAttempt& attempt, Board& board, std::array<Player, 2>& players, std::vector<std::string>& history)
 {
     if (!_enabled)

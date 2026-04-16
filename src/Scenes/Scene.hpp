@@ -1,6 +1,6 @@
 #pragma once
 
-// Base interface for every renderable UI/game scene.
+// Base interface for every renderable scene
 class Scene {
 public:
     // Constructors
@@ -11,6 +11,6 @@ public:
     Scene& operator=(Scene&&)      = default;
     virtual ~Scene()               = default;
 
-    // Render function implemented by each concrete scene.
+    // Render function
     virtual void render() = 0;
 };

@@ -2,34 +2,38 @@
 #include <imgui.h>
 #include <vector>
 #include "Model/Board/Board.hpp"
+#include "utilities/Direction.hpp"
 #include "utilities/Vector2D.hpp"
-
 
 Rook::Rook()
     : Piece()
 {
-    _name = "Rook";
-    _type = PieceType::Rook;
+    _name  = "Rook";
+    _type  = PieceType::Rook;
     _color = PieceColor::White;
 }
 
 void Rook::updateAllowedMoves(const Board& board, Vector2D position)
 {
-   std::vector<Vector2D> directions {
-    {0, 1},   // up
-    {0, -1},  // down
-    {-1, 0},  // left
-    {1, 0}    // right
-   };
+    std::vector<Vector2D> directions{
+        dir::up(),
+        dir::down(),
+        dir::left(),
+        dir::right()
+    };
 
-   _allowedMoves.clear();
+    _allowedMoves.clear();
 
-    for (const Vector2D& dir : directions) {
+    for (const Vector2D& dir : directions)
+    {
         Vector2D currentPos = position + dir;
 
-        while (board.isInside(currentPos)) {
-            if (!board.isEmpty(currentPos)) {
-                if (board.isEnemy(currentPos, _color)) {
+        while (board.isInside(currentPos))
+        {
+            if (!board.isEmpty(currentPos))
+            {
+                if (board.isEnemy(currentPos, _color))
+                {
                     _allowedMoves.push_back(currentPos);
                 }
                 break;
@@ -44,17 +48,17 @@ void Rook::updateAllowedMoves(const Board& board, Vector2D position)
 
 Rook::Rook(ImTextureID texture)
 {
-    _name = "Rook";
-    _type = PieceType::Rook;
-    _color = PieceColor::White;
+    _name    = "Rook";
+    _type    = PieceType::Rook;
+    _color   = PieceColor::White;
     _texture = texture;
 }
 
 Rook::Rook(PieceColor color, ImTextureID texture)
 {
-    _name = "Rook";
-    _type = PieceType::Rook;
-    _color = color;
+    _name    = "Rook";
+    _type    = PieceType::Rook;
+    _color   = color;
     _texture = texture;
 }
 

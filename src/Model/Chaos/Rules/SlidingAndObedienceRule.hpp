@@ -20,6 +20,7 @@ private:
     // Parameters
     const ChaosOptions* _options = nullptr;
 
+    // Configurable obedience probabilities by piece type
     const double PAWN_OBEDIENCE_PROBA   = 0.95;
     const double KNIGHT_OBEDIENCE_PROBA = 1.0;
     const double KING_OBEDIENCE_PROBA   = 0.95;

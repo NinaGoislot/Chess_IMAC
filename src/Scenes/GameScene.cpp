@@ -4,7 +4,6 @@
 #include "Scenes/SettingsPanel.hpp"
 #include "UI/GameUiComponents.hpp"
 
-
 GameScene::GameScene(SceneManager& sceneManager, GameManager::Mode mode)
     : _sceneManager(&sceneManager)
     , _game(sceneManager.getGame())
@@ -14,8 +13,8 @@ GameScene::GameScene(SceneManager& sceneManager, GameManager::Mode mode)
 
 /**
  *
- * Orchestration du rendu de la scene de jeu, avec UI, vue 3D integree et vue 2D separee.
- * @return Aucun.
+ * rendu de la scene de jeu
+ * @return Aucun
  */
 void GameScene::render()
 {
@@ -63,7 +62,7 @@ void GameScene::render()
         ImGui::Text("Victoire de %s", winnerName);
         ImGui::Spacing();
 
-        if (GameUiComponents::drawPrimaryButton("Recommencer", ImVec2(180.f, 0.f)))
+        if (GameUiComponents::drawPrimaryButton("Recommencer une partie de fou", ImVec2(180.f, 0.f)))
         {
             _game.newGame(_mode);
             _winnerPopupShown = false;

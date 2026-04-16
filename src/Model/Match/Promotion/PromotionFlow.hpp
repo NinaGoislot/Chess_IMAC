@@ -3,6 +3,8 @@
 #include "Model/Match/MatchState.hpp"
 #include "Render/TextureManager.hpp"
 
+// Handles the promotion flow when a pawn reaches the end of the board
+
 class PromotionFlow {
 public:
     // Constructors

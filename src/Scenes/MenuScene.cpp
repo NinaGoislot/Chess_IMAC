@@ -8,26 +8,26 @@
 namespace {
 /**
  *
- * Affiche les options du mode Chaos dans la fenetre de setup.
- * @param options : options Chaos a modifier.
- * @return Aucun.
+ * Affiche les options du mode Chaos dans la fenetre de setup
+ * @param options : options Chaos a modifier
+ * @return Aucun
  */
 void drawChaosRulesSection(ChaosOptions& options)
 {
     ImGui::Separator();
-    ImGui::Text("Regles Chaos actives");
+    ImGui::Text("Regles Chaos activable (have fun) :");
 
     ImGui::Checkbox("1. Loi de Weibull (duree de vie)", &options.enableWeibullLifetime);
-    ImGui::TextDisabled("La piece perd de la duree de vie uniquement quand elle est jouee.");
+    ImGui::TextDisabled("La piece perd de la duree de vi quand elle est jouee. Tic Tac, tic tac...");
 
-    ImGui::Checkbox("2-3. Bernoulli + uniforme discrete (setup pieces)", &options.enableBernoulliBackrowAndShuffle);
-    ImGui::TextDisabled("Chance d'avoir des pions en backrow puis melange aleatoire des lignes de depart.");
+    ImGui::Checkbox("2. Bernoulli + uniforme discrete (setup pieces)", &options.enableBernoulliBackrowAndShuffle);
+    ImGui::TextDisabled("Mélange aleatoire des lignes de depart.");
 
-    ImGui::Checkbox("4. Poisson + uniforme (Kirby)", &options.enableKirbyPoissonUniform);
-    ImGui::TextDisabled("Kirby peut apparaitre sur une case et manger une piece voisine au hasard.");
+    ImGui::Checkbox("3. Poisson + uniforme (Kirby)", &options.enableKirbyPoissonUniform);
+    ImGui::TextDisabled("Kirby a faim. Il peut apparaitre sur une case et manger des piece au hasard :)");
 
-    ImGui::Checkbox("7-8. Geometrique + Bernoulli (glissantes + obeissance)", &options.enableGeometricSlidingAndObedience);
-    ImGui::TextDisabled("Les pieces glissantes peuvent s'arreter avant; certaines pieces refusent d'obeir.");
+    ImGui::Checkbox("4. Geometrique + Bernoulli (glissantes + obeissance)", &options.enableGeometricSlidingAndObedience);
+    ImGui::TextDisabled("Les pieces peuvent arreter d'obéir. Les pièces glissantes peuvent s'arrêter avant la fin du mouvement complet.");
 }
 } // namespace
 
@@ -79,20 +79,21 @@ void MenuScene::drawMainActions(float buttonWidth)
 
 /**
  *
- * Affiche le resume d'une partie interrompue et le bouton de reprise.
- * @param game : gestionnaire du match courant.
- * @param buttonWidth : largeur cible de la carte.
+ * Affiche le resume d'une partie interrompue
+ * @param game : gestionnaire du match courant
+ * @param buttonWidth : largeur cible de la carte
+ * @param height : hauteur cible de la carte
  * @return Aucun.
  */
-void MenuScene::drawInterruptedMatchCard(GameManager& game, float buttonWidth)
+void MenuScene::drawInterruptedMatchCard(GameManager& game, float buttonWidth, float height)
 {
     ImGui::Spacing();
     ImGui::Separator();
     ImGui::Spacing();
 
     ImGui::PushStyleColor(ImGuiCol_ChildBg, UiTheme::secondaryButton.toImVec4());
-    ImGui::BeginChild("InterruptedMatchCard", ImVec2(buttonWidth, 145.f), true);
-    ImGui::TextColored(UiTheme::panelStrong.toImVec4(), "Partie interrompue");
+    ImGui::BeginChild("InterruptedMatchCard", ImVec2(buttonWidth, height), true);
+    ImGui::TextColored(UiTheme::panelStrong.toImVec4(), "Partie récente");
 
     ImGui::Text("Joueur blanc: %s", game.getWhitePlayerName().c_str());
     ImGui::Text("Joueur noir: %s", game.getBlackPlayerName().c_str());
@@ -110,8 +111,8 @@ void MenuScene::drawInterruptedMatchCard(GameManager& game, float buttonWidth)
 
 /**
  *
- * Affiche la fenetre de confirmation avant d'ecraser une partie interrompue.
- * @return Aucun.
+ * Affiche la fenetre de confirmation avant d'ecraser une partie interrompue
+ * @return Aucun
  */
 void MenuScene::drawOverwritePopup()
 {
@@ -122,7 +123,7 @@ void MenuScene::drawOverwritePopup()
     ImGui::TextUnformatted("Creer une nouvelle partie ecrasera cette sauvegarde.");
     ImGui::Separator();
 
-    if (GameUiComponents::drawDangerButton("Ecraser et continuer", ImVec2(220.f, 0.f)))
+    if (GameUiComponents::drawDangerButton("Ecrase tout !", ImVec2(220.f, 0.f)))
     {
         _sceneManager->clearInterruptedMatch();
         _selectedMode            = _requestedMode;
@@ -142,17 +143,17 @@ void MenuScene::drawOverwritePopup()
 
 /**
  *
- * Affiche la fenetre de configuration d'une nouvelle partie.
- * @param game : gestionnaire du match courant.
- * @return Aucun.
+ * Affiche la fenetre de configuration d'une nouvelle partie
+ * @param game : gestionnaire du match courant
+ * @return Aucun
  */
 void MenuScene::drawSetupPopup(GameManager& game)
 {
-    if (!ImGui::BeginPopupModal("Setup Partie", nullptr, ImGuiWindowFlags_AlwaysAutoResize))
+    ImGui::SetNextWindowSize(ImVec2(900.f, 560.f), ImGuiCond_Appearing);
+    if (!ImGui::BeginPopupModal("Setup Partie", nullptr, ImGuiWindowFlags_NoResize))
         return;
 
     ImGui::TextColored(UiTheme::panelHeader.toImVec4(), "Configuration de la partie");
-    ImGui::TextColored(UiTheme::mutedText.toImVec4(), "Personnalise les joueurs puis lance la partie.");
     ImGui::Separator();
 
     ImGui::InputText("Joueur Blanc", _whitePlayerName.data(), static_cast<int>(_whitePlayerName.size()));
@@ -165,7 +166,7 @@ void MenuScene::drawSetupPopup(GameManager& game)
 
     ImGui::Spacing();
 
-    if (GameUiComponents::drawPrimaryButton("Lancer la partie", ImVec2(200.f, 0.f)))
+    if (GameUiComponents::drawPrimaryButton("Lancer la partie de fou !", ImVec2(390.f, 50.f)))
     {
         game.addPlayerWhite(_whitePlayerName.data());
         game.addPlayerBlack(_blackPlayerName.data());
@@ -185,7 +186,7 @@ void MenuScene::drawSetupPopup(GameManager& game)
 
     ImGui::SameLine();
 
-    if (GameUiComponents::drawSecondaryButton("Annuler", ImVec2(120.f, 0.f)))
+    if (GameUiComponents::drawSecondaryButton("Annuler", ImVec2(120.f, 50.f)))
     {
         ImGui::CloseCurrentPopup();
     }
@@ -195,12 +196,21 @@ void MenuScene::drawSetupPopup(GameManager& game)
 
 /**
  *
- * Construit l'interface principale du menu avec ses popups associes.
- * @return Aucun.
+ * Construit l'interface principale du menu avec ses popups associes
+ * @return Aucun
  */
 void MenuScene::render()
 {
     GameManager& game = _sceneManager->getGame();
+
+    ImFont*     menuFont = nullptr;
+    const auto& fonts    = ImGui::GetIO().Fonts->Fonts;
+    if (fonts.Size > 1)
+    {
+        // Font #0: regular default, Font #1: larger/heavier variant loaded at startup.
+        menuFont = fonts[1];
+        ImGui::PushFont(menuFont);
+    }
 
     if (_openSetupPopupNextFrame)
     {
@@ -215,8 +225,8 @@ void MenuScene::render()
     ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 8.f);
 
     GameUiComponents::drawMenuHero({
-        "Chess Arena",
-        "Une interface propre, moderne et lisible pour lancer ta partie.",
+        "Le super jeu d'echecs de Paul et Nina !",
+        "Un banger absolu.",
     });
 
     ImGui::Spacing();
@@ -242,4 +252,9 @@ void MenuScene::render()
     ImGui::PopStyleVar(2);
 
     ImGui::End();
+
+    if (menuFont != nullptr)
+    {
+        ImGui::PopFont();
+    }
 }

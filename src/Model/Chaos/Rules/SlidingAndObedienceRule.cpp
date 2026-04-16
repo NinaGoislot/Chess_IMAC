@@ -11,19 +11,14 @@ SlidingAndObedienceRule::SlidingAndObedienceRule(const ChaosOptions* options)
 }
 
 /**
- * Chaos rule: Makes pieces potentially disobey orders and slide to random distances.
+ * Chaos rule: Makes pieces potentially disobey orders and slide to random distances
  *
  * Two chaos mechanics applied BEFORE a move is executed:
  * 1. OBEDIENCE: Piece might refuse to move (Bernoulli roll by piece type)
  * 2. SLIDING: Sliding pieces (Bishop, Rook, Queen) might stop early (Geometric distribution)
  *
- * Examples:
- *   - Queen moves e2→e8: Roll obedience (65% chance). If fails → move cancelled, turn skipped.
- *   - Bishop moves a1→h8: Roll obedience (80% chance). If OK, roll sliding distance.
- *     Maybe stops at a3 instead of h8 (interrupted mid-path).
- *
- * @param context : the move attempt context (piece, from, to, history, rng)
- * @return : true if move allowed, false if blocked by chaos
+ * @param context : the move attempt context
+ * @return : true if move allowed, false if blocked (disobedience)
  */
 bool SlidingAndObedienceRule::beforeMove(ChaosMoveContext& context)
 {
@@ -35,17 +30,16 @@ bool SlidingAndObedienceRule::beforeMove(ChaosMoveContext& context)
     if (obeyDistribution(context.rng) == 0)
     // --- MECHANIC 1: OBEDIENCE CHECK ---
     // Roll Bernoulli: "Will this piece obey the player's command?"
-    // Each piece type has different obedience probability (e.g., Queen=65%, Knight=100%)
-    BernoulliDistribution obeyDistribution(obedienceProbabilityFor(context.attempt.piece));
-    if (obeyDistribution(context.rng) == 0) // Roll failed (piece refuses)
+    LoiBernoulli obeyDistribution(obedienceProbabilityFor(context.attempt.piece)); // Each piece type has different obedience probability (configured in options)
+    if (obeyDistribution(context.rng) == 0)                                        // Roll failed (piece refuses)
     {
-        // Piece disobeys! Cancel the move and skip turn
+        // OMG, Piece disobeys! Cancel the move and skip turn :(
         context.history.push_back("Chaos: la piece refuse d'obeir. Elle semble vexée.");
         if (context.skipTurnRequested != nullptr)
         {
-            *context.skipTurnRequested = true; // Mark: skip this player's turn
+            *context.skipTurnRequested = true;
         }
-        return false; // Block the move
+        return false;
     }
 
     // --- MECHANIC 2: SLIDING CHECK ---
@@ -89,10 +83,10 @@ bool SlidingAndObedienceRule::beforeMove(ChaosMoveContext& context)
         // Recalculate destination based on actual sliding distance
         context.attempt.toX = context.attempt.fromX + stepX * travel;
         context.attempt.toY = context.attempt.fromY + stepY * travel;
-        context.history.push_back("Chaos: la piece glissante s'arrete avant la destination.");
+        context.history.push_back("Chaos: la piece semble fatiguée... Elle s'est arrêtée avant la destination.");
     }
 
-    return true; // Allow the (possibly modified) move
+    return true;
 }
 
 double SlidingAndObedienceRule::obedienceProbabilityFor(const Piece* piece) const
@@ -103,15 +97,17 @@ double SlidingAndObedienceRule::obedienceProbabilityFor(const Piece* piece) cons
     switch (piece->getType())
     {
     case PieceType::Pawn:
-    case PieceType::King:
-        return 0.95;
+        return PAWN_OBEDIENCE_PROBA;
     case PieceType::Knight:
-        return 1.0;
+        return KNIGHT_OBEDIENCE_PROBA;
+    case PieceType::King:
+        return KING_OBEDIENCE_PROBA;
     case PieceType::Queen:
-        return 0.65;
+        return QUEEN_OBEDIENCE_PROBA;
     case PieceType::Bishop:
+        return BISHOP_OBEDIENCE_PROBA;
     case PieceType::Rook:
-        return 0.80;
+        return ROOK_OBEDIENCE_PROBA;
     }
 
     return 1.0;

@@ -63,6 +63,13 @@ GLFWwindow* create_window(const char* title)
     // io.ConfigViewportsNoAutoMerge = true;
     // io.ConfigViewportsNoTaskBarIcon = true;
 
+    // Keep regular default font, and add a larger/heavier variant for menu scene.
+    io.Fonts->AddFontDefault();
+    ImFontConfig menuFontConfig;
+    menuFontConfig.SizePixels         = 20.0f;
+    menuFontConfig.RasterizerMultiply = 1.15f;
+    io.Fonts->AddFontDefault(&menuFontConfig);
+
     // Setup Dear ImGui style
     // ImGui::StyleColorsDark();
     ImGui::StyleColorsClassic();
