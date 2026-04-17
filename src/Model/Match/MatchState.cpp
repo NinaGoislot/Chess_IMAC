@@ -14,9 +14,9 @@ namespace {
 void appendTurnHistory(MoveHistory& history, int turnNumber, const std::string& playerName, PieceColor color)
 {
     history.add(
-        std::string("Tour ")
+        std::string("Coup n°")
         + std::to_string(turnNumber)
-        + " - A jouer: "
+        + " - Trait à : "
         + playerName
         + " ("
         + PieceColorUtils::toFrenchLabel(color)

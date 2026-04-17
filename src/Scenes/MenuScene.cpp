@@ -15,19 +15,19 @@ namespace {
 void drawChaosRulesSection(ChaosOptions& options)
 {
     ImGui::Separator();
-    ImGui::Text("Regles Chaos activable (have fun) :");
+    ImGui::Text("Règles Chaos activables (have fun) :");
 
-    ImGui::Checkbox("1. Loi de Weibull (duree de vie)", &options.enableWeibullLifetime);
-    ImGui::TextDisabled("La piece perd de la duree de vi quand elle est jouee. Tic Tac, tic tac...");
+    ImGui::Checkbox("Durée de vie (Weibull)", &options.enableWeibullLifetime);
+    ImGui::TextDisabled("La pièce perd de sa vie lorsqu'elle est jouée. Tic Tac, tic tac...");
 
-    ImGui::Checkbox("2. Bernoulli + uniforme discrete (setup pieces)", &options.enableBernoulliBackrowAndShuffle);
-    ImGui::TextDisabled("Mélange aleatoire des lignes de depart.");
+    ImGui::Checkbox("Démarrage aléatoire (Bernoulli + Uniforme)", &options.enableBernoulliBackrowAndShuffle);
+    ImGui::TextDisabled("Mélange aléatoire des lignes de depart.");
 
-    ImGui::Checkbox("3. Poisson + uniforme (Kirby)", &options.enableKirbyPoissonUniform);
+    ImGui::Checkbox("Appétit de Kirby (Poisson + Uniforme)", &options.enableKirbyPoissonUniform);
     ImGui::TextDisabled("Kirby a faim. Il peut apparaitre sur une case et manger des piece au hasard :)");
 
-    ImGui::Checkbox("4. Geometrique + Bernoulli (glissantes + obeissance)", &options.enableGeometricSlidingAndObedience);
-    ImGui::TextDisabled("Les pieces peuvent arreter d'obéir. Les pièces glissantes peuvent s'arrêter avant la fin du mouvement complet.");
+    ImGui::Checkbox("Obéissance et fatigue (Bernoulli + Geometrique)", &options.enableGeometricSlidingAndObedience);
+    ImGui::TextDisabled("Les pièces peuvent arrêter d'obéir. Les pièces glissantes peuvent s'arrêter avant la fin du mouvement complet.");
 }
 } // namespace
 
@@ -225,7 +225,7 @@ void MenuScene::render()
     ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 8.f);
 
     GameUiComponents::drawMenuHero({
-        "Le super jeu d'echecs de Paul et Nina !",
+        "Le super jeu d'echecs de Nina et Paul !",
         "Un banger absolu.",
     });
 
