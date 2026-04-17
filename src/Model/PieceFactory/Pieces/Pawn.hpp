@@ -6,6 +6,10 @@ public:
     // Constructors
     Pawn();
     ~Pawn() override = default;
+    Pawn(const Pawn&) = delete;
+    Pawn& operator=(const Pawn&) = delete;
+    Pawn(Pawn&&) = delete;
+    Pawn& operator=(Pawn&&) = delete;
 
     explicit Pawn(ImTextureID texture);
     Pawn(PieceColor color, ImTextureID texture);

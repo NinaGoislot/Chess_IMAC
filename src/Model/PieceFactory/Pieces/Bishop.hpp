@@ -6,6 +6,10 @@ public:
     // Constructors
     Bishop();
     ~Bishop() override = default;
+    Bishop(const Bishop&) = delete;
+    Bishop& operator=(const Bishop&) = delete;
+    Bishop(Bishop&&) = delete;
+    Bishop& operator=(Bishop&&) = delete;
 
     explicit Bishop(ImTextureID texture);
     Bishop(PieceColor color, ImTextureID texture);

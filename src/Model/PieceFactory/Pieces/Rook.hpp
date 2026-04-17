@@ -5,7 +5,11 @@ class Rook : public Piece {
 public:
     // Constructors
     Rook();
-    ~Rook() override = default;
+    ~Rook() override             = default;
+    Rook(const Rook&)            = delete;
+    Rook& operator=(const Rook&) = delete;
+    Rook(Rook&&)                 = delete;
+    Rook& operator=(Rook&&)      = delete;
 
     explicit Rook(ImTextureID texture);
     Rook(PieceColor color, ImTextureID texture);

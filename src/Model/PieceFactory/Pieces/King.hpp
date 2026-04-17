@@ -6,6 +6,10 @@ public:
     // Constructors
     King();
     ~King() override = default;
+    King(const King&) = delete;
+    King& operator=(const King&) = delete;
+    King(King&&) = delete;
+    King& operator=(King&&) = delete;
 
     explicit King(ImTextureID texture);
     King(PieceColor color, ImTextureID texture);

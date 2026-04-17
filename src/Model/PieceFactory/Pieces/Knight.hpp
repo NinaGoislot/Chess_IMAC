@@ -6,6 +6,10 @@ public:
     // Constructors
     Knight();
     ~Knight() override = default;
+    Knight(const Knight&) = delete;
+    Knight& operator=(const Knight&) = delete;
+    Knight(Knight&&) = delete;
+    Knight& operator=(Knight&&) = delete;
 
     explicit Knight(ImTextureID texture);
     Knight(PieceColor color, ImTextureID texture);
